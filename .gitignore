@@ -1,3 +1,38 @@
+# Gradle
+.gradle
+.settings
+/build/
+/out/
+
+# IDE
+/.idea/
+/.vscode/
+.classpath
+.project
+/bin/
+/eclipse/
+*.iml
+*.ipr
+*.iws
+.factorypath
+
+# Minecraft Dev Environment
+/run/
+/config/
+/crash-reports/
+/logs/
+/saves/
+options.txt
+usernamecache.json
+banned-ips.json
+banned-players.json
+eula.txt
+ops.json
+server.properties
+servers.dat
+usercache.json
+whitelist.json
+
 # Compiled class file
 *.class
 
@@ -19,6 +54,26 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# Exception: Gradle wrapper jar is needed
+!gradle/wrapper/gradle-wrapper.jar
+!gradlew.bat
+
+# virtual machine crash logs
 hs_err_pid*
 replay_pid*
+
+# macOS
+*.DS_Store
+
+# Local addon configuration
+addon.local.gradle
+addon.local.gradle.kts
+addon.late.local.gradle
+addon.late.local.gradle.kts
+layout.json
+
+# Temporary files
+*.tmp
+*.temp
+GRADLE_JVM_FIX.md
+IDE_SETUP.md
