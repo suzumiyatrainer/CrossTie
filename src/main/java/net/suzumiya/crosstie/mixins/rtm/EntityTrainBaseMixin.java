@@ -96,4 +96,18 @@ public abstract class EntityTrainBaseMixin {
             }
         }
     }
+
+    /**
+     * 編成更新の頻度を削減 (Formation System Optimization)
+     * 
+     * 毎tick実行される編成チェックを、20tickに1回に削減します。
+     * 編成変更は頻繁には起きないため、これで十分です。
+     */
+    @Inject(method = "updateFormation", at = @At("HEAD"), cancellable = true, require = 0)
+    private void crosstie$throttleFormationUpdate(CallbackInfo ci) {
+        // 20tickに1回だけ実行 (1秒に1回)
+        if (this.ticksExisted % 20 != 0) {
+            ci.cancel();
+        }
+    }
 }

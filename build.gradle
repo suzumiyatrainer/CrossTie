@@ -49,6 +49,10 @@ dependencies {
     annotationProcessor('com.google.guava:guava:24.1.1-jre')
     annotationProcessor('com.google.code.gson:gson:2.8.6')
 
+    // ASM for compilation
+    compileOnly('org.ow2.asm:asm-all:5.0.3') // Try asm-all instead of debug-all
+    compileOnly('org.ow2.asm:asm-commons:5.0.3') // Explicitly add commons just in case
+
     // Load all jars from 'libs' directory (for testing with other mods)
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
@@ -71,7 +75,7 @@ jar {
             'FMLCorePluginContainsFMLMod': 'true',
             'MixinConfigs': 'mixins.crosstie.json',
             'ForceLoadAsMod': 'true',
-            'FMLCorePlugin': project.findProperty('coreModClass') ?: ''
+            'FMLCorePlugin': 'net.suzumiya.crosstie.asm.CrossTieCorePlugin'
         ])
     }
 }

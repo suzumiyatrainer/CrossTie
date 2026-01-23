@@ -129,4 +129,16 @@ public class ModDetector {
     public static boolean needsCompatibilityLayer() {
         return hasOptiFine || hasAngelica || hasFalseTweaks || hasBeddium || hasFastCraft;
     }
+
+    /**
+     * クラスが存在するか確認 (Mixinロード時用)
+     */
+    public static boolean isClassLoaded(String className) {
+        try {
+            Class.forName(className, false, ModDetector.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
 }
