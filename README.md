@@ -204,7 +204,7 @@ cd CrossTie
 
 MIT License
 
-Copyright (c) 2026 Suzumiya
+Copyright (c) 2026 SuzumiyaTrainer
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -228,7 +228,7 @@ SOFTWARE.
 
 ## クレジット
 
-- **RTM/KaizPatchX**: [ngt5479](https://github.com/Kai-Z-JP) - 解析・最適化対象
+- **RTM/KaizPatchX**: [KaizJP](https://github.com/Kai-Z-JP) - 解析・最適化対象
 - **UniMixins**: [LegacyModdingMC](https://github.com/LegacyModdingMC/UniMixins) - Mixin framework
 - **GTNH**: [GTNewHorizons](https://github.com/GTNewHorizons) - Build template
 
@@ -236,7 +236,6 @@ SOFTWARE.
 
 ## リンク
 
-- [RTM公式Wiki](http://www.realtrainmod.com/)
 - [UniMixins GitHub](https://github.com/LegacyModdingMC/UniMixins)
 - [本Modの実装計画](../../implementation_plan.md)
 - [タスク管理](../../task.md)
