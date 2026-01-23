@@ -78,3 +78,10 @@ layout.json
 GRADLE_JVM_FIX.md
 IDE_SETUP.md
 TOOLCHAIN_SOLUTION.md
+
+# libs
+libs
+libs/*
+
+# Other
+*.editorconfig

@@ -6,9 +6,9 @@ plugins {
 }
 
 // Mod properties from gradle.properties
-version = project.version ?: '1.0.0-SNAPSHOT'
+version = '1.0.0-Alpha1'
 group = project.modGroup
-archivesBaseName = project.modId
+archivesBaseName = 'CrossTie'
 
 minecraft {
     mcVersion = '1.7.10'
@@ -25,6 +25,7 @@ minecraft {
     if (project.findProperty('usesMixins') == 'true') {
         extraRunJvmArguments.add("-Dmixin.debug=${project.findProperty('usesMixinDebug') ?: 'false'}")
     }
+    extraRunJvmArguments.add("-Dlog4j.configurationFile=${project.file('src/main/resources/log4j2.xml').toURI().toString()}")
 }
 
 repositories {
@@ -41,12 +42,15 @@ repositories {
 
 dependencies {
     // UniMixins (Late Mixin support)
-    implementation('com.github.LegacyModdingMC:UniMixins:0.2.1')
+    implementation('com.github.LegacyModdingMC.UniMixins:unimixins-all-1.7.10:0.2.1')
     
     // Annotation processor for Mixins
     annotationProcessor('org.ow2.asm:asm-debug-all:5.0.3')
     annotationProcessor('com.google.guava:guava:24.1.1-jre')
     annotationProcessor('com.google.code.gson:gson:2.8.6')
+
+    // Load all jars from 'libs' directory (for testing with other mods)
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
@@ -63,9 +67,8 @@ jar {
             'Implementation-Version': project.version,
             'Implementation-Vendor': 'Suzumiya',
             'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+            // CoreMod / Mixin Tweak
             'FMLCorePluginContainsFMLMod': 'true',
-            'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
-            'TweakOrder': '0',
             'MixinConfigs': 'mixins.crosstie.json',
             'ForceLoadAsMod': 'true',
             'FMLCorePlugin': project.findProperty('coreModClass') ?: ''
