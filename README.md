@@ -142,10 +142,27 @@ Minecraft 1.7.10のRealTrainMod (RTM/KaizPatchX)及び関連Modに対して、**
 
 ### 使用技術
 - **UniMixins**: Late Mixin technology
-- **GTNH ExampleMod**: ビルドシステムテンプレート
+- **RetroFuturaGradle**: Gradle build system
 - **SpongePowered Mixin**: バイトコード操作
 
-### Mixinターゲット
+### 開発環境のセットアップ
+
+**必須: Java 8 (JDK 1.8)**
+※ Gradle 7.6.4を使用しているため、Java 17は必須ではありません。
+
+```bash
+# 1. クローン
+git clone <repository-url>
+cd CrossTie
+
+# 2. ワークスペースセットアップ (初回のみ時間がかかります)
+./gradlew clean setupDecompWorkspace
+
+# 3. IDE設定
+./gradlew idea    # for IntelliJ
+# または
+./gradlew eclipse # for Eclipse
+```
 
 #### TPS最適化
 - `jp.ngt.rtm.entity.train.EntityTrainBase`

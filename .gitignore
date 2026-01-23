@@ -77,3 +77,4 @@ layout.json
 *.temp
 GRADLE_JVM_FIX.md
 IDE_SETUP.md
+TOOLCHAIN_SOLUTION.md

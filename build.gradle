@@ -1,0 +1,91 @@
+plugins {
+    id 'java-library'
+    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.1'
+    id 'idea'
+    id 'eclipse'
+}
+
+// Mod properties from gradle.properties
+version = project.version ?: '1.0.0-SNAPSHOT'
+group = project.modGroup
+archivesBaseName = project.modId
+
+minecraft {
+    mcVersion = '1.7.10'
+    
+    // Inject properties into mcmod.info
+    injectedTags = [
+        'VERSION': project.version,
+        'MODID': project.modId,
+        'MODNAME': project.modName
+    ]
+    
+    // UniMixins configuration
+    // Enable mixins if usesMixins is true in gradle.properties
+    if (project.findProperty('usesMixins') == 'true') {
+        extraRunJvmArguments.add("-Dmixin.debug=${project.findProperty('usesMixinDebug') ?: 'false'}")
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'GTNH Maven'
+        url = 'https://nexus.gtnewhorizons.com/repository/public/'
+    }
+    maven {
+        name = 'JitPack'
+        url = 'https://jitpack.io'
+    }
+}
+
+dependencies {
+    // UniMixins (Late Mixin support)
+    implementation('com.github.LegacyModdingMC:UniMixins:0.2.1')
+    
+    // Annotation processor for Mixins
+    annotationProcessor('org.ow2.asm:asm-debug-all:5.0.3')
+    annotationProcessor('com.google.guava:guava:24.1.1-jre')
+    annotationProcessor('com.google.code.gson:gson:2.8.6')
+}
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+java { toolchain { languageVersion = JavaLanguageVersion.of(8) } }
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title': project.modName,
+            'Specification-Vendor': 'Suzumiya',
+            'Specification-Version': '1',
+            'Implementation-Title': project.modId,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor': 'Suzumiya',
+            'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+            'FMLCorePluginContainsFMLMod': 'true',
+            'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
+            'TweakOrder': '0',
+            'MixinConfigs': 'mixins.crosstie.json',
+            'ForceLoadAsMod': 'true',
+            'FMLCorePlugin': project.findProperty('coreModClass') ?: ''
+        ])
+    }
+}
+
+processResources {
+    // Replace properties in mcmod.info
+    inputs.property 'modVersion', project.version
+    inputs.property 'minecraftVersion', '1.7.10'
+    inputs.property 'modId', project.modId
+    inputs.property 'modName', project.modName
+
+    filesMatching('mcmod.info') {
+        expand(
+            'modVersion': project.version,
+            'minecraftVersion': '1.7.10',
+            'modId': project.modId,
+            'modName': project.modName
+        )
+    }
+}

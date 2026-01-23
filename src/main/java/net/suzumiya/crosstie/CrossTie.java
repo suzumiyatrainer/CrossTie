@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
  * TPS（サーバー処理）とFPS（クライアント描画）の両面から最適化を提供します。
  * UniMixinsベースのLate Mixinを使用してバイナリModに介入します。
  */
-@Mod(modid = Tags.MODID, name = Tags.MODNAME, version = Tags.VERSION, dependencies = "required-after:unimixins@[0.2.0,)")
+@Mod(modid = Tags.MODID, name = Tags.MODNAME, version = Tags.VERSION, dependencies = "required-after:unimixins")
 public class CrossTie {
 
     public static final Logger LOGGER = LogManager.getLogger(Tags.MODID);
