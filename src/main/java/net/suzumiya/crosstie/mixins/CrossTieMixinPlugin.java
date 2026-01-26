@@ -19,7 +19,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void onLoad(String mixinPackage) {
-        // Logging via System.out is safer at this stage
         System.out.println("[CrossTie] Mixin Plugin loaded");
     }
 
@@ -30,8 +29,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        // RTM関連のMixin
+        // RTM関連
         if (mixinClassName.contains(".rtm.")) {
+            // Mod存在チェック
             if (!ModDetector.isClassLoaded("jp.ngt.rtm.RTMCore")) {
                 return false;
             }

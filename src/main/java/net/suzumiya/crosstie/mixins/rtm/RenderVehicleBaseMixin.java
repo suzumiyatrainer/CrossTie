@@ -42,4 +42,47 @@ public abstract class RenderVehicleBaseMixin {
             ci.cancel();
         }
     }
+
+    /**
+     * ライトエフェクト（ボリュームライト）の距離制限
+     * 描画距離 - 4チャンク（最低4チャンク）以上離れたら描画しない
+     */
+    @Inject(method = "renderLightEffect", at = @At("HEAD"), cancellable = true)
+    private void crosstie$cullLightEffects(jp.ngt.rtm.entity.vehicle.EntityVehicleBase vehicle,
+            jp.ngt.rtm.modelpack.modelset.ModelSetVehicleBaseClient modelset, CallbackInfo ci) {
+
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc.renderViewEntity == null)
+            return;
+
+        int renderChunks = mc.gameSettings.renderDistanceChunks;
+        // 最低4チャンク確保、描画距離-4チャンクまで表示
+        int effectChunks = Math.max(4, renderChunks - 4);
+        double effectDist = effectChunks * 16.0;
+
+        if (vehicle.getDistanceSqToEntity(mc.renderViewEntity) > effectDist * effectDist) {
+            ci.cancel();
+        }
+    }
+
+    /**
+     * 方向幕の距離制限
+     * 描画距離 + 1チャンク以上離れたら描画しない
+     */
+    @Inject(method = "renderRollsign", at = @At("HEAD"), cancellable = true)
+    private void crosstie$cullRollsigns(jp.ngt.rtm.entity.vehicle.EntityVehicleBase vehicle,
+            jp.ngt.rtm.modelpack.modelset.ModelSetVehicleBaseClient modelset, CallbackInfo ci) {
+
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc.renderViewEntity == null)
+            return;
+
+        int renderChunks = mc.gameSettings.renderDistanceChunks;
+        // 描画距離 + 1チャンクまで表示
+        double signDist = (renderChunks + 1) * 16.0;
+
+        if (vehicle.getDistanceSqToEntity(mc.renderViewEntity) > signDist * signDist) {
+            ci.cancel();
+        }
+    }
 }

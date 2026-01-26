@@ -8,9 +8,20 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "rtm.EntityTrainBaseMixin",
-    "rtm.EntityBogieMixin"
+    "rtm.EntityBogieMixin",
+    "rtm.EntityFloorMixin",
+    "rtm.TileEntityMachineBaseMixin",
+    "rtm.TileEntityMovingMachineMixin",
+    "rtm.TileEntityElectricalWiringMixin",
+    "rtm.TileEntitySignalMixin",
+    "rtm.TileEntityLargeRailCoreMixin",
+    "other.BambooTileEntityMixin"
   ],
   "client": [
-    "rtm.RenderVehicleBaseMixin"
+    "rtm.RenderVehicleBaseMixin",
+    "rtm.RTMMiscRenderMixin",
+    "rtm.RTMPartsRenderMixin",
+    "other.BambooRenderMixin",
+    "other.BambooEntityRenderMixin"
   ]
 }

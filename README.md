@@ -1,245 +1,44 @@
-# CrossTie - RTM最適化Mod for Minecraft 1.7.10
-
-![Minecraft Version](https://img.shields.io/badge/Minecraft-1.7.10-green)
-![Forge](https://img.shields.io/badge/Forge-10.13.4.1614-blue)
-![License](https://img.shields.io/badge/license-MIT-blue)
-
-Minecraft 1.7.10のRealTrainMod (RTM/KaizPatchX)及び関連Modに対して、**TPS（サーバー処理）とFPS（クライアント描画）の両面から最適化を提供する**Modです。
-
-## 特徴
-
-### 🚄 RTM/KaizPatchX TPS最適化
-- **静止列車の更新スキップ**: 完全に停止している列車の不要な計算を削減
-- **チャンク更新頻度削減**: チャンクローダーの更新を5tickに1回に削減（80%の削減）
-- **アニメーション計算の最適化**: サーバー側での不要なアニメーション計算を無効化
-
-### 🎨 RTM/KaizPatchX FPS最適化
-- **遠距離車両カリング**: 200ブロック以上離れた車両の描画をスキップ
-- **ライトエフェクト距離制限**: 64ブロック以上離れた車両のボリュームライトを無効化
-- **LODシステム（予定）**: 距離に応じた描画品質の自動調整
-
-### 🔧 モジュラー設計
- **存在しないModへの最適化は自動的に無効化** されます:
-- RTM/KaizPatchX
-- 竹Mod（予定）
-- OEMod（予定）
-- ATSAssistMod（予定）
-
-### 🌐 広範な互換性
-以下の軽量化Mod環境との共存を目指します:
-- **OptiFine + FastCraft**
-- **FalseTweaks + Beddium + SwanSong**
-- **Angelica** (Sodium 1.7.10 port)
-
-### ⚙️ サーバー/クライアント両対応
-サーバー専用・クライアント専用のどちらの環境でも動作可能です。
-
----
-
-## 必須前提Mod
-
-| Mod | バージョン | 説明 |
-|-----|----------|------|
-| **Minecraft Forge** | 10.13.4.1614+ | Modローダー |
-| **UniMixins** | 0.2.0+ | Late Mixin support |
-
-## 推奨Mod
-
-最適化効果を得られるMod:
-- RTM (RealTrainMod) / KaizPatchX
-- 竹Mod
-- OEMod
-
----
-
-## インストール方法
-
-1. **Minecraft Forge 1.7.10をインストール**
-   - [Forge公式サイト](https://files.minecraftforge.net/net/minecraftforge/forge/index_1.7.10.html)からダウンロード
-
-2. **UniMixinsをインストール**
-   - [UniMixins Releases](https://github.com/LegacyModdingMC/UniMixins/releases)からダウンロード
-   - `mods/`フォルダに配置
-
-3. **CrossTieをインストール**
-   - 本Modのjarファイルを`mods/`フォルダに配置
-
-4. **Minecraftを起動**
-   - ログで`CrossTie Mod Detection`が表示されることを確認
-
----
-
-## 設定
-
-（現在、設定ファイルは未実装）
-
-将来的に以下の設定が追加予定:
-- チャンク更新間隔の調整
-- 最大描画距離の調整
-- ライトエフェクト距離の調整
-- 各最適化機能のON/OFF
-
----
-
-## 開発状況
-
-### ✅ Phase 1: プロジェクトセットアップ（完了）
-- UniMixins統合
-- Mod検出システム
-- 基本的なRTM TPS/FPS最適化
-
-### 🔧 Phase 2: RTM TPS最適化（進行中）
-- EntityBogie最適化
-- Formation（編成）システム最適化
-
-### 🔜 Phase 3: RTM FPS最適化
-- バッチレンダリング
-- LODシステム
-
-### 🔜 Phase 4-7: 互換性・他Mod・テスト
-- OptiFine/Angelica/FalseTweaks互換性
-- Bamboo/OEMod最適化
-- パフォーマンステスト
-
----
-
-## パフォーマンス改善効果（予測）
-
-### TPS改善
-- 静止列車が多い環境: **10-20%のTPS改善**
-- 大規模編成運用: **15-30%のTPS改善**
-
-### FPS改善
-- 多数の車両が視界内: **20-40%のFPS改善**
-- ライトエフェクト有効時: **30-50%のFPS改善**
-
-（実測値は今後のテストで公開予定）
-
----
-
-## トラブルシューティング
-
-### Q: クラッシュする
-**A**: 以下を確認してください:
-1. UniMixinsがインストールされているか
-2. Minecraft Forge 10.13.4.1614以上を使用しているか
-3. クラッシュログを[Issues](../../issues)に報告してください
-
-### Q: 効果が感じられない
-**A**: 
-- RTM/KaizPatchXがインストールされているか確認
-- F3デバッグ画面でTPS/FPSを確認
-- 列車が多数走行している環境で効果が顕著です
-
-### Q: OptiFineと競合する
-**A**: 
-- 現在、OptiFine互換性レイヤーは開発中です
-- 問題が発生した場合は[Issues](../../issues)に報告してください
-
----
-
-## 技術詳細
-
-### 使用技術
-- **UniMixins**: Late Mixin technology
-- **RetroFuturaGradle**: Gradle build system
-- **SpongePowered Mixin**: バイトコード操作
-
-### 開発環境のセットアップ
-
-**必須: Java 8 (JDK 1.8)**
-※ Gradle 7.6.4を使用しているため、Java 17は必須ではありません。
-
-```bash
-# 1. クローン
-git clone <repository-url>
-cd CrossTie
-
-# 2. ワークスペースセットアップ (初回のみ時間がかかります)
-./gradlew clean setupDecompWorkspace
-
-# 3. IDE設定
-./gradlew idea    # for IntelliJ
-# または
-./gradlew eclipse # for Eclipse
-```
-
-#### TPS最適化
-- `jp.ngt.rtm.entity.train.EntityTrainBase`
-  - `updateSpeed()` - 速度計算最適化
-  - `onVehicleUpdate()` - チャンク更新最適化
-  - `updateAnimation()` - アニメーション最適化
-
-#### FPS最適化
-- `jp.ngt.rtm.entity.vehicle.RenderVehicleBase`
-  - `renderVehicleBase()` - 距離カリング
-  - `renderLightEffect()` - ライト距離制限
-
----
-
-## コントリビューション
-
-プルリクエスト・Issue報告を歓迎します！
-
-### 開発環境のセットアップ
-
-```bash
-git clone <repository-url>
-cd CrossTie
-./gradlew setupDecompWorkspace
-./gradlew idea  # IntelliJ IDEA用 または ./gradlew eclipse
-```
-
-### ビルド方法
-
-```bash
-./gradlew build
-```
-
-生成されたjarファイルは `build/libs/` に出力されます。
-
----
-
-## ライセンス
-
-MIT License
-
-Copyright (c) 2026 SuzumiyaTrainer
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
----
-
-## クレジット
-
-- **RTM/KaizPatchX**: [KaizJP](https://github.com/Kai-Z-JP) - 解析・最適化対象
-- **UniMixins**: [LegacyModdingMC](https://github.com/LegacyModdingMC/UniMixins) - Mixin framework
-- **GTNH**: [GTNewHorizons](https://github.com/GTNewHorizons) - Build template
-
----
-
-## リンク
-
-- [UniMixins GitHub](https://github.com/LegacyModdingMC/UniMixins)
-- [本Modの実装計画](../../implementation_plan.md)
-- [タスク管理](../../task.md)
-
----
-
-**RTMをもっと快適に、もっとスムーズに。CrossTieと共に。**
+# CrossTie - RTM & Bamboo Optimization Patch
+
+Minecraft 1.7.10環境におけるRealTrainMod (RTM) および BambooMod の動作を劇的に軽量化するための最適化パッチModです。
+大規模な鉄道ネットワークや和風建築ワールドにおけるFPS低下（描画負荷）とTPS低下（サーバー負荷）の双方を改善します。
+
+## 主な機能
+
+### 1. FPS最適化 (描画軽量化)
+プレイヤーの描画距離設定に基づき、遠くのオブジェクトを描画しない（カリング）処理を追加しました。
+
+#### RealTrainMod (RTM)
+- **車両描画カリング**: 描画距離外にある車両（台車含む）のレンダリングを完全にスキップします。長大編成でも手元の車両のみ描画されるため軽快です。
+- **TileEntity描画カリング**: 以下の重いオブジェクトを描画距離外で非表示にします。
+  - 券売機、改札機 (`RenderMachine`)
+  - 架線、コネクタ (`RenderElectricalWiring`)
+  - 駅名標、看板 (`RenderStation`, `RenderSignBoard`)
+  - 遮断機、ターンテーブル (`RenderMovingMachine`)
+  - **追加最適化**: 光源エフェクト(`RenderEffect`)、鏡(`RenderMirror`)、塗装ブロック(`RenderPaint`)、パイプ、レール部品(`PartsRenderer`)など、市街地で負荷となりやすい装飾類も網羅的にカリングします。
+- **信号機/レール**: 描画距離制限をバニラ設定に合わせることで、無駄な遠距離描画をカットしました。
+
+#### BambooMod
+- **TileEntity描画カリング**: 囲炉裏、行灯、石臼、布団などの描画を最適化。
+- **Entity描画カリング**: 蛍(`RenderFirefly`)、風車、水車、桜の花弁などの動的エンティティもカリング対象に追加。
+
+### 2. TPS最適化 (サーバー/処理負荷軽減)
+内部処理の無駄を省き、サーバーおよびクライアントの計算負荷を軽減します。
+
+- **RTM列車処理の間引き**: 静止中の列車や台車の物理演算・位置更新処理をスキップまたは簡略化。
+- **編成更新の最適化**: 連結情報の同期頻度を調整。
+- **サーバー側Bamboo最適化**: サーバーサイドにおいて、BambooのTileEntity（囲炉裏など）の更新処理を **1/2の頻度に間引き** ました。これによりチャンクローダー等で読み込まれた無人エリアの負荷が半減します（調理時間は伸びますが停止はしません）。
+  - ※RTMの踏切・信号等については、安全確保（事故防止）のためサーバー側での動作変更は行っていません。
+
+### 3. サーバー互換性
+- **クラッシュ回避**: クライアント専用の描画コードを適切に分離し、サーバー(`minecraft_server.jar`)のmodsフォルダに入れてもクラッシュしない設計にアップデートしました。
+- **導入推奨**: 基本的にはクライアント導入で効果を発揮しますが、サーバーへの導入も安全です（Bamboo最適化が有効になります）。
+
+## 導入方法
+1. `CrossTie-x.x.x.jar` を `mods` フォルダに入れてください。
+2. 前提Mod: `UniMixins` が必要です（all版を推奨）。
+3. 競合: KaizPatchX等の既存パッチと共存できるよう設計されていますが、万一競合する場合は報告ください。
+
+## 開発者向け情報
+- Mixinベースで動作し、元のModファイルを書き換えずにバイトコードを注入しています。
+- `mixins.crosstie.json` により、クライアント/共通の読み込み分けを行っています。

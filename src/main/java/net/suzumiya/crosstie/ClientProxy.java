@@ -26,4 +26,14 @@ public class ClientProxy extends CommonProxy {
         super.postInit(event);
         // クライアント固有の初期化処理
     }
+
+    @Override
+    public int getClientRenderDistance() {
+        return net.minecraft.client.Minecraft.getMinecraft().gameSettings.renderDistanceChunks;
+    }
+
+    @Override
+    public net.minecraft.entity.Entity getClientPlayer() {
+        return net.minecraft.client.Minecraft.getMinecraft().thePlayer;
+    }
 }

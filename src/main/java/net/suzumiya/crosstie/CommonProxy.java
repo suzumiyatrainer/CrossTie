@@ -20,4 +20,12 @@ public class CommonProxy {
     public void postInit(FMLPostInitializationEvent event) {
         // 共通初期化処理
     }
+
+    public int getClientRenderDistance() {
+        return 0;
+    }
+
+    public net.minecraft.entity.Entity getClientPlayer() {
+        return null;
+    }
 }

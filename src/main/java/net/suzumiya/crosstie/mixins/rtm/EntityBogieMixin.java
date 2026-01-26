@@ -53,4 +53,24 @@ public abstract class EntityBogieMixin {
      * }
      * }
      */
+    @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true, remap = false)
+    private void crosstie$cullDistantUpdates(CallbackInfo ci) {
+        EntityBogie bogie = (EntityBogie) (Object) this;
+        if (bogie.worldObj.isRemote) {
+            // クライアント側の更新描画距離カリング
+            // 描画距離 + 2チャンク (1チャンク=16ブロック)
+            int renderChunks = CrossTie.proxy.getClientRenderDistance();
+            // デフォルト未満ならカリングしない
+            if (renderChunks <= 0)
+                return;
+
+            double cullLimit = (renderChunks + 2) * 16.0;
+            double limitSq = cullLimit * cullLimit;
+
+            net.minecraft.entity.Entity player = CrossTie.proxy.getClientPlayer();
+            if (player != null && bogie.getDistanceSqToEntity(player) > limitSq) {
+                ci.cancel();
+            }
+        }
+    }
 }

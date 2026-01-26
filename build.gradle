@@ -41,6 +41,8 @@ repositories {
 }
 
 dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
     // UniMixins (Late Mixin support)
     implementation('com.github.LegacyModdingMC.UniMixins:unimixins-all-1.7.10:0.2.1')
     
