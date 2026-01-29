@@ -46,8 +46,8 @@ Minecraft 1.7.10環境におけるRealTrainMod (RTM) および BambooMod の動�
 ## 互換性情報
 - **Forge**: 10.13.4.1614
 - **UniMixins**: 0.2.1
-- **OptiFine**: 未テスト
-- **FastCraft**: 未テスト
+- **OptiFine**: 1.7.10-E7
+- **FastCraft**: 1.2.5
 - **FalseTweaks**: 未テスト
 - **Beddium**: 未テスト
 - **SwanSong**: 未テスト
