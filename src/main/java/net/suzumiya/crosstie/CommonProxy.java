@@ -3,6 +3,7 @@ package net.suzumiya.crosstie;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import net.suzumiya.crosstie.config.CrossTieConfig;
 
 /**
  * サーバー/クライアント共通プロキシ
@@ -10,7 +11,9 @@ import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 public class CommonProxy {
 
     public void preInit(FMLPreInitializationEvent event) {
-        // 共通初期化処理
+        // Use custom config file name "CrossTie.cfg" instead of default "crosstie.cfg"
+        java.io.File configFile = new java.io.File(event.getModConfigurationDirectory(), "CrossTie.cfg");
+        CrossTieConfig.init(configFile);
     }
 
     public void init(FMLInitializationEvent event) {

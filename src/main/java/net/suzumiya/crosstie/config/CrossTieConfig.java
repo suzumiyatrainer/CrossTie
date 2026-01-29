@@ -1,81 +1,45 @@
 package net.suzumiya.crosstie.config;
 
 import net.minecraftforge.common.config.Configuration;
-import net.minecraftforge.common.config.Property;
+import cpw.mods.fml.common.FMLLog;
 import java.io.File;
 
-/**
- * CrossTie Configuration Handler
- * Mixinロード時にも使用可能なように設計
- */
 public class CrossTieConfig {
-
     public static Configuration config;
 
-    // General Settings
-    public static boolean enableRTM = true;
-    public static boolean enableBamboo = true;
-    public static boolean enableOEMod = true;
+    // FPS Optimizations
+    public static boolean enableRenderCulling = true;
+    public static boolean fixAngelicaRailCulling = false; // Default false as per request
 
-    // Optimization Settings
-    public static int renderDistanceOffset = 2; // Default: RenderDistance + 2
+    // TPS Optimizations
+    public static boolean enableTileEntityUpdates = true;
 
-    // RTM Specific
-    public static boolean enableRTMCulling = true;
-
-    // File Path (Mixin Pluginから設定)
-    public static File configFile;
-
-    public static void init(File file) {
-        configFile = file;
+    public static void init(File configFile) {
         config = new Configuration(configFile);
         syncConfig();
     }
 
     public static void syncConfig() {
-        if (config == null) {
-            if (configFile != null)
-                config = new Configuration(configFile);
-            else
-                return;
-        }
-
         try {
             config.load();
 
-            // Modules (TEMPORARY STUB for Build Check)
-            // Property code commented out to verify build classpath
-            /*
-             * // Modules
-             * Property pRTM = config.get("modules", "EnableRTM", true);
-             * pRTM.comment = "Enable RTM (RealTrainMod) Optimizations";
-             * enableRTM = pRTM.getBoolean();
-             * 
-             * Property pBamboo = config.get("modules", "EnableBamboo", true);
-             * pBamboo.comment = "Enable BambooMod Optimizations";
-             * enableBamboo = pBamboo.getBoolean();
-             * 
-             * Property pOE = config.get("modules", "EnableOEMod", true);
-             * pOE.comment = "Enable OEMod Optimizations";
-             * enableOEMod = pOE.getBoolean();
-             * 
-             * // Optimizations
-             * Property pCull = config.get("optimizations", "RTMCulling", true);
-             * pCull.comment =
-             * "Enable Render Distance Culling for RTM Entities (Trains, Floor)";
-             * enableRTMCulling = pCull.getBoolean();
-             * 
-             * Property pDist = config.get("optimizations", "RenderDistanceOffset", 2);
-             * pDist.comment =
-             * "Chunk offset for render distance culling (RenderDistance + Offset) [0-16]";
-             * renderDistanceOffset = pDist.getInt();
-             */
+            // FPS Category
+            enableRenderCulling = config.getBoolean("enableRenderCulling", "fps", true,
+                    "Enable render culling for RTM vehicles and machines.");
+
+            fixAngelicaRailCulling = config.getBoolean("fixAngelicaRailCulling", "fps", false,
+                    "Fixes rail culling issues with Angelica/Sodium by extending the bounding box of rails. May reduce FPS slightly when enabled.");
+
+            // TPS Category
+            enableTileEntityUpdates = config.getBoolean("enableTileEntityUpdates", "tps", true,
+                    "Enable server-side update optimizations for TileEntities.");
 
         } catch (Exception e) {
-            e.printStackTrace();
+            FMLLog.getLogger().error("[CrossTie] Failed to load configuration", e);
         } finally {
-            if (config.hasChanged())
+            if (config.hasChanged()) {
                 config.save();
+            }
         }
     }
 }

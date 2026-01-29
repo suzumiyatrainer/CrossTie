@@ -17,12 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = EntityBogie.class, remap = false)
 public abstract class EntityBogieMixin {
 
-    @Shadow
-    public abstract float getSpeed();
-
-    @Unique
-    private static final float CROSSTIE$SPEED_THRESHOLD = 0.001F;
-
     /**
      * サーバー側でのアニメーション/エフェクト処理をスキップ
      * 

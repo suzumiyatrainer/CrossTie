@@ -1,39 +1,62 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import jp.ngt.rtm.rail.TileEntityLargeRailCore;
-import net.suzumiya.crosstie.CrossTie;
+import cpw.mods.fml.common.FMLLog;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.AxisAlignedBB;
+import net.suzumiya.crosstie.CrossTie;
+import net.suzumiya.crosstie.config.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * レールの描画距離最適化
- * デフォルトの「チャンク読み込み距離」から「描画設定距離」に変更
- */
-@Mixin(value = TileEntityLargeRailCore.class, remap = false)
-public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
+@Mixin(targets = "jp.ngt.rtm.rail.TileEntityLargeRailCore", remap = false)
+public abstract class TileEntityLargeRailCoreMixin extends TileEntity implements ICrossTieRail {
+
+    @org.spongepowered.asm.mixin.Unique
+    private byte crosstie$hi03Cache = 0; // 0:None, 1:Yes, 2:No
+
+    @Override
+    public byte crosstie$getHi03Cache() {
+        return crosstie$hi03Cache;
+    }
+
+    @Override
+    public void crosstie$setHi03Cache(byte status) {
+        this.crosstie$hi03Cache = status;
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public double getMaxRenderDistanceSquared() {
+        // レールの描画距離をプレイヤーの描画設定に合わせる
+        int renderDistance = CrossTie.proxy.getClientRenderDistance();
+        if (renderDistance > 0) {
+            double blockDistance = renderDistance * 16.0D;
+            return blockDistance * blockDistance;
+        }
+        return super.getMaxRenderDistanceSquared();
+    }
 
     /**
-     * @author CrossTie
-     * @reason Limit rail render distance to client settings
+     * Angelica fix: Override getRenderBoundingBox早期に
+     * 
+     * AngelicaのMixinTileEntityは、getRenderBoundingBoxの結果をキャッシュします。
+     * このため、@Overrideメソッドでは遅すぎます（既にキャッシュされた後）。
+     * 代わりに@Injectを使用してメソッドの先頭で介入し、結果を変更します。
      */
-    @Overwrite
-    public double getMaxRenderDistanceSquared() {
-        // サーバー側はデフォルト動作
-        if (this.worldObj == null || !this.worldObj.isRemote) {
-            return 65536.0D; // 256*256 (fallback) or larger
+    @Inject(method = "getRenderBoundingBox", at = @At("HEAD"), cancellable = true, remap = false)
+    @SideOnly(Side.CLIENT)
+    private void crosstie$fixAngelicaRailCulling(CallbackInfoReturnable<AxisAlignedBB> cir) {
+        if (CrossTieConfig.fixAngelicaRailCulling) {
+            // Debug log (減らす)
+            if (this.xCoord % 10 == 0 && this.zCoord % 10 == 0) {
+                FMLLog.info("[CrossTie] Angelica rail fix: Forcing INFINITE_EXTENT_AABB at x=%d, z=%d",
+                        this.xCoord, this.zCoord);
+            }
+            cir.setReturnValue(INFINITE_EXTENT_AABB);
         }
-
-        // クライアントの描画距離設定を取得
-        int renderChunks = CrossTie.proxy.getClientRenderDistance();
-        if (renderChunks < 4)
-            renderChunks = 4; // 最低保証
-
-        double dist = renderChunks * 16.0;
-
-        // レールは長いので、少し余裕を持たせる（+1チャンク分）
-        dist += 16.0;
-
-        return dist * dist;
     }
 }

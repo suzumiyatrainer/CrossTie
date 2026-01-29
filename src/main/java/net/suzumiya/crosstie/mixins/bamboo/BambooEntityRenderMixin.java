@@ -1,4 +1,4 @@
-package net.suzumiya.crosstie.mixins.other;
+package net.suzumiya.crosstie.mixins.bamboo;
 
 import net.suzumiya.crosstie.CrossTie;
 import net.minecraft.client.Minecraft;

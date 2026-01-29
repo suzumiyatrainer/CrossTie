@@ -75,6 +75,7 @@ jar {
             'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
             // CoreMod / Mixin Tweak
             'FMLCorePluginContainsFMLMod': 'true',
+            'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
             'MixinConfigs': 'mixins.crosstie.json',
             'ForceLoadAsMod': 'true',
             'FMLCorePlugin': 'net.suzumiya.crosstie.asm.CrossTieCorePlugin'
