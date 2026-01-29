@@ -1,0 +1,53 @@
+name: Publish to Modrinth
+
+on:
+    release:
+        types: [published] # GitHubでリリースを公開した時に実行
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up JDK
+              uses: actions/setup-java@v4
+              with:
+                  java-version: "8" # 1.7.10のビルドには8が安定します
+                  distribution: "temurin"
+
+            - name: Build with Gradle
+              run: ./gradlew build # jarファイルを生成
+
+            - name: Upload to Modrinth
+              uses: Kir-Antipov/mc-publish@v3.3
+              with:
+                  modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+                  modrinth-id: "xrwNprGB"
+
+                  # build/libs 内のすべての .jar ファイルを対象にする
+                  files: |
+                      build/libs/*.jar
+
+                  # GitHubのリリース本文をModrinthの変更履歴に同期
+                  changelog: ${{ github.event.release.body }}
+
+                  # バージョン名と番号（タグ名を使用）
+                  name: "Release ${{ github.ref_name }}"
+                  version: ${{ github.ref_name }}
+
+                  # Forge 1.7.10 のみに固定
+                  loaders: |
+                      forge
+                  game-versions: |
+                      1.7.10
+
+                  # リリースタイプ（必要に応じて alpha, beta に変更可）
+                  version-type: "release"
+
+                  dependencies: |-
+                      [{
+                          "project_id": "ghjoiQAl",
+                          "dependency_type": "required"
+                      }]
