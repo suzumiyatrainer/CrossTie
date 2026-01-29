@@ -82,6 +82,7 @@ TOOLCHAIN_SOLUTION.md
 # libs
 libs
 libs/*
+!libs.zip
 
 # Other
 *.editorconfig
