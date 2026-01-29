@@ -1,4 +1,4 @@
-# CrossTie - RTM & Bamboo Optimization Patch
+# CrossTie - Optimization Patch Mod For RealTrainMod & BambooMod
 
 Minecraft 1.7.10環境におけるRealTrainMod (RTM) および BambooMod の動作を軽量化・安定化するための最適化パッチModです。
 大規模な鉄道ネットワークや和風建築ワールドにおけるFPS低下（描画負荷）とTPS低下（サーバー負荷）の双方を改善します。
@@ -41,7 +41,7 @@ Minecraft 1.7.10環境におけるRealTrainMod (RTM) および BambooMod の動�
 
 ## 導入方法
 1. `CrossTie-x.x.x.jar` を `mods` フォルダに入れてください。
-2. 前提Mod: **UniMixins** が必須です。
+2. 前提Mod: **UniMixins** が必須です。(https://modrinth.com/mod/unimixins)
 
 ## 互換性情報
 - **Forge**: 10.13.4.1614
