@@ -5,7 +5,6 @@
   "refmap": "mixins.crosstie.refmap.json",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "plugin": "net.suzumiya.crosstie.asm.CrossTieMixinPlugin",
   "mixins": [
     "rtm.EntityTrainBaseMixin",
     "rtm.EntityBogieMixin",

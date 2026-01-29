@@ -60,3 +60,8 @@ Minecraft 1.7.10環境におけるRealTrainMod (RTM) および BambooMod の動�
 - Mixinベースで動作し、元のModファイルを書き換えずにバイトコードを注入しています。
 - **Late Mixin**: 他のModとの互換性を高めるため、一部のパッチ（Bamboo関連）は Late Mixin として実装されています。
 - `CrossTieMixinPlugin`: 導入されているMod（Angelica, Bamboo）を検出し、必要なパッチのみを適用する安全機構を備えています。
+
+## Thanks
+- **hi03様**: hi03ExpressRailwayPack系列のJavaScriptコードを参考にしました。
+- **Kaiz_JP様**: KaizPatchXのコードを分析・参考にしました。
+- **GTNewHorizonチーム**: Angelicaのコードを分析・参考にしました。

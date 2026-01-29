@@ -131,16 +131,6 @@ public class ModDetector {
     }
 
     /**
-     * Angelica hi03ExpressRailway互換性修正が必要か確認
-     * Angelicaがロードされている場合のみtrue
-     * 
-     * @return hi03修正が必要な場合true
-     */
-    public static boolean needsAngelicaHi03Fix() {
-        return hasAngelica;
-    }
-
-    /**
      * クラスが存在するか確認 (Mixinロード時用)
      */
     public static boolean isClassLoaded(String className) {

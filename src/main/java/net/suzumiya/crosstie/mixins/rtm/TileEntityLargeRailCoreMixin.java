@@ -13,20 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(targets = "jp.ngt.rtm.rail.TileEntityLargeRailCore", remap = false)
-public abstract class TileEntityLargeRailCoreMixin extends TileEntity implements ICrossTieRail {
-
-    @org.spongepowered.asm.mixin.Unique
-    private byte crosstie$hi03Cache = 0; // 0:None, 1:Yes, 2:No
-
-    @Override
-    public byte crosstie$getHi03Cache() {
-        return crosstie$hi03Cache;
-    }
-
-    @Override
-    public void crosstie$setHi03Cache(byte status) {
-        this.crosstie$hi03Cache = status;
-    }
+public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
 
     @Override
     @SideOnly(Side.CLIENT)
