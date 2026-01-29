@@ -35,8 +35,11 @@ jobs:
                   modrinth-id: "xrwNprGB"
 
                   # build/libs 内のすべての .jar ファイルを対象にする
+                  # dev, sources を除外して通常版をプライマリにする
                   files: |
                       build/libs/*.jar
+                      !build/libs/*-dev.jar
+                      !build/libs/*-sources.jar
 
                   # GitHubのリリース本文をModrinthの変更履歴に同期
                   changelog: ${{ github.event.release.body }}
