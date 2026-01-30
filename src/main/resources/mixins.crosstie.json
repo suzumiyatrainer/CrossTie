@@ -11,8 +11,7 @@
     "rtm.EntityFloorMixin",
     "rtm.TileEntityMachineBaseMixin",
     "rtm.TileEntityMovingMachineMixin",
-    "rtm.TileEntityElectricalWiringMixin",
-    "rtm.TileEntitySignalMixin"
+    "rtm.TileEntityElectricalWiringMixin"
   ],
   "client": [
     "rtm.RenderVehicleBaseMixin",
@@ -20,6 +19,7 @@
     "rtm.RTMRailPartsRenderMixin",
     "rtm.RTMWirePartsRenderMixin",
     "rtm.TileEntityLargeRailCoreMixin",
+    "rtm.TileEntitySignalMixin",
     "ngtlib.PolygonRendererMixin",
     "angelica.AngelicaDisplayListManagerMixin"
   ]

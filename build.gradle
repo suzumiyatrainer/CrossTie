@@ -6,7 +6,7 @@ plugins {
 }
 
 // Mod properties from gradle.properties
-version = '1.0.0-Alpha1'
+version = '1.0.0-Alpha2'
 group = project.modGroup
 archivesBaseName = 'CrossTie'
 
@@ -96,6 +96,13 @@ processResources {
             'minecraftVersion': '1.7.10',
             'modId': project.modId,
             'modName': project.modName
+        )
+    }
+    
+    // fmlbranding.properties - タイトル画面とローディング画面にCrossTieバージョンを表示
+    filesMatching('fmlbranding.properties') {
+        expand(
+            'modVersion': project.version
         )
     }
 }
