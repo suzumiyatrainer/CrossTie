@@ -48,4 +48,9 @@ public class CrossTie {
         LOGGER.info("CrossTie Post-Initialization");
         proxy.postInit(event);
     }
+
+    @cpw.mods.fml.common.network.NetworkCheckHandler
+    public boolean checkModLists(java.util.Map<String, String> modList, cpw.mods.fml.relauncher.Side side) {
+        return true;
+    }
 }
