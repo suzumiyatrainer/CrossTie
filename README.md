@@ -51,7 +51,7 @@ Minecraft 1.7.10環境におけるRealTrainMod (RTM) および BambooMod の動�
 - **FalseTweaks**: 未テスト
 - **Beddium**: 未テスト
 - **SwanSong**: 未テスト
-- **Angelica**: 2.0.0-alpha16
+- **Angelica**: 2.0.0-alpha16+
 - **RealTrainMod(純正)**: 未テスト
 - **RealTrainMod(KaizPatchX)**: 1.9.3
 - **BambooMod**: 2.6.8.5
