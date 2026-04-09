@@ -31,6 +31,12 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build --no-daemon
+  modrinth-publish:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Select publish artifact
         id: artifact
