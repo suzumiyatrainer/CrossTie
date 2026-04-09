@@ -8,7 +8,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  build:
+  publish: # ジョブを1つに統合
     runs-on: ubuntu-latest
 
     steps:
@@ -31,27 +31,21 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew build --no-daemon
-  modrinth-publish:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
 
       - name: Select publish artifact
         id: artifact
         shell: bash
         run: |
           set -euo pipefail
-          # xargsを使って前後の空白・改行を完全に除去した1行の文字列にする
+          # ビルド直後なので、確実にここにあるはずです
           jar_path=$(find build/libs -maxdepth 1 -type f -name 'CrossTie-*.jar' ! -name '*-dev.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' | head -n 1 | xargs)
-
+          
           if [ -z "$jar_path" ]; then
             echo "Error: Main JAR file not found!" >&2
+            ls -R build/libs # デバッグ用に中身を表示
             exit 1
           fi
-
-          # 確実に1行で出力
+          
           printf "jar_path=%s" "$jar_path" >> "$GITHUB_OUTPUT"
 
       - name: Upload to Modrinth
@@ -59,13 +53,10 @@ jobs:
         with:
           token: ${{ secrets.MODRINTH_TOKEN }}
           project: xrwNprGB
-          # 変数からの入力
           files: ${{ steps.artifact.outputs.jar_path }}
-          # 文字列を引用符で囲み、末尾に改行が入らないように記述
           loaders: "forge"
           game-versions: "1.7.10"
           channel: "release"
-          # 依存関係のJSONからも余計な改行を排除
           dependencies: '[{"project_id":"ghjoiQAl","dependency_type":"required"}]'
           changelog: ${{ github.event.release.body || github.event.release.name || github.event.release.tag_name }}
           name: ${{ github.event.release.name || github.event.release.tag_name }}
