@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -34,14 +37,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           jar_path="$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' | head -n 1)"
           if [ -z "$jar_path" ]; then
             echo "No publishable JAR found under build/libs" >&2
             exit 1
           fi
-
-          # Pass files as JSON array to avoid empty-line parsing bug in the action.
           echo "files_json=[\"$jar_path\"]" >> "$GITHUB_OUTPUT"
           echo "Selected artifact: $jar_path"
 
