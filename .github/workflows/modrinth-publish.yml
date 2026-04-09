@@ -37,12 +37,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          jar_path="$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' | head -n 1)"
+          # 'dev' や 'sources' が含まれないメインのJARのみを探し、改行を完全に除去
+          jar_path=$(find build/libs -maxdepth 1 -type f -name 'CrossTie-*.jar' ! -name '*-dev.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' | head -n 1 | tr -d '\n\r')
+          
           if [ -z "$jar_path" ]; then
-            echo "No publishable JAR found under build/libs" >&2
+            echo "Error: Main JAR file not found!" >&2
             exit 1
           fi
-          echo "files_json=[\"$jar_path\"]" >> "$GITHUB_OUTPUT"
+          
+          echo "jar_path=$jar_path" >> "$GITHUB_OUTPUT"
           echo "Selected artifact: $jar_path"
 
       - name: Upload to Modrinth
@@ -50,7 +53,10 @@ jobs:
         with:
           token: ${{ secrets.MODRINTH_TOKEN }}
           project: xrwNprGB
-          files: ${{ steps.artifact.outputs.files_json }}
+          # 配列形式を避け、パスを直接渡します
+          files: ${{ steps.artifact.outputs.jar_path }}
+          # 明示的にメインファイルとして指定（オプション）
+          primary-file: ${{ steps.artifact.outputs.jar_path }}
           changelog: ${{ github.event.release.body || github.event.release.name || github.event.release.tag_name }}
           name: ${{ github.event.release.name || github.event.release.tag_name }}
           version: ${{ github.event.release.tag_name }}
