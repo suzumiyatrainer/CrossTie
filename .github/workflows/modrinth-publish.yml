@@ -41,7 +41,8 @@ jobs:
             exit 1
           fi
 
-          echo "jar_path=$jar_path" >> "$GITHUB_OUTPUT"
+          # Pass files as JSON array to avoid empty-line parsing bug in the action.
+          echo "files_json=[\"$jar_path\"]" >> "$GITHUB_OUTPUT"
           echo "Selected artifact: $jar_path"
 
       - name: Upload to Modrinth
@@ -49,7 +50,7 @@ jobs:
         with:
           token: ${{ secrets.MODRINTH_TOKEN }}
           project: xrwNprGB
-          files: ${{ steps.artifact.outputs.jar_path }}
+          files: ${{ steps.artifact.outputs.files_json }}
           changelog: ${{ github.event.release.body || github.event.release.name || github.event.release.tag_name }}
           name: ${{ github.event.release.name || github.event.release.tag_name }}
           version: ${{ github.event.release.tag_name }}
