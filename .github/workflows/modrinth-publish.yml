@@ -2,7 +2,13 @@ name: Publish to Modrinth
 
 on:
   release:
-    types: [published]
+    types: [published, edited]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Tag to publish (e.g. 1.0.0-Alpha4)"
+        required: true
+        type: string
 
 env:
   # Node.js 20の非推奨警告への対策
@@ -11,10 +17,16 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.event.release.tag_name }}
+      RELEASE_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.event.release.name || github.event.release.tag_name }}
+      RELEASE_CHANGELOG: ${{ github.event_name == 'workflow_dispatch' && format('Manual publish for {0}', inputs.release_tag) || github.event.release.body || github.event.release.name || github.event.release.tag_name }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Restore dependencies
         run: |
@@ -48,8 +60,8 @@ jobs:
             exit 1
           fi
 
-          # 環境変数にセット（ステップ間での改行混入を防ぐ）
-          echo "SELECTED_JAR=$jar_path" >> "$GITHUB_ENV"
+          # JSON array avoids empty-line parsing bug in modrinth-publish.
+          echo "files_json=[\"$jar_path\"]" >> "$GITHUB_OUTPUT"
           echo "Selected artifact: $jar_path"
 
       - name: Upload to Modrinth
@@ -57,15 +69,13 @@ jobs:
         with:
           token: ${{ secrets.MODRINTH_TOKEN }}
           project: xrwNprGB
-          # 環境変数から直接参照することで、展開時の改行混入を回避
-          files: ${{ env.SELECTED_JAR }}
+          files: ${{ steps.artifact.outputs.files_json }}
           # 1行の文字列として指定
           loaders: forge
           game-versions: 1.7.10
           channel: release
           # JSONから空白・改行を完全に排除
           dependencies: '[{"project_id":"ghjoiQAl","dependency_type":"required"}]'
-          # 動的変数の展開。これらはアクション側で1行として処理される
-          changelog: ${{ github.event.release.body || github.event.release.name || github.event.release.tag_name }}
-          name: ${{ github.event.release.name || github.event.release.tag_name }}
-          version: ${{ github.event.release.tag_name }}
+          changelog: ${{ env.RELEASE_CHANGELOG }}
+          name: ${{ env.RELEASE_NAME }}
+          version: ${{ env.RELEASE_TAG }}
