@@ -1,62 +1,62 @@
 name: Publish to Modrinth
 
 on:
-    release:
-        types: [published] # GitHubでリリースを公開した時に実行
+  release:
+    types: [published]
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
+  build:
+    runs-on: ubuntu-latest
 
-            - name: Restore dependencies
-              run: |
-                  mkdir -p libs
-                  unzip -P "${{ secrets.LIBS_PASSWORD }}" libs.zip -d libs
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Set up JDK 8
-              uses: actions/setup-java@v3
-              with:
-                  java-version: "8"
-                  distribution: "temurin"
-                  cache: gradle
+      - name: Restore dependencies
+        run: |
+          mkdir -p libs
+          unzip -P "${{ secrets.LIBS_PASSWORD }}" libs.zip -d libs
 
-            - name: Grant execute permission for gradlew
-              run: chmod +x gradlew
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: "8"
+          distribution: "temurin"
+          cache: gradle
 
-            - name: Build with Gradle
-              run: ./gradlew build --no-daemon
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-            - name: Upload to Modrinth
-              uses: cloudnode-pro/modrinth-publish@v2
-              with:
-                  token: ${{ secrets.MODRINTH_TOKEN }}
-                  project: "xrwNprGB"
+      - name: Build with Gradle
+        run: ./gradlew build --no-daemon
 
-                  # build/libs 内のすべての .jar ファイルを対象にする
-                  # dev, sources を除外して通常版をプライマリにする
-                  files: |
-                      build/libs/CrossTie-${{ github.ref_name }}.jar
+      - name: Select publish artifact
+        id: artifact
+        shell: bash
+        run: |
+          set -euo pipefail
 
-                  # GitHubのリリース本文をModrinthの変更履歴に同期
-                  changelog: ${{ github.event.release.body }}
+          jar_path="$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' ! -name '*-javadoc.jar' ! -name '*-dev.jar' | head -n 1)"
+          if [ -z "$jar_path" ]; then
+            echo "No publishable JAR found under build/libs" >&2
+            exit 1
+          fi
 
-                  # バージョン名と番号（タグ名を使用）
-                  name: "Release ${{ github.ref_name }}"
-                  version: ${{ github.ref_name }}
+          echo "jar_path=$jar_path" >> "$GITHUB_OUTPUT"
+          echo "Selected artifact: $jar_path"
 
-                  # Forge 1.7.10 のみに固定
-                  loaders: |
-                      forge
-                  game-versions: |
-                      1.7.10
-
-                  # リリースタイプ（必要に応じて alpha, beta に変更可）
-                  channel: "release"
-
-                  dependencies: |-
-                      [{
-                          "project_id": "ghjoiQAl",
-                          "dependency_type": "required"
-                      }]
+      - name: Upload to Modrinth
+        uses: cloudnode-pro/modrinth-publish@v2
+        with:
+          token: ${{ secrets.MODRINTH_TOKEN }}
+          project: xrwNprGB
+          files: ${{ steps.artifact.outputs.jar_path }}
+          changelog: ${{ github.event.release.body || github.event.release.name || github.event.release.tag_name }}
+          name: ${{ github.event.release.name || github.event.release.tag_name }}
+          version: ${{ github.event.release.tag_name }}
+          loaders: forge
+          game-versions: 1.7.10
+          dependencies: |-
+            [{
+                "project_id": "ghjoiQAl",
+                "dependency_type": "required"
+            }]
