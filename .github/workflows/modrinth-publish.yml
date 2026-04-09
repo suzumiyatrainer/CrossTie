@@ -1,0 +1,62 @@
+name: Publish to Modrinth
+
+on:
+    release:
+        types: [published] # GitHubでリリースを公開した時に実行
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Restore dependencies
+              run: |
+                  mkdir -p libs
+                  unzip -P "${{ secrets.LIBS_PASSWORD }}" libs.zip -d libs
+
+            - name: Set up JDK 8
+              uses: actions/setup-java@v3
+              with:
+                  java-version: "8"
+                  distribution: "temurin"
+                  cache: gradle
+
+            - name: Grant execute permission for gradlew
+              run: chmod +x gradlew
+
+            - name: Build with Gradle
+              run: ./gradlew build --no-daemon
+
+            - name: Upload to Modrinth
+              uses: cloudnode-pro/modrinth-publish@v2
+              with:
+                  token: ${{ secrets.MODRINTH_TOKEN }}
+                  project: "xrwNprGB"
+
+                  # build/libs 内のすべての .jar ファイルを対象にする
+                  # dev, sources を除外して通常版をプライマリにする
+                  files: |
+                      build/libs/CrossTie-${{ github.ref_name }}.jar
+
+                  # GitHubのリリース本文をModrinthの変更履歴に同期
+                  changelog: ${{ github.event.release.body }}
+
+                  # バージョン名と番号（タグ名を使用）
+                  name: "Release ${{ github.ref_name }}"
+                  version: ${{ github.ref_name }}
+
+                  # Forge 1.7.10 のみに固定
+                  loaders: |
+                      forge
+                  game-versions: |
+                      1.7.10
+
+                  # リリースタイプ（必要に応じて alpha, beta に変更可）
+                  channel: "release"
+
+                  dependencies: |-
+                      [{
+                          "project_id": "ghjoiQAl",
+                          "dependency_type": "required"
+                      }]
