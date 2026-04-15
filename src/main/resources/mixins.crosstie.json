@@ -1,0 +1,31 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.suzumiya.crosstie.mixins",
+  "plugin": "net.suzumiya.crosstie.mixins.CrossTieMixinPlugin",
+  "refmap": "mixins.crosstie.refmap.json",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "ngtlib.ScriptUtilMixin",
+    "rtm.EntityTrainBaseMixin",
+    "rtm.EntityBogieMixin",
+    "rtm.EntityFloorMixin",
+    "rtm.TileEntityMachineBaseMixin",
+    "rtm.TileEntityMovingMachineMixin",
+    "rtm.TileEntityElectricalWiringMixin"
+  ],
+  "client": [
+    "angelica.RenderGlobalInitMixin",
+    "intelliinput.RedirectWindowProcMixin",
+    "rtm.RenderVehicleBaseMixin",
+    "rtm.RTMMiscRenderMixin",
+    "rtm.RTMRailPartsRenderSafeMixin",
+    "rtm.RTMWirePartsRenderMixin",
+    "rtm.TileEntityLargeRailCoreMixin",
+    "rtm.TileEntitySignalMixin",
+    "ngtlib.GLHelperMixin",
+    "ngtlib.PolygonRendererMixin",
+    "angelica.AngelicaDisplayListManagerMixin"
+  ]
+}

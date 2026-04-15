@@ -1,0 +1,102 @@
+package net.suzumiya.crosstie.mixins.ngtlib;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import jp.ngt.ngtlib.io.ScriptUtil;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+
+/**
+ * Rewrites RTM script GL11 method calls to a CrossTie bridge so Angelica can
+ * handle legacy matrix APIs safely.
+ */
+@Mixin(value = ScriptUtil.class, remap = false)
+public abstract class ScriptUtilMixin {
+
+    @Unique
+    private static final String BRIDGE_VAR = "__crosstie_gl11_bridge";
+    @Unique
+    private static final String BRIDGE_CLASS = "net.suzumiya.crosstie.compat.AngelicaScriptGLBridge";
+    @Unique
+    private static final String BRIDGE_INIT = "var " + BRIDGE_VAR + " = Java.type(\"" + BRIDGE_CLASS + "\");\n";
+    @Unique
+    private static final Pattern GL11_METHOD_PATTERN = Pattern.compile(
+            "(?<![A-Za-z0-9_$.])(?:org\\.lwjgl\\.opengl\\.)?GL11\\.(gl[A-Za-z0-9_]+)\\s*\\(");
+    @Unique
+    private static final Set<String> REWRITABLE_METHODS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+            "glPushMatrix",
+            "glPopMatrix",
+            "glTranslatef",
+            "glRotatef",
+            "glScalef",
+            "glTranslated",
+            "glRotated",
+            "glScaled",
+            "glMatrixMode",
+            "glLoadIdentity",
+            "glBegin",
+            "glEnd",
+            "glVertex3f",
+            "glTexCoord2f",
+            "glNormal3f",
+            "glColor4f",
+            "glEnable",
+            "glDisable",
+            "glBlendFunc",
+            "glAlphaFunc",
+            "glDepthMask",
+            "glShadeModel")));
+
+    @Redirect(
+            method = "doScript(Ljava/lang/String;)Ljavax/script/ScriptEngine;",
+            at = @At(value = "INVOKE", target = "Ljavax/script/ScriptEngine;eval(Ljava/lang/String;)Ljava/lang/Object;"),
+            remap = false)
+    private static Object crosstie$rewriteScriptGL11Calls(ScriptEngine engine, String script) throws ScriptException {
+        return engine.eval(crosstie$rewriteGL11MethodCalls(script));
+    }
+
+    @Unique
+    private static String crosstie$rewriteGL11MethodCalls(String script) {
+        if (script == null) {
+            return null;
+        }
+
+        if (!script.contains("GL11.gl") && !script.contains("org.lwjgl.opengl.GL11.gl")) {
+            return script;
+        }
+
+        Matcher matcher = GL11_METHOD_PATTERN.matcher(script);
+        StringBuffer rewritten = new StringBuffer(script.length() + 64);
+        boolean changed = false;
+
+        while (matcher.find()) {
+            String methodName = matcher.group(1);
+            if (REWRITABLE_METHODS.contains(methodName)) {
+                String replacement = BRIDGE_VAR + "." + methodName + "(";
+                matcher.appendReplacement(rewritten, Matcher.quoteReplacement(replacement));
+                changed = true;
+            } else {
+                matcher.appendReplacement(rewritten, Matcher.quoteReplacement(matcher.group(0)));
+            }
+        }
+        matcher.appendTail(rewritten);
+
+        if (!changed) {
+            return script;
+        }
+
+        if (rewritten.indexOf(BRIDGE_VAR + " = Java.type") >= 0) {
+            return rewritten.toString();
+        }
+
+        return BRIDGE_INIT + rewritten.toString();
+    }
+}

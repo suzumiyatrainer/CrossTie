@@ -1,0 +1,1277 @@
+﻿Compiled from "IntelliInput.java"
+public class com.tsoft_web.IntelliInput.IntelliInput {
+  static final com.sun.jna.platform.win32.User32 user32;
+
+  static final com.tsoft_web.IntelliInput.User32_Callback user32_cb;
+
+  static final com.tsoft_web.IntelliInput.Imm32 imm32;
+
+  static final com.tsoft_web.IntelliInput.RedirectWindowProc redirectWindowProc;
+
+  static final boolean IS_DEBUG;
+
+  private static com.sun.jna.platform.win32.WinDef$HWND hWnd;
+
+  private static int ProcessId;
+
+  private static com.sun.jna.Pointer lastHIMC;
+
+  public static boolean lastIMEOpenStatus;
+
+  public static boolean sanitizing;
+
+  public static boolean legacyLengthLimit;
+
+  public static boolean extendedEndComposition;
+
+  public static java.lang.Integer prevSentence;
+
+  public static java.lang.Integer prevConversion;
+
+  public static java.util.ArrayList<java.lang.Object> inputFields;
+
+  public com.tsoft_web.IntelliInput.IntelliInput();
+    Code:
+         0: aload_0
+         1: invokespecial #74                 // Method java/lang/Object."<init>":()V
+         4: return
+
+  public static void wakeUp();
+    Code:
+         0: return
+
+  private static com.sun.jna.Pointer ImmGetContext();
+    Code:
+         0: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+         3: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+         6: invokeinterface #88,  2           // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmGetContext:(Lcom/sun/jna/platform/win32/WinDef$HWND;)Lcom/sun/jna/Pointer;
+        11: astore_0
+        12: aload_0
+        13: ifnonnull     16
+        16: aload_0
+        17: areturn
+
+  private static void ImmReleaseContext(com.sun.jna.Pointer);
+    Code:
+         0: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+         3: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+         6: aload_0
+         7: invokeinterface #96,  3           // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmReleaseContext:(Lcom/sun/jna/platform/win32/WinDef$HWND;Lcom/sun/jna/Pointer;)Z
+        12: pop
+        13: return
+
+  public static void DisableIME();
+    Code:
+         0: invokestatic  #101                // Method SearchhWnd:()V
+         3: getstatic     #103                // Field lastHIMC:Lcom/sun/jna/Pointer;
+         6: ifnull        10
+         9: return
+        10: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+        13: astore_0
+        14: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        17: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+        20: iconst_0
+        21: invokeinterface #109,  3          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmAssociateContext:(Lcom/sun/jna/platform/win32/WinDef$HWND;I)Lcom/sun/jna/Pointer;
+        26: putstatic     #103                // Field lastHIMC:Lcom/sun/jna/Pointer;
+        29: aload_0
+        30: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        33: goto          43
+        36: astore_1
+        37: aload_0
+        38: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        41: aload_1
+        42: athrow
+        43: return
+      Exception table:
+         from    to  target type
+            14    29    36   any
+
+  public static void EnableIME();
+    Code:
+         0: invokestatic  #101                // Method SearchhWnd:()V
+         3: getstatic     #103                // Field lastHIMC:Lcom/sun/jna/Pointer;
+         6: ifnonnull     10
+         9: return
+        10: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+        13: astore_0
+        14: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        17: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+        20: getstatic     #103                // Field lastHIMC:Lcom/sun/jna/Pointer;
+        23: invokeinterface #117,  3          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmAssociateContext:(Lcom/sun/jna/platform/win32/WinDef$HWND;Lcom/sun/jna/Pointer;)Lcom/sun/jna/Pointer;
+        28: pop
+        29: aconst_null
+        30: putstatic     #103                // Field lastHIMC:Lcom/sun/jna/Pointer;
+        33: aload_0
+        34: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        37: goto          47
+        40: astore_1
+        41: aload_0
+        42: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        45: aload_1
+        46: athrow
+        47: invokestatic  #120                // Method resumeConversionStatus:()V
+        50: return
+      Exception table:
+         from    to  target type
+            14    33    40   any
+
+  public static boolean getOpenIME();
+    Code:
+         0: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+         3: astore_0
+         4: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+         7: aload_0
+         8: invokeinterface #126,  2          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmGetOpenStatus:(Lcom/sun/jna/Pointer;)I
+        13: ifeq          24
+        16: iconst_1
+        17: istore_1
+        18: aload_0
+        19: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        22: iload_1
+        23: ireturn
+        24: iconst_0
+        25: istore_1
+        26: aload_0
+        27: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        30: iload_1
+        31: ireturn
+        32: astore_2
+        33: aload_0
+        34: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        37: aload_2
+        38: athrow
+      Exception table:
+         from    to  target type
+             4    18    32   any
+            24    26    32   any
+
+  public static void setOpenIME(boolean);
+    Code:
+         0: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+         3: astore_1
+         4: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+         7: aload_1
+         8: iload_0
+         9: invokeinterface #132,  3          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmSetOpenStatus:(Lcom/sun/jna/Pointer;Z)Z
+        14: pop
+        15: aload_1
+        16: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        19: goto          29
+        22: astore_2
+        23: aload_1
+        24: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        27: aload_2
+        28: athrow
+        29: return
+      Exception table:
+         from    to  target type
+             4    15    22   any
+
+  public static void setLastOpenIME();
+    Code:
+         0: invokestatic  #136                // Method getOpenIME:()Z
+         3: putstatic     #138                // Field lastIMEOpenStatus:Z
+         6: return
+
+  public static com.sun.jna.Pointer getHImc();
+    Code:
+         0: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+         3: astore_0
+         4: aload_0
+         5: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+         8: aload_0
+         9: areturn
+
+  public static void OnIMEStartComposition(com.sun.jna.platform.win32.WinDef$WPARAM, com.sun.jna.platform.win32.WinDef$LPARAM);
+    Code:
+         0: aload_0
+         1: invokevirtual #147                // Method com/sun/jna/platform/win32/WinDef$WPARAM.intValue:()I
+         4: istore_2
+         5: aload_1
+         6: invokevirtual #148                // Method com/sun/jna/platform/win32/WinDef$LPARAM.intValue:()I
+         9: istore_3
+        10: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+        13: astore        4
+        15: getstatic     #150                // Field inputFields:Ljava/util/ArrayList;
+        18: invokevirtual #156                // Method java/util/ArrayList.iterator:()Ljava/util/Iterator;
+        21: astore        5
+        23: aload         5
+        25: invokeinterface #161,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        30: ifeq          120
+        33: aload         5
+        35: invokeinterface #165,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        40: astore        6
+        42: aload         6
+        44: instanceof    #167                // class net/minecraft/client/gui/GuiTextField
+        47: ifeq          74
+        50: aload         6
+        52: checkcast     #167                // class net/minecraft/client/gui/GuiTextField
+        55: astore        7
+        57: aload         7
+        59: invokevirtual #170                // Method net/minecraft/client/gui/GuiTextField.func_146206_l:()Z
+        62: ifeq          71
+        65: aload         4
+        67: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        70: return
+        71: goto          117
+        74: aload         6
+        76: instanceof    #172                // class net/minecraft/client/gui/inventory/GuiEditSign
+        79: ifeq          88
+        82: aload         4
+        84: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        87: return
+        88: aload         6
+        90: instanceof    #174                // class net/minecraft/client/gui/GuiScreenBook
+        93: ifeq          117
+        96: aload         6
+        98: checkcast     #174                // class net/minecraft/client/gui/GuiScreenBook
+       101: astore        7
+       103: aload         7
+       105: invokevirtual #177                // Method net/minecraft/client/gui/GuiScreenBook.isBookIsUnsigned:()Z
+       108: ifeq          117
+       111: aload         4
+       113: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       116: return
+       117: goto          23
+       120: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+       123: aload         4
+       125: bipush        21
+       127: iconst_4
+       128: iconst_0
+       129: invokeinterface #181,  5          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmNotifyIME:(Lcom/sun/jna/Pointer;III)Z
+       134: pop
+       135: aload         4
+       137: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       140: goto          168
+       143: astore        5
+       145: aload         5
+       147: invokestatic  #185                // Method printStacktrace:(Ljava/lang/Exception;)V
+       150: aload         4
+       152: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       155: goto          168
+       158: astore        8
+       160: aload         4
+       162: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       165: aload         8
+       167: athrow
+       168: return
+      Exception table:
+         from    to  target type
+            15    65   143   Class java/lang/Exception
+            71    82   143   Class java/lang/Exception
+            88   111   143   Class java/lang/Exception
+           117   135   143   Class java/lang/Exception
+            15    65   158   any
+            71    82   158   any
+            88   111   158   any
+           117   135   158   any
+           143   150   158   any
+           158   160   158   any
+
+  public static void CommitIMEComposition(com.sun.jna.platform.win32.WinDef$WPARAM, com.sun.jna.platform.win32.WinDef$LPARAM);
+    Code:
+         0: aload_0
+         1: invokevirtual #147                // Method com/sun/jna/platform/win32/WinDef$WPARAM.intValue:()I
+         4: istore_2
+         5: aload_1
+         6: invokevirtual #148                // Method com/sun/jna/platform/win32/WinDef$LPARAM.intValue:()I
+         9: istore_3
+        10: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+        13: astore        4
+        15: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        18: aload         4
+        20: sipush        2048
+        23: aconst_null
+        24: iconst_0
+        25: invokeinterface #204,  5          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmGetCompositionString:(Lcom/sun/jna/Pointer;I[CI)Lcom/sun/jna/NativeLong;
+        30: invokevirtual #207                // Method com/sun/jna/NativeLong.intValue:()I
+        33: istore        5
+        35: iload         5
+        37: newarray       char
+        39: astore        6
+        41: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        44: aload         4
+        46: sipush        2048
+        49: aload         6
+        51: iload         5
+        53: invokeinterface #204,  5          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmGetCompositionString:(Lcom/sun/jna/Pointer;I[CI)Lcom/sun/jna/NativeLong;
+        58: pop
+        59: aload         6
+        61: invokestatic  #213                // Method com/sun/jna/Native.toString:([C)Ljava/lang/String;
+        64: invokestatic  #217                // Method Sanitizing:(Ljava/lang/String;)Ljava/lang/String;
+        67: astore        7
+        69: getstatic     #150                // Field inputFields:Ljava/util/ArrayList;
+        72: invokevirtual #156                // Method java/util/ArrayList.iterator:()Ljava/util/Iterator;
+        75: astore        8
+        77: aload         8
+        79: invokeinterface #161,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        84: ifeq          191
+        87: aload         8
+        89: invokeinterface #165,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        94: astore        9
+        96: aload         9
+        98: instanceof    #167                // class net/minecraft/client/gui/GuiTextField
+       101: ifeq          138
+       104: aload         9
+       106: checkcast     #167                // class net/minecraft/client/gui/GuiTextField
+       109: astore        10
+       111: aload         10
+       113: invokevirtual #170                // Method net/minecraft/client/gui/GuiTextField.func_146206_l:()Z
+       116: ifeq          135
+       119: aload         10
+       121: aconst_null
+       122: putfield      #224                // Field net/minecraft/client/gui/GuiTextField.imeInputTexts:Ljava/util/ArrayList;
+       125: aload         10
+       127: aload         7
+       129: invokevirtual #228                // Method net/minecraft/client/gui/GuiTextField.func_146191_b:(Ljava/lang/String;)V
+       132: goto          191
+       135: goto          188
+       138: aload         9
+       140: instanceof    #172                // class net/minecraft/client/gui/inventory/GuiEditSign
+       143: ifeq          163
+       146: aload         9
+       148: checkcast     #172                // class net/minecraft/client/gui/inventory/GuiEditSign
+       151: astore        10
+       153: aload         10
+       155: aload         7
+       157: invokevirtual #231                // Method net/minecraft/client/gui/inventory/GuiEditSign.commitText:(Ljava/lang/String;)V
+       160: goto          191
+       163: aload         9
+       165: instanceof    #174                // class net/minecraft/client/gui/GuiScreenBook
+       168: ifeq          188
+       171: aload         9
+       173: checkcast     #174                // class net/minecraft/client/gui/GuiScreenBook
+       176: astore        10
+       178: aload         10
+       180: aload         7
+       182: invokevirtual #232                // Method net/minecraft/client/gui/GuiScreenBook.commitText:(Ljava/lang/String;)V
+       185: goto          191
+       188: goto          77
+       191: invokestatic  #235                // Method sendNullKeydown:()V
+       194: aload         4
+       196: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       199: goto          227
+       202: astore        5
+       204: aload         5
+       206: invokestatic  #185                // Method printStacktrace:(Ljava/lang/Exception;)V
+       209: aload         4
+       211: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       214: goto          227
+       217: astore        11
+       219: aload         4
+       221: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       224: aload         11
+       226: athrow
+       227: return
+      Exception table:
+         from    to  target type
+            15   194   202   Class java/lang/Exception
+            15   194   217   any
+           202   209   217   any
+           217   219   217   any
+
+  public static void UpdateIMEComposition(com.sun.jna.platform.win32.WinDef$WPARAM, com.sun.jna.platform.win32.WinDef$LPARAM);
+    Code:
+         0: aload_0
+         1: invokevirtual #147                // Method com/sun/jna/platform/win32/WinDef$WPARAM.intValue:()I
+         4: istore_2
+         5: aload_1
+         6: invokevirtual #148                // Method com/sun/jna/platform/win32/WinDef$LPARAM.intValue:()I
+         9: istore_3
+        10: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+        13: astore        4
+        15: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        18: aload         4
+        20: bipush        8
+        22: aconst_null
+        23: iconst_0
+        24: invokeinterface #204,  5          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmGetCompositionString:(Lcom/sun/jna/Pointer;I[CI)Lcom/sun/jna/NativeLong;
+        29: invokevirtual #207                // Method com/sun/jna/NativeLong.intValue:()I
+        32: istore        5
+        34: iload         5
+        36: newarray       char
+        38: astore        6
+        40: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        43: aload         4
+        45: bipush        8
+        47: aload         6
+        49: iload         5
+        51: invokeinterface #204,  5          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmGetCompositionString:(Lcom/sun/jna/Pointer;I[CI)Lcom/sun/jna/NativeLong;
+        56: pop
+        57: aload         6
+        59: invokestatic  #213                // Method com/sun/jna/Native.toString:([C)Ljava/lang/String;
+        62: astore        7
+        64: invokestatic  #247                // Method getCharAttribute:()[Lcom/tsoft_web/IntelliInput/IMEAttribute;
+        67: astore        8
+        69: aload         8
+        71: ifnonnull     80
+        74: aload         4
+        76: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        79: return
+        80: new           #152                // class java/util/ArrayList
+        83: dup
+        84: invokespecial #250                // Method java/util/ArrayList."<init>":()V
+        87: astore        9
+        89: iconst_0
+        90: istore        10
+        92: iload         10
+        94: aload         8
+        96: arraylength
+        97: if_icmpge     231
+       100: aload         8
+       102: iload         10
+       104: aaload
+       105: astore        11
+       107: aload         6
+       109: iload         10
+       111: caload
+       112: istore        12
+       114: iload         10
+       116: ifne          142
+       119: aload         9
+       121: new           #252                // class com/tsoft_web/IntelliInput/IMEInputText
+       124: dup
+       125: aload         11
+       127: iload         12
+       129: invokestatic  #256                // Method java/lang/String.valueOf:(C)Ljava/lang/String;
+       132: invokespecial #259                // Method com/tsoft_web/IntelliInput/IMEInputText."<init>":(Lcom/tsoft_web/IntelliInput/IMEAttribute;Ljava/lang/String;)V
+       135: invokevirtual #263                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+       138: pop
+       139: goto          225
+       142: aload         9
+       144: aload         9
+       146: invokevirtual #268                // Method java/util/ArrayList.size:()I
+       149: iconst_1
+       150: isub
+       151: invokevirtual #272                // Method java/util/ArrayList.get:(I)Ljava/lang/Object;
+       154: checkcast     #252                // class com/tsoft_web/IntelliInput/IMEInputText
+       157: astore        13
+       159: aload         13
+       161: getfield      #276                // Field com/tsoft_web/IntelliInput/IMEInputText.attribute:Lcom/tsoft_web/IntelliInput/IMEAttribute;
+       164: aload         11
+       166: if_acmpeq     192
+       169: aload         9
+       171: new           #252                // class com/tsoft_web/IntelliInput/IMEInputText
+       174: dup
+       175: aload         11
+       177: iload         12
+       179: invokestatic  #256                // Method java/lang/String.valueOf:(C)Ljava/lang/String;
+       182: invokespecial #259                // Method com/tsoft_web/IntelliInput/IMEInputText."<init>":(Lcom/tsoft_web/IntelliInput/IMEAttribute;Ljava/lang/String;)V
+       185: invokevirtual #263                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+       188: pop
+       189: goto          225
+       192: new           #278                // class java/lang/StringBuilder
+       195: dup
+       196: invokespecial #279                // Method java/lang/StringBuilder."<init>":()V
+       199: aload         13
+       201: dup_x1
+       202: getfield      #282                // Field com/tsoft_web/IntelliInput/IMEInputText.text:Ljava/lang/String;
+       205: invokevirtual #286                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       208: iload         12
+       210: invokestatic  #256                // Method java/lang/String.valueOf:(C)Ljava/lang/String;
+       213: invokestatic  #217                // Method Sanitizing:(Ljava/lang/String;)Ljava/lang/String;
+       216: invokevirtual #286                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       219: invokevirtual #289                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+       222: putfield      #282                // Field com/tsoft_web/IntelliInput/IMEInputText.text:Ljava/lang/String;
+       225: iinc          10, 1
+       228: goto          92
+       231: getstatic     #150                // Field inputFields:Ljava/util/ArrayList;
+       234: invokevirtual #156                // Method java/util/ArrayList.iterator:()Ljava/util/Iterator;
+       237: astore        11
+       239: aload         11
+       241: invokeinterface #161,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+       246: ifeq          347
+       249: aload         11
+       251: invokeinterface #165,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       256: astore        12
+       258: aload         12
+       260: instanceof    #167                // class net/minecraft/client/gui/GuiTextField
+       263: ifeq          294
+       266: aload         12
+       268: checkcast     #167                // class net/minecraft/client/gui/GuiTextField
+       271: astore        13
+       273: aload         13
+       275: invokevirtual #170                // Method net/minecraft/client/gui/GuiTextField.func_146206_l:()Z
+       278: ifeq          291
+       281: aload         13
+       283: aload         9
+       285: putfield      #224                // Field net/minecraft/client/gui/GuiTextField.imeInputTexts:Ljava/util/ArrayList;
+       288: goto          347
+       291: goto          344
+       294: aload         12
+       296: instanceof    #172                // class net/minecraft/client/gui/inventory/GuiEditSign
+       299: ifeq          319
+       302: aload         12
+       304: checkcast     #172                // class net/minecraft/client/gui/inventory/GuiEditSign
+       307: astore        13
+       309: aload         13
+       311: aload         9
+       313: putfield      #290                // Field net/minecraft/client/gui/inventory/GuiEditSign.imeInputTexts:Ljava/util/ArrayList;
+       316: goto          347
+       319: aload         12
+       321: instanceof    #174                // class net/minecraft/client/gui/GuiScreenBook
+       324: ifeq          344
+       327: aload         12
+       329: checkcast     #174                // class net/minecraft/client/gui/GuiScreenBook
+       332: astore        13
+       334: aload         13
+       336: aload         9
+       338: putfield      #291                // Field net/minecraft/client/gui/GuiScreenBook.imeInputTexts:Ljava/util/ArrayList;
+       341: goto          347
+       344: goto          239
+       347: aload         4
+       349: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       352: goto          380
+       355: astore        5
+       357: aload         5
+       359: invokestatic  #185                // Method printStacktrace:(Ljava/lang/Exception;)V
+       362: aload         4
+       364: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       367: goto          380
+       370: astore        14
+       372: aload         4
+       374: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       377: aload         14
+       379: athrow
+       380: return
+      Exception table:
+         from    to  target type
+            15    74   355   Class java/lang/Exception
+            80   347   355   Class java/lang/Exception
+            15    74   370   any
+            80   347   370   any
+           355   362   370   any
+           370   372   370   any
+
+  public static void ClearIMEComposition();
+    Code:
+         0: getstatic     #150                // Field inputFields:Ljava/util/ArrayList;
+         3: invokevirtual #156                // Method java/util/ArrayList.iterator:()Ljava/util/Iterator;
+         6: astore_0
+         7: aload_0
+         8: invokeinterface #161,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        13: ifeq          96
+        16: aload_0
+        17: invokeinterface #165,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        22: astore_1
+        23: aload_1
+        24: instanceof    #167                // class net/minecraft/client/gui/GuiTextField
+        27: ifeq          53
+        30: aload_1
+        31: checkcast     #167                // class net/minecraft/client/gui/GuiTextField
+        34: astore_2
+        35: aload_2
+        36: invokevirtual #170                // Method net/minecraft/client/gui/GuiTextField.func_146206_l:()Z
+        39: ifeq          50
+        42: aload_2
+        43: aconst_null
+        44: putfield      #224                // Field net/minecraft/client/gui/GuiTextField.imeInputTexts:Ljava/util/ArrayList;
+        47: goto          96
+        50: goto          93
+        53: aload_1
+        54: instanceof    #172                // class net/minecraft/client/gui/inventory/GuiEditSign
+        57: ifeq          73
+        60: aload_1
+        61: checkcast     #172                // class net/minecraft/client/gui/inventory/GuiEditSign
+        64: astore_2
+        65: aload_2
+        66: aconst_null
+        67: putfield      #290                // Field net/minecraft/client/gui/inventory/GuiEditSign.imeInputTexts:Ljava/util/ArrayList;
+        70: goto          96
+        73: aload_1
+        74: instanceof    #174                // class net/minecraft/client/gui/GuiScreenBook
+        77: ifeq          93
+        80: aload_1
+        81: checkcast     #174                // class net/minecraft/client/gui/GuiScreenBook
+        84: astore_2
+        85: aload_2
+        86: aconst_null
+        87: putfield      #291                // Field net/minecraft/client/gui/GuiScreenBook.imeInputTexts:Ljava/util/ArrayList;
+        90: goto          96
+        93: goto          7
+        96: return
+
+  public static void OpenCandidateList(com.sun.jna.platform.win32.WinDef$WPARAM, com.sun.jna.platform.win32.WinDef$LPARAM);
+    Code:
+         0: aload_0
+         1: invokevirtual #147                // Method com/sun/jna/platform/win32/WinDef$WPARAM.intValue:()I
+         4: istore_2
+         5: aload_1
+         6: invokevirtual #148                // Method com/sun/jna/platform/win32/WinDef$LPARAM.intValue:()I
+         9: istore_3
+        10: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+        13: astore        4
+        15: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        18: aload         4
+        20: iconst_0
+        21: aconst_null
+        22: iconst_0
+        23: invokeinterface #307,  5          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmGetCandidateListW:(Lcom/sun/jna/Pointer;I[CI)I
+        28: istore        5
+        30: iload         5
+        32: ifne          41
+        35: aload         4
+        37: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        40: return
+        41: iload         5
+        43: iconst_2
+        44: idiv
+        45: newarray       char
+        47: astore        6
+        49: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        52: aload         4
+        54: iconst_0
+        55: aload         6
+        57: iload         5
+        59: invokeinterface #307,  5          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmGetCandidateListW:(Lcom/sun/jna/Pointer;I[CI)I
+        64: pop
+        65: new           #309                // class com/tsoft_web/IntelliInput/NativeStructure/CandidateList
+        68: dup
+        69: aload         6
+        71: invokespecial #312                // Method com/tsoft_web/IntelliInput/NativeStructure/CandidateList."<init>":([C)V
+        74: astore        7
+        76: getstatic     #150                // Field inputFields:Ljava/util/ArrayList;
+        79: invokevirtual #156                // Method java/util/ArrayList.iterator:()Ljava/util/Iterator;
+        82: astore        8
+        84: aload         8
+        86: invokeinterface #161,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        91: ifeq          192
+        94: aload         8
+        96: invokeinterface #165,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+       101: astore        9
+       103: aload         9
+       105: instanceof    #167                // class net/minecraft/client/gui/GuiTextField
+       108: ifeq          139
+       111: aload         9
+       113: checkcast     #167                // class net/minecraft/client/gui/GuiTextField
+       116: astore        10
+       118: aload         10
+       120: invokevirtual #170                // Method net/minecraft/client/gui/GuiTextField.func_146206_l:()Z
+       123: ifeq          136
+       126: aload         10
+       128: aload         7
+       130: putfield      #316                // Field net/minecraft/client/gui/GuiTextField.candidateList:Lcom/tsoft_web/IntelliInput/NativeStructure/CandidateList;
+       133: goto          192
+       136: goto          189
+       139: aload         9
+       141: instanceof    #172                // class net/minecraft/client/gui/inventory/GuiEditSign
+       144: ifeq          164
+       147: aload         9
+       149: checkcast     #172                // class net/minecraft/client/gui/inventory/GuiEditSign
+       152: astore        10
+       154: aload         10
+       156: aload         7
+       158: putfield      #317                // Field net/minecraft/client/gui/inventory/GuiEditSign.candidateList:Lcom/tsoft_web/IntelliInput/NativeStructure/CandidateList;
+       161: goto          192
+       164: aload         9
+       166: instanceof    #174                // class net/minecraft/client/gui/GuiScreenBook
+       169: ifeq          189
+       172: aload         9
+       174: checkcast     #174                // class net/minecraft/client/gui/GuiScreenBook
+       177: astore        10
+       179: aload         10
+       181: aload         7
+       183: putfield      #318                // Field net/minecraft/client/gui/GuiScreenBook.candidateList:Lcom/tsoft_web/IntelliInput/NativeStructure/CandidateList;
+       186: goto          192
+       189: goto          84
+       192: aload         4
+       194: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       197: goto          225
+       200: astore        5
+       202: aload         5
+       204: invokestatic  #185                // Method printStacktrace:(Ljava/lang/Exception;)V
+       207: aload         4
+       209: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       212: goto          225
+       215: astore        11
+       217: aload         4
+       219: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       222: aload         11
+       224: athrow
+       225: return
+      Exception table:
+         from    to  target type
+            15    35   200   Class java/lang/Exception
+            41   192   200   Class java/lang/Exception
+            15    35   215   any
+            41   192   215   any
+           200   207   215   any
+           215   217   215   any
+
+  public static void closeCandidateList();
+    Code:
+         0: getstatic     #150                // Field inputFields:Ljava/util/ArrayList;
+         3: invokevirtual #156                // Method java/util/ArrayList.iterator:()Ljava/util/Iterator;
+         6: astore_0
+         7: aload_0
+         8: invokeinterface #161,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+        13: ifeq          96
+        16: aload_0
+        17: invokeinterface #165,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+        22: astore_1
+        23: aload_1
+        24: instanceof    #167                // class net/minecraft/client/gui/GuiTextField
+        27: ifeq          53
+        30: aload_1
+        31: checkcast     #167                // class net/minecraft/client/gui/GuiTextField
+        34: astore_2
+        35: aload_2
+        36: invokevirtual #170                // Method net/minecraft/client/gui/GuiTextField.func_146206_l:()Z
+        39: ifeq          50
+        42: aload_2
+        43: aconst_null
+        44: putfield      #316                // Field net/minecraft/client/gui/GuiTextField.candidateList:Lcom/tsoft_web/IntelliInput/NativeStructure/CandidateList;
+        47: goto          96
+        50: goto          93
+        53: aload_1
+        54: instanceof    #172                // class net/minecraft/client/gui/inventory/GuiEditSign
+        57: ifeq          73
+        60: aload_1
+        61: checkcast     #172                // class net/minecraft/client/gui/inventory/GuiEditSign
+        64: astore_2
+        65: aload_2
+        66: aconst_null
+        67: putfield      #317                // Field net/minecraft/client/gui/inventory/GuiEditSign.candidateList:Lcom/tsoft_web/IntelliInput/NativeStructure/CandidateList;
+        70: goto          96
+        73: aload_1
+        74: instanceof    #174                // class net/minecraft/client/gui/GuiScreenBook
+        77: ifeq          93
+        80: aload_1
+        81: checkcast     #174                // class net/minecraft/client/gui/GuiScreenBook
+        84: astore_2
+        85: aload_2
+        86: aconst_null
+        87: putfield      #318                // Field net/minecraft/client/gui/GuiScreenBook.candidateList:Lcom/tsoft_web/IntelliInput/NativeStructure/CandidateList;
+        90: goto          96
+        93: goto          7
+        96: return
+
+  public static com.tsoft_web.IntelliInput.IMEAttribute[] getCharAttribute();
+    Code:
+         0: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+         3: astore_0
+         4: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+         7: aload_0
+         8: bipush        16
+        10: aconst_null
+        11: iconst_0
+        12: invokeinterface #324,  5          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmGetCompositionStringW:(Lcom/sun/jna/Pointer;I[BI)Lcom/sun/jna/NativeLong;
+        17: invokevirtual #207                // Method com/sun/jna/NativeLong.intValue:()I
+        20: istore_1
+        21: iload_1
+        22: ifne          33
+        25: aconst_null
+        26: astore_2
+        27: aload_0
+        28: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        31: aload_2
+        32: areturn
+        33: iload_1
+        34: newarray       byte
+        36: astore_2
+        37: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        40: aload_0
+        41: bipush        16
+        43: aload_2
+        44: iload_1
+        45: invokeinterface #324,  5          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmGetCompositionStringW:(Lcom/sun/jna/Pointer;I[BI)Lcom/sun/jna/NativeLong;
+        50: pop
+        51: iload_1
+        52: anewarray     #265                // class com/tsoft_web/IntelliInput/IMEAttribute
+        55: astore_3
+        56: ldc_w         #326                // String
+        59: astore        5
+        61: iconst_0
+        62: istore        4
+        64: iload         4
+        66: aload_2
+        67: arraylength
+        68: if_icmpge     121
+        71: aload_3
+        72: iload         4
+        74: aload_2
+        75: iload         4
+        77: baload
+        78: invokestatic  #332                // Method com/tsoft_web/IntelliInput/IMEAttribute.setInt:(I)Lcom/tsoft_web/IntelliInput/IMEAttribute;
+        81: aastore
+        82: new           #278                // class java/lang/StringBuilder
+        85: dup
+        86: invokespecial #279                // Method java/lang/StringBuilder."<init>":()V
+        89: aload         5
+        91: invokevirtual #286                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+        94: aload_3
+        95: iload         4
+        97: aaload
+        98: invokevirtual #333                // Method com/tsoft_web/IntelliInput/IMEAttribute.toString:()Ljava/lang/String;
+       101: invokevirtual #286                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       104: ldc_w         #335                // String  ,
+       107: invokevirtual #286                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       110: invokevirtual #289                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+       113: astore        5
+       115: iinc          4, 1
+       118: goto          64
+       121: aload_3
+       122: astore        6
+       124: aload_0
+       125: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       128: aload         6
+       130: areturn
+       131: astore_1
+       132: aload_1
+       133: invokestatic  #185                // Method printStacktrace:(Ljava/lang/Exception;)V
+       136: aload_0
+       137: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       140: goto          152
+       143: astore        7
+       145: aload_0
+       146: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+       149: aload         7
+       151: athrow
+       152: aconst_null
+       153: areturn
+      Exception table:
+         from    to  target type
+             4    27   131   Class java/lang/Exception
+            33   124   131   Class java/lang/Exception
+             4    27   143   any
+            33   124   143   any
+           131   136   143   any
+           143   145   143   any
+
+  public static void SearchhWnd();
+    Code:
+         0: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+         3: ifnull        7
+         6: return
+         7: getstatic     #340                // Field user32:Lcom/sun/jna/platform/win32/User32;
+        10: new           #7                  // class com/tsoft_web/IntelliInput/IntelliInput$1
+        13: dup
+        14: invokespecial #341                // Method com/tsoft_web/IntelliInput/IntelliInput$1."<init>":()V
+        17: aconst_null
+        18: invokeinterface #347,  3          // InterfaceMethod com/sun/jna/platform/win32/User32.EnumWindows:(Lcom/sun/jna/platform/win32/WinUser$WNDENUMPROC;Lcom/sun/jna/Pointer;)Z
+        23: pop
+        24: return
+
+  private static void ToSubclass();
+    Code:
+         0: invokestatic  #351                // Method getOsBit:()I
+         3: bipush        32
+         5: if_icmpne     47
+         8: getstatic     #340                // Field user32:Lcom/sun/jna/platform/win32/User32;
+        11: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+        14: bipush        -4
+        16: invokeinterface #355,  3          // InterfaceMethod com/sun/jna/platform/win32/User32.GetWindowLong:(Lcom/sun/jna/platform/win32/WinDef$HWND;I)I
+        21: invokestatic  #360                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+        24: putstatic     #365                // Field com/tsoft_web/IntelliInput/RedirectWindowProc.prevWndProcInteger:Ljava/lang/Integer;
+        27: getstatic     #367                // Field user32_cb:Lcom/tsoft_web/IntelliInput/User32_Callback;
+        30: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+        33: bipush        -4
+        35: getstatic     #369                // Field redirectWindowProc:Lcom/tsoft_web/IntelliInput/RedirectWindowProc;
+        38: invokeinterface #375,  4          // InterfaceMethod com/tsoft_web/IntelliInput/User32_Callback.SetWindowLong:(Lcom/sun/jna/platform/win32/WinDef$HWND;ILcom/sun/jna/Callback;)I
+        43: pop
+        44: goto          80
+        47: getstatic     #340                // Field user32:Lcom/sun/jna/platform/win32/User32;
+        50: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+        53: bipush        -4
+        55: invokeinterface #379,  3          // InterfaceMethod com/sun/jna/platform/win32/User32.GetWindowLongPtr:(Lcom/sun/jna/platform/win32/WinDef$HWND;I)Lcom/sun/jna/platform/win32/BaseTSD$LONG_PTR;
+        60: putstatic     #383                // Field com/tsoft_web/IntelliInput/RedirectWindowProc.prevWndProc:Lcom/sun/jna/platform/win32/BaseTSD$LONG_PTR;
+        63: getstatic     #367                // Field user32_cb:Lcom/tsoft_web/IntelliInput/User32_Callback;
+        66: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+        69: bipush        -4
+        71: getstatic     #369                // Field redirectWindowProc:Lcom/tsoft_web/IntelliInput/RedirectWindowProc;
+        74: invokeinterface #386,  4          // InterfaceMethod com/tsoft_web/IntelliInput/User32_Callback.SetWindowLongPtr:(Lcom/sun/jna/platform/win32/WinDef$HWND;ILcom/sun/jna/Callback;)I
+        79: pop
+        80: return
+
+  public static int getProcessId();
+    Code:
+         0: getstatic     #389                // Field ProcessId:I
+         3: ifne          37
+         6: invokestatic  #395                // Method java/lang/management/ManagementFactory.getRuntimeMXBean:()Ljava/lang/management/RuntimeMXBean;
+         9: astore_0
+        10: aload_0
+        11: invokeinterface #400,  1          // InterfaceMethod java/lang/management/RuntimeMXBean.getName:()Ljava/lang/String;
+        16: astore_1
+        17: aload_1
+        18: ldc_w         #402                // String @
+        21: invokevirtual #406                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+        24: iconst_0
+        25: aaload
+        26: invokestatic  #409                // Method java/lang/Integer.valueOf:(Ljava/lang/String;)Ljava/lang/Integer;
+        29: invokevirtual #410                // Method java/lang/Integer.intValue:()I
+        32: istore_2
+        33: iload_2
+        34: putstatic     #389                // Field ProcessId:I
+        37: getstatic     #389                // Field ProcessId:I
+        40: ireturn
+
+  public static com.sun.jna.platform.win32.WinDef$HWND gethWnd();
+    Code:
+         0: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+         3: ifnonnull     9
+         6: invokestatic  #101                // Method SearchhWnd:()V
+         9: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+        12: areturn
+
+  public static void sethWnd(com.sun.jna.platform.win32.WinDef$HWND);
+    Code:
+         0: aload_0
+         1: putstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+         4: return
+
+  public static void sendNullKeydown();
+    Code:
+         0: getstatic     #369                // Field redirectWindowProc:Lcom/tsoft_web/IntelliInput/RedirectWindowProc;
+         3: pop
+         4: getstatic     #383                // Field com/tsoft_web/IntelliInput/RedirectWindowProc.prevWndProc:Lcom/sun/jna/platform/win32/BaseTSD$LONG_PTR;
+         7: ifnonnull     20
+        10: getstatic     #369                // Field redirectWindowProc:Lcom/tsoft_web/IntelliInput/RedirectWindowProc;
+        13: pop
+        14: getstatic     #365                // Field com/tsoft_web/IntelliInput/RedirectWindowProc.prevWndProcInteger:Ljava/lang/Integer;
+        17: ifnull        183
+        20: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+        23: getstatic     #367                // Field user32_cb:Lcom/tsoft_web/IntelliInput/User32_Callback;
+        26: invokeinterface #422,  1          // InterfaceMethod com/tsoft_web/IntelliInput/User32_Callback.GetForegroundWindow:()Lcom/sun/jna/platform/win32/WinDef$HWND;
+        31: invokevirtual #425                // Method com/sun/jna/platform/win32/WinDef$HWND.equals:(Ljava/lang/Object;)Z
+        34: ifne          38
+        37: return
+        38: new           #20                 // class com/sun/jna/platform/win32/WinUser$INPUT
+        41: dup
+        42: invokespecial #426                // Method com/sun/jna/platform/win32/WinUser$INPUT."<init>":()V
+        45: astore_0
+        46: aload_0
+        47: new           #25                 // class com/sun/jna/platform/win32/WinDef$DWORD
+        50: dup
+        51: lconst_1
+        52: invokespecial #429                // Method com/sun/jna/platform/win32/WinDef$DWORD."<init>":(J)V
+        55: putfield      #433                // Field com/sun/jna/platform/win32/WinUser$INPUT.type:Lcom/sun/jna/platform/win32/WinDef$DWORD;
+        58: aload_0
+        59: new           #28                 // class com/sun/jna/platform/win32/WinUser$INPUT$INPUT_UNION
+        62: dup
+        63: invokespecial #434                // Method com/sun/jna/platform/win32/WinUser$INPUT$INPUT_UNION."<init>":()V
+        66: putfield      #438                // Field com/sun/jna/platform/win32/WinUser$INPUT.input:Lcom/sun/jna/platform/win32/WinUser$INPUT$INPUT_UNION;
+        69: aload_0
+        70: getfield      #438                // Field com/sun/jna/platform/win32/WinUser$INPUT.input:Lcom/sun/jna/platform/win32/WinUser$INPUT$INPUT_UNION;
+        73: ldc_w         #440                // String ki
+        76: invokevirtual #443                // Method com/sun/jna/platform/win32/WinUser$INPUT$INPUT_UNION.setType:(Ljava/lang/String;)V
+        79: aload_0
+        80: getfield      #438                // Field com/sun/jna/platform/win32/WinUser$INPUT.input:Lcom/sun/jna/platform/win32/WinUser$INPUT$INPUT_UNION;
+        83: getfield      #446                // Field com/sun/jna/platform/win32/WinUser$INPUT$INPUT_UNION.ki:Lcom/sun/jna/platform/win32/WinUser$KEYBDINPUT;
+        86: new           #31                 // class com/sun/jna/platform/win32/WinDef$WORD
+        89: dup
+        90: ldc2_w        #447                // long 168l
+        93: invokespecial #449                // Method com/sun/jna/platform/win32/WinDef$WORD."<init>":(J)V
+        96: putfield      #453                // Field com/sun/jna/platform/win32/WinUser$KEYBDINPUT.wVk:Lcom/sun/jna/platform/win32/WinDef$WORD;
+        99: aload_0
+       100: getfield      #438                // Field com/sun/jna/platform/win32/WinUser$INPUT.input:Lcom/sun/jna/platform/win32/WinUser$INPUT$INPUT_UNION;
+       103: getfield      #446                // Field com/sun/jna/platform/win32/WinUser$INPUT$INPUT_UNION.ki:Lcom/sun/jna/platform/win32/WinUser$KEYBDINPUT;
+       106: new           #31                 // class com/sun/jna/platform/win32/WinDef$WORD
+       109: dup
+       110: getstatic     #367                // Field user32_cb:Lcom/tsoft_web/IntelliInput/User32_Callback;
+       113: sipush        168
+       116: iconst_0
+       117: invokeinterface #457,  3          // InterfaceMethod com/tsoft_web/IntelliInput/User32_Callback.MapVirtualKeyA:(II)I
+       122: i2l
+       123: invokespecial #449                // Method com/sun/jna/platform/win32/WinDef$WORD."<init>":(J)V
+       126: putfield      #460                // Field com/sun/jna/platform/win32/WinUser$KEYBDINPUT.wScan:Lcom/sun/jna/platform/win32/WinDef$WORD;
+       129: aload_0
+       130: getfield      #438                // Field com/sun/jna/platform/win32/WinUser$INPUT.input:Lcom/sun/jna/platform/win32/WinUser$INPUT$INPUT_UNION;
+       133: getfield      #446                // Field com/sun/jna/platform/win32/WinUser$INPUT$INPUT_UNION.ki:Lcom/sun/jna/platform/win32/WinUser$KEYBDINPUT;
+       136: new           #25                 // class com/sun/jna/platform/win32/WinDef$DWORD
+       139: dup
+       140: lconst_1
+       141: invokespecial #429                // Method com/sun/jna/platform/win32/WinDef$DWORD."<init>":(J)V
+       144: putfield      #463                // Field com/sun/jna/platform/win32/WinUser$KEYBDINPUT.dwFlags:Lcom/sun/jna/platform/win32/WinDef$DWORD;
+       147: iconst_1
+       148: anewarray     #20                 // class com/sun/jna/platform/win32/WinUser$INPUT
+       151: dup
+       152: iconst_0
+       153: aload_0
+       154: aastore
+       155: astore_1
+       156: getstatic     #340                // Field user32:Lcom/sun/jna/platform/win32/User32;
+       159: new           #25                 // class com/sun/jna/platform/win32/WinDef$DWORD
+       162: dup
+       163: lconst_1
+       164: invokespecial #429                // Method com/sun/jna/platform/win32/WinDef$DWORD."<init>":(J)V
+       167: aload_1
+       168: aload_1
+       169: iconst_0
+       170: aaload
+       171: invokevirtual #464                // Method com/sun/jna/platform/win32/WinUser$INPUT.size:()I
+       174: invokeinterface #468,  4          // InterfaceMethod com/sun/jna/platform/win32/User32.SendInput:(Lcom/sun/jna/platform/win32/WinDef$DWORD;[Lcom/sun/jna/platform/win32/WinUser$INPUT;I)Lcom/sun/jna/platform/win32/WinDef$DWORD;
+       179: invokevirtual #469                // Method com/sun/jna/platform/win32/WinDef$DWORD.intValue:()I
+       182: istore_2
+       183: return
+
+  public static void checkHandler();
+    Code:
+         0: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+         3: ifnull        27
+         6: getstatic     #367                // Field user32_cb:Lcom/tsoft_web/IntelliInput/User32_Callback;
+         9: getstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+        12: invokeinterface #477,  2          // InterfaceMethod com/tsoft_web/IntelliInput/User32_Callback.IsWindow:(Lcom/sun/jna/platform/win32/WinDef$HWND;)Z
+        17: ifne          27
+        20: aconst_null
+        21: putstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+        24: invokestatic  #101                // Method SearchhWnd:()V
+        27: return
+
+  private static final int getOsBit();
+    Code:
+         0: ldc_w         #479                // String sun.arch.data.mode
+         3: invokestatic  #484                // Method java/lang/System.getProperty:(Ljava/lang/String;)Ljava/lang/String;
+         6: astore_0
+         7: aload_0
+         8: ifnull        49
+        11: aload_0
+        12: invokevirtual #487                // Method java/lang/String.trim:()Ljava/lang/String;
+        15: dup
+        16: astore_0
+        17: invokevirtual #490                // Method java/lang/String.length:()I
+        20: ifle          49
+        23: ldc_w         #492                // String 32
+        26: aload_0
+        27: invokevirtual #493                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+        30: ifeq          36
+        33: bipush        32
+        35: ireturn
+        36: ldc_w         #495                // String 64
+        39: aload_0
+        40: invokevirtual #493                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+        43: ifeq          49
+        46: bipush        64
+        48: ireturn
+        49: ldc_w         #497                // String os.arch
+        52: invokestatic  #484                // Method java/lang/System.getProperty:(Ljava/lang/String;)Ljava/lang/String;
+        55: astore_0
+        56: aload_0
+        57: ifnull        72
+        60: aload_0
+        61: invokevirtual #487                // Method java/lang/String.trim:()Ljava/lang/String;
+        64: dup
+        65: astore_0
+        66: invokevirtual #490                // Method java/lang/String.length:()I
+        69: ifgt          74
+        72: iconst_m1
+        73: ireturn
+        74: aload_0
+        75: ldc_w         #492                // String 32
+        78: invokevirtual #501                // Method java/lang/String.endsWith:(Ljava/lang/String;)Z
+        81: ifeq          87
+        84: bipush        32
+        86: ireturn
+        87: aload_0
+        88: ldc_w         #495                // String 64
+        91: invokevirtual #501                // Method java/lang/String.endsWith:(Ljava/lang/String;)Z
+        94: ifeq          100
+        97: bipush        64
+        99: ireturn
+       100: bipush        32
+       102: ireturn
+
+  public static java.lang.String Sanitizing(java.lang.String);
+    Code:
+         0: getstatic     #504                // Field sanitizing:Z
+         3: ifeq          44
+         6: aload_0
+         7: ldc_w         #506                // String �i
+        10: ldc_w         #508                // String (
+        13: invokevirtual #512                // Method java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+        16: ldc_w         #514                // String �j
+        19: ldc_w         #516                // String )
+        22: invokevirtual #512                // Method java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+        25: ldc_w         #518                // String �o
+        28: ldc_w         #520                // String {
+        31: invokevirtual #512                // Method java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+        34: ldc_w         #522                // String �p
+        37: ldc_w         #524                // String }
+        40: invokevirtual #512                // Method java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+        43: areturn
+        44: aload_0
+        45: areturn
+
+  public static void changeToAlphabetInput();
+    Code:
+         0: invokestatic  #101                // Method SearchhWnd:()V
+         3: getstatic     #103                // Field lastHIMC:Lcom/sun/jna/Pointer;
+         6: ifnull        10
+         9: return
+        10: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+        13: astore_0
+        14: new           #528                // class com/sun/jna/ptr/IntByReference
+        17: dup
+        18: invokespecial #529                // Method com/sun/jna/ptr/IntByReference."<init>":()V
+        21: astore_1
+        22: new           #528                // class com/sun/jna/ptr/IntByReference
+        25: dup
+        26: invokespecial #529                // Method com/sun/jna/ptr/IntByReference."<init>":()V
+        29: astore_2
+        30: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        33: aload_0
+        34: aload_2
+        35: aload_1
+        36: invokeinterface #533,  4          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmGetConversionStatus:(Lcom/sun/jna/Pointer;Lcom/sun/jna/ptr/IntByReference;Lcom/sun/jna/ptr/IntByReference;)Z
+        41: ifeq          79
+        44: aload_1
+        45: invokevirtual #536                // Method com/sun/jna/ptr/IntByReference.getValue:()I
+        48: invokestatic  #360                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+        51: putstatic     #538                // Field prevSentence:Ljava/lang/Integer;
+        54: aload_2
+        55: invokevirtual #536                // Method com/sun/jna/ptr/IntByReference.getValue:()I
+        58: invokestatic  #360                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+        61: putstatic     #540                // Field prevConversion:Ljava/lang/Integer;
+        64: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        67: aload_0
+        68: iconst_0
+        69: aload_1
+        70: invokevirtual #536                // Method com/sun/jna/ptr/IntByReference.getValue:()I
+        73: invokeinterface #544,  4          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmSetConversionStatus:(Lcom/sun/jna/Pointer;II)Z
+        78: pop
+        79: aload_0
+        80: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        83: goto          93
+        86: astore_3
+        87: aload_0
+        88: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        91: aload_3
+        92: athrow
+        93: return
+      Exception table:
+         from    to  target type
+            14    79    86   any
+
+  public static void resumeConversionStatus();
+    Code:
+         0: invokestatic  #101                // Method SearchhWnd:()V
+         3: getstatic     #103                // Field lastHIMC:Lcom/sun/jna/Pointer;
+         6: ifnull        10
+         9: return
+        10: invokestatic  #105                // Method ImmGetContext:()Lcom/sun/jna/Pointer;
+        13: astore_0
+        14: getstatic     #538                // Field prevSentence:Ljava/lang/Integer;
+        17: ifnull        56
+        20: getstatic     #540                // Field prevConversion:Ljava/lang/Integer;
+        23: ifnull        56
+        26: getstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        29: aload_0
+        30: getstatic     #540                // Field prevConversion:Ljava/lang/Integer;
+        33: invokevirtual #410                // Method java/lang/Integer.intValue:()I
+        36: getstatic     #538                // Field prevSentence:Ljava/lang/Integer;
+        39: invokevirtual #410                // Method java/lang/Integer.intValue:()I
+        42: invokeinterface #544,  4          // InterfaceMethod com/tsoft_web/IntelliInput/Imm32.ImmSetConversionStatus:(Lcom/sun/jna/Pointer;II)Z
+        47: pop
+        48: aconst_null
+        49: putstatic     #540                // Field prevConversion:Ljava/lang/Integer;
+        52: aconst_null
+        53: putstatic     #538                // Field prevSentence:Ljava/lang/Integer;
+        56: aload_0
+        57: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        60: goto          70
+        63: astore_1
+        64: aload_0
+        65: invokestatic  #111                // Method ImmReleaseContext:(Lcom/sun/jna/Pointer;)V
+        68: aload_1
+        69: athrow
+        70: return
+      Exception table:
+         from    to  target type
+            14    56    63   any
+
+  public static boolean canTextboxInput(net.minecraft.client.gui.GuiTextField);
+    Code:
+         0: aload_0
+         1: invokevirtual #170                // Method net/minecraft/client/gui/GuiTextField.func_146206_l:()Z
+         4: ifeq          18
+         7: aload_0
+         8: invokevirtual #552                // Method net/minecraft/client/gui/GuiTextField.isEnabled:()Z
+        11: ifeq          18
+        14: iconst_1
+        15: goto          19
+        18: iconst_0
+        19: ireturn
+
+  public static boolean isKeyBindingPressed(net.minecraft.client.settings.KeyBinding);
+    Code:
+         0: aload_0
+         1: invokevirtual #559                // Method net/minecraft/client/settings/KeyBinding.func_151468_f:()Z
+         4: ireturn
+
+  public static boolean isWindows();
+    Code:
+         0: ldc_w         #564                // String os.name
+         3: invokestatic  #484                // Method java/lang/System.getProperty:(Ljava/lang/String;)Ljava/lang/String;
+         6: invokevirtual #567                // Method java/lang/String.toLowerCase:()Ljava/lang/String;
+         9: ldc_w         #569                // String windows
+        12: invokevirtual #572                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+        15: ireturn
+
+  private static void printStacktrace(java.lang.Exception);
+    Code:
+         0: new           #574                // class java/io/StringWriter
+         3: dup
+         4: invokespecial #575                // Method java/io/StringWriter."<init>":()V
+         7: astore_1
+         8: new           #577                // class java/io/PrintWriter
+        11: dup
+        12: aload_1
+        13: invokespecial #580                // Method java/io/PrintWriter."<init>":(Ljava/io/Writer;)V
+        16: astore_2
+        17: aload_0
+        18: aload_2
+        19: invokevirtual #584                // Method java/lang/Exception.printStackTrace:(Ljava/io/PrintWriter;)V
+        22: aload_1
+        23: invokevirtual #585                // Method java/io/StringWriter.toString:()Ljava/lang/String;
+        26: astore_3
+        27: aload_3
+        28: iconst_1
+        29: anewarray     #4                  // class java/lang/Object
+        32: dup
+        33: iconst_0
+        34: new           #4                  // class java/lang/Object
+        37: dup
+        38: invokespecial #74                 // Method java/lang/Object."<init>":()V
+        41: aastore
+        42: invokestatic  #591                // Method cpw/mods/fml/common/FMLLog.warning:(Ljava/lang/String;[Ljava/lang/Object;)V
+        45: return
+
+  static com.sun.jna.platform.win32.WinDef$HWND access$002(com.sun.jna.platform.win32.WinDef$HWND);
+    Code:
+         0: aload_0
+         1: dup
+         2: putstatic     #83                 // Field hWnd:Lcom/sun/jna/platform/win32/WinDef$HWND;
+         5: areturn
+
+  static void access$100();
+    Code:
+         0: invokestatic  #602                // Method ToSubclass:()V
+         3: return
+
+  static {};
+    Code:
+         0: getstatic     #606                // Field com/sun/jna/platform/win32/User32.INSTANCE:Lcom/sun/jna/platform/win32/User32;
+         3: putstatic     #340                // Field user32:Lcom/sun/jna/platform/win32/User32;
+         6: getstatic     #608                // Field com/tsoft_web/IntelliInput/User32_Callback.INSTANCE:Lcom/tsoft_web/IntelliInput/User32_Callback;
+         9: putstatic     #367                // Field user32_cb:Lcom/tsoft_web/IntelliInput/User32_Callback;
+        12: getstatic     #610                // Field com/tsoft_web/IntelliInput/Imm32.INSTANCE:Lcom/tsoft_web/IntelliInput/Imm32;
+        15: putstatic     #81                 // Field imm32:Lcom/tsoft_web/IntelliInput/Imm32;
+        18: new           #362                // class com/tsoft_web/IntelliInput/RedirectWindowProc
+        21: dup
+        22: invokespecial #611                // Method com/tsoft_web/IntelliInput/RedirectWindowProc."<init>":()V
+        25: putstatic     #369                // Field redirectWindowProc:Lcom/tsoft_web/IntelliInput/RedirectWindowProc;
+        28: iconst_0
+        29: putstatic     #504                // Field sanitizing:Z
+        32: iconst_0
+        33: putstatic     #613                // Field legacyLengthLimit:Z
+        36: iconst_0
+        37: putstatic     #615                // Field extendedEndComposition:Z
+        40: aconst_null
+        41: putstatic     #538                // Field prevSentence:Ljava/lang/Integer;
+        44: aconst_null
+        45: putstatic     #540                // Field prevConversion:Ljava/lang/Integer;
+        48: new           #152                // class java/util/ArrayList
+        51: dup
+        52: invokespecial #250                // Method java/util/ArrayList."<init>":()V
+        55: putstatic     #150                // Field inputFields:Ljava/util/ArrayList;
+        58: return
+}

@@ -1,0 +1,84 @@
+﻿Compiled from "IntelliInput.java"
+final class com.tsoft_web.IntelliInput.IntelliInput$1 implements com.sun.jna.platform.win32.WinUser$WNDENUMPROC {
+  com.tsoft_web.IntelliInput.IntelliInput$1();
+    Code:
+         0: aload_0
+         1: invokespecial #23                 // Method java/lang/Object."<init>":()V
+         4: return
+
+  public boolean callback(com.sun.jna.platform.win32.WinDef$HWND, com.sun.jna.Pointer);
+    Code:
+         0: sipush        128
+         3: newarray       char
+         5: astore_3
+         6: getstatic     #31                 // Field com/tsoft_web/IntelliInput/IntelliInput.user32:Lcom/sun/jna/platform/win32/User32;
+         9: aload_1
+        10: aload_3
+        11: sipush        128
+        14: invokeinterface #37,  4           // InterfaceMethod com/sun/jna/platform/win32/User32.GetWindowText:(Lcom/sun/jna/platform/win32/WinDef$HWND;[CI)I
+        19: pop
+        20: aload_3
+        21: invokestatic  #43                 // Method com/sun/jna/Native.toString:([C)Ljava/lang/String;
+        24: astore        4
+        26: aload         4
+        28: invokevirtual #49                 // Method java/lang/String.isEmpty:()Z
+        31: ifeq          39
+        34: ldc           #51                 // String
+        36: goto          41
+        39: aload         4
+        41: astore        4
+        43: aload         4
+        45: ldc           #55                 // String Minecraft
+        47: invokevirtual #59                 // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+        50: ifeq          167
+        53: sipush        128
+        56: newarray       char
+        58: astore        5
+        60: getstatic     #31                 // Field com/tsoft_web/IntelliInput/IntelliInput.user32:Lcom/sun/jna/platform/win32/User32;
+        63: aload_1
+        64: aload         5
+        66: sipush        128
+        69: invokeinterface #62,  4           // InterfaceMethod com/sun/jna/platform/win32/User32.GetClassName:(Lcom/sun/jna/platform/win32/WinDef$HWND;[CI)I
+        74: pop
+        75: aload         5
+        77: invokestatic  #43                 // Method com/sun/jna/Native.toString:([C)Ljava/lang/String;
+        80: astore        6
+        82: aload         6
+        84: invokevirtual #49                 // Method java/lang/String.isEmpty:()Z
+        87: ifeq          95
+        90: ldc           #51                 // String
+        92: goto          97
+        95: aload         6
+        97: astore        6
+        99: aload         6
+       101: ldc           #64                 // String LWJGL
+       103: invokevirtual #68                 // Method java/lang/String.equalsIgnoreCase:(Ljava/lang/String;)Z
+       106: ifeq          167
+       109: new           #70                 // class com/sun/jna/ptr/IntByReference
+       112: dup
+       113: invokespecial #71                 // Method com/sun/jna/ptr/IntByReference."<init>":()V
+       116: astore        7
+       118: getstatic     #31                 // Field com/tsoft_web/IntelliInput/IntelliInput.user32:Lcom/sun/jna/platform/win32/User32;
+       121: aload_1
+       122: aload         7
+       124: invokeinterface #75,  3           // InterfaceMethod com/sun/jna/platform/win32/User32.GetWindowThreadProcessId:(Lcom/sun/jna/platform/win32/WinDef$HWND;Lcom/sun/jna/ptr/IntByReference;)I
+       129: pop
+       130: aload         7
+       132: invokevirtual #79                 // Method com/sun/jna/ptr/IntByReference.getValue:()I
+       135: invokestatic  #82                 // Method com/tsoft_web/IntelliInput/IntelliInput.getProcessId:()I
+       138: if_icmpne     167
+       141: aload_1
+       142: invokestatic  #86                 // Method com/tsoft_web/IntelliInput/IntelliInput.access$002:(Lcom/sun/jna/platform/win32/WinDef$HWND;)Lcom/sun/jna/platform/win32/WinDef$HWND;
+       145: pop
+       146: invokestatic  #89                 // Method com/tsoft_web/IntelliInput/IntelliInput.access$100:()V
+       149: getstatic     #93                 // Field com/tsoft_web/IntelliInput/IntelliInput.user32_cb:Lcom/tsoft_web/IntelliInput/User32_Callback;
+       152: aload_1
+       153: invokeinterface #98,  2           // InterfaceMethod com/tsoft_web/IntelliInput/User32_Callback.SetActiveWindow:(Lcom/sun/jna/platform/win32/WinDef$HWND;)Lcom/sun/jna/platform/win32/WinDef$HWND;
+       158: pop
+       159: invokestatic  #101                // Method com/tsoft_web/IntelliInput/IntelliInput.sendNullKeydown:()V
+       162: invokestatic  #104                // Method com/tsoft_web/IntelliInput/IntelliInput.DisableIME:()V
+       165: iconst_0
+       166: ireturn
+       167: iconst_1
+       168: ireturn
+}

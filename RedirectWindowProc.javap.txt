@@ -1,0 +1,165 @@
+﻿Compiled from "RedirectWindowProc.java"
+public class com.tsoft_web.IntelliInput.RedirectWindowProc implements com.tsoft_web.IntelliInput.NativeStructure.WindowProc {
+  static com.sun.jna.platform.win32.BaseTSD$LONG_PTR prevWndProc;
+
+  static java.lang.Integer prevWndProcInteger;
+
+  public com.tsoft_web.IntelliInput.RedirectWindowProc();
+    Code:
+         0: aload_0
+         1: invokespecial #34                 // Method java/lang/Object."<init>":()V
+         4: return
+
+  public com.sun.jna.platform.win32.WinDef$LRESULT callback(com.sun.jna.platform.win32.WinDef$HWND, int, com.sun.jna.platform.win32.WinDef$WPARAM, com.sun.jna.platform.win32.WinDef$LPARAM);
+    Code:
+         0: iload_2
+         1: sipush        269
+         4: if_icmpne     22
+         7: aload_3
+         8: aload         4
+        10: invokestatic  #46                 // Method com/tsoft_web/IntelliInput/IntelliInput.OnIMEStartComposition:(Lcom/sun/jna/platform/win32/WinDef$WPARAM;Lcom/sun/jna/platform/win32/WinDef$LPARAM;)V
+        13: new           #25                 // class com/sun/jna/platform/win32/WinDef$LRESULT
+        16: dup
+        17: lconst_0
+        18: invokespecial #49                 // Method com/sun/jna/platform/win32/WinDef$LRESULT."<init>":(J)V
+        21: areturn
+        22: iload_2
+        23: sipush        646
+        26: if_icmpne     38
+        29: new           #25                 // class com/sun/jna/platform/win32/WinDef$LRESULT
+        32: dup
+        33: lconst_0
+        34: invokespecial #49                 // Method com/sun/jna/platform/win32/WinDef$LRESULT."<init>":(J)V
+        37: areturn
+        38: iload_2
+        39: sipush        271
+        42: if_icmpne     105
+        45: aload         4
+        47: invokevirtual #53                 // Method com/sun/jna/platform/win32/WinDef$LPARAM.longValue:()J
+        50: ldc2_w        #54                 // long 2048l
+        53: land
+        54: lconst_0
+        55: lcmp
+        56: ifeq          68
+        59: aload_3
+        60: aload         4
+        62: invokestatic  #58                 // Method com/tsoft_web/IntelliInput/IntelliInput.CommitIMEComposition:(Lcom/sun/jna/platform/win32/WinDef$WPARAM;Lcom/sun/jna/platform/win32/WinDef$LPARAM;)V
+        65: goto          247
+        68: aload         4
+        70: invokevirtual #53                 // Method com/sun/jna/platform/win32/WinDef$LPARAM.longValue:()J
+        73: ldc2_w        #59                 // long 8l
+        76: land
+        77: lconst_0
+        78: lcmp
+        79: ifeq          91
+        82: aload_3
+        83: aload         4
+        85: invokestatic  #63                 // Method com/tsoft_web/IntelliInput/IntelliInput.UpdateIMEComposition:(Lcom/sun/jna/platform/win32/WinDef$WPARAM;Lcom/sun/jna/platform/win32/WinDef$LPARAM;)V
+        88: goto          247
+        91: aload         4
+        93: invokevirtual #67                 // Method com/sun/jna/platform/win32/WinDef$LPARAM.intValue:()I
+        96: ifne          247
+        99: invokestatic  #70                 // Method com/tsoft_web/IntelliInput/IntelliInput.ClearIMEComposition:()V
+       102: goto          247
+       105: iload_2
+       106: sipush        270
+       109: if_icmpne     127
+       112: invokestatic  #70                 // Method com/tsoft_web/IntelliInput/IntelliInput.ClearIMEComposition:()V
+       115: getstatic     #74                 // Field com/tsoft_web/IntelliInput/IntelliInput.extendedEndComposition:Z
+       118: ifeq          247
+       121: invokestatic  #77                 // Method com/tsoft_web/IntelliInput/IntelliInput.closeCandidateList:()V
+       124: goto          247
+       127: iload_2
+       128: sipush        642
+       131: if_icmpne     212
+       134: aload_3
+       135: invokevirtual #78                 // Method com/sun/jna/platform/win32/WinDef$WPARAM.intValue:()I
+       138: iconst_5
+       139: if_icmpne     157
+       142: aload_3
+       143: aload         4
+       145: invokestatic  #81                 // Method com/tsoft_web/IntelliInput/IntelliInput.OpenCandidateList:(Lcom/sun/jna/platform/win32/WinDef$WPARAM;Lcom/sun/jna/platform/win32/WinDef$LPARAM;)V
+       148: new           #25                 // class com/sun/jna/platform/win32/WinDef$LRESULT
+       151: dup
+       152: lconst_0
+       153: invokespecial #49                 // Method com/sun/jna/platform/win32/WinDef$LRESULT."<init>":(J)V
+       156: areturn
+       157: aload_3
+       158: invokevirtual #78                 // Method com/sun/jna/platform/win32/WinDef$WPARAM.intValue:()I
+       161: iconst_3
+       162: if_icmpne     180
+       165: aload_3
+       166: aload         4
+       168: invokestatic  #81                 // Method com/tsoft_web/IntelliInput/IntelliInput.OpenCandidateList:(Lcom/sun/jna/platform/win32/WinDef$WPARAM;Lcom/sun/jna/platform/win32/WinDef$LPARAM;)V
+       171: new           #25                 // class com/sun/jna/platform/win32/WinDef$LRESULT
+       174: dup
+       175: lconst_0
+       176: invokespecial #49                 // Method com/sun/jna/platform/win32/WinDef$LRESULT."<init>":(J)V
+       179: areturn
+       180: aload_3
+       181: invokevirtual #78                 // Method com/sun/jna/platform/win32/WinDef$WPARAM.intValue:()I
+       184: iconst_4
+       185: if_icmpne     200
+       188: invokestatic  #77                 // Method com/tsoft_web/IntelliInput/IntelliInput.closeCandidateList:()V
+       191: new           #25                 // class com/sun/jna/platform/win32/WinDef$LRESULT
+       194: dup
+       195: lconst_0
+       196: invokespecial #49                 // Method com/sun/jna/platform/win32/WinDef$LRESULT."<init>":(J)V
+       199: areturn
+       200: aload_3
+       201: invokevirtual #78                 // Method com/sun/jna/platform/win32/WinDef$WPARAM.intValue:()I
+       204: bipush        8
+       206: if_icmpne     247
+       209: goto          247
+       212: iload_2
+       213: sipush        641
+       216: if_icmpne     247
+       219: aload         4
+       221: aload         4
+       223: invokevirtual #53                 // Method com/sun/jna/platform/win32/WinDef$LPARAM.longValue:()J
+       226: ldc2_w        #82                 // long 1073741808l
+       229: land
+       230: invokevirtual #86                 // Method com/sun/jna/platform/win32/WinDef$LPARAM.setValue:(J)V
+       233: getstatic     #90                 // Field com/tsoft_web/IntelliInput/IntelliInput.user32_cb:Lcom/tsoft_web/IntelliInput/User32_Callback;
+       236: aload_1
+       237: iload_2
+       238: aload_3
+       239: aload         4
+       241: invokeinterface #95,  5           // InterfaceMethod com/tsoft_web/IntelliInput/User32_Callback.DefWindowProc:(Lcom/sun/jna/platform/win32/WinDef$HWND;ILcom/sun/jna/platform/win32/WinDef$WPARAM;Lcom/sun/jna/platform/win32/WinDef$LPARAM;)Lcom/sun/jna/platform/win32/WinDef$LRESULT;
+       246: areturn
+       247: goto          252
+       250: astore        5
+       252: getstatic     #97                 // Field prevWndProc:Lcom/sun/jna/platform/win32/BaseTSD$LONG_PTR;
+       255: ifnonnull     278
+       258: getstatic     #90                 // Field com/tsoft_web/IntelliInput/IntelliInput.user32_cb:Lcom/tsoft_web/IntelliInput/User32_Callback;
+       261: getstatic     #99                 // Field prevWndProcInteger:Ljava/lang/Integer;
+       264: invokevirtual #102                // Method java/lang/Integer.intValue:()I
+       267: aload_1
+       268: iload_2
+       269: aload_3
+       270: aload         4
+       272: invokeinterface #106,  6          // InterfaceMethod com/tsoft_web/IntelliInput/User32_Callback.CallWindowProc:(ILcom/sun/jna/platform/win32/WinDef$HWND;ILcom/sun/jna/platform/win32/WinDef$WPARAM;Lcom/sun/jna/platform/win32/WinDef$LPARAM;)Lcom/sun/jna/platform/win32/WinDef$LRESULT;
+       277: areturn
+       278: getstatic     #90                 // Field com/tsoft_web/IntelliInput/IntelliInput.user32_cb:Lcom/tsoft_web/IntelliInput/User32_Callback;
+       281: getstatic     #97                 // Field prevWndProc:Lcom/sun/jna/platform/win32/BaseTSD$LONG_PTR;
+       284: aload_1
+       285: iload_2
+       286: aload_3
+       287: aload         4
+       289: invokeinterface #109,  6          // InterfaceMethod com/tsoft_web/IntelliInput/User32_Callback.CallWindowProc:(Lcom/sun/jna/platform/win32/BaseTSD$LONG_PTR;Lcom/sun/jna/platform/win32/WinDef$HWND;ILcom/sun/jna/platform/win32/WinDef$WPARAM;Lcom/sun/jna/platform/win32/WinDef$LPARAM;)Lcom/sun/jna/platform/win32/WinDef$LRESULT;
+       294: areturn
+      Exception table:
+         from    to  target type
+             0    21   250   Class java/lang/Exception
+            22    37   250   Class java/lang/Exception
+            38   156   250   Class java/lang/Exception
+           157   179   250   Class java/lang/Exception
+           180   199   250   Class java/lang/Exception
+           200   246   250   Class java/lang/Exception
+
+  static {};
+    Code:
+         0: aconst_null
+         1: putstatic     #99                 // Field prevWndProcInteger:Ljava/lang/Integer;
+         4: return
+}

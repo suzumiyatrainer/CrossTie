@@ -1,0 +1,275 @@
+﻿Compiled from "CandidateList.java"
+public class com.tsoft_web.IntelliInput.NativeStructure.CandidateList {
+  public final int dwSize;
+
+  public final int dwStyle;
+
+  public final int dwCount;
+
+  public final int dwSelection;
+
+  public final int dwPageStart;
+
+  public final int dwPageSize;
+
+  public final java.util.ArrayList<java.lang.String> list;
+
+  public com.tsoft_web.IntelliInput.NativeStructure.CandidateList(byte[]);
+    Code:
+         0: aload_0
+         1: invokespecial #24                 // Method java/lang/Object."<init>":()V
+         4: aload_0
+         5: aload_1
+         6: iconst_0
+         7: invokestatic  #28                 // Method toInt32:([BI)I
+        10: putfield      #30                 // Field dwSize:I
+        13: aload_0
+        14: aload_1
+        15: iconst_4
+        16: invokestatic  #28                 // Method toInt32:([BI)I
+        19: putfield      #32                 // Field dwStyle:I
+        22: aload_0
+        23: aload_1
+        24: bipush        8
+        26: invokestatic  #28                 // Method toInt32:([BI)I
+        29: putfield      #34                 // Field dwCount:I
+        32: aload_0
+        33: aload_1
+        34: bipush        12
+        36: invokestatic  #28                 // Method toInt32:([BI)I
+        39: putfield      #36                 // Field dwSelection:I
+        42: aload_0
+        43: aload_1
+        44: bipush        16
+        46: invokestatic  #28                 // Method toInt32:([BI)I
+        49: putfield      #38                 // Field dwPageStart:I
+        52: aload_0
+        53: aload_1
+        54: bipush        20
+        56: invokestatic  #28                 // Method toInt32:([BI)I
+        59: putfield      #40                 // Field dwPageSize:I
+        62: aload_0
+        63: new           #42                 // class java/util/ArrayList
+        66: dup
+        67: invokespecial #43                 // Method java/util/ArrayList."<init>":()V
+        70: putfield      #45                 // Field list:Ljava/util/ArrayList;
+        73: iconst_0
+        74: istore_2
+        75: iload_2
+        76: aload_0
+        77: getfield      #34                 // Field dwCount:I
+        80: if_icmpge     171
+        83: aload_1
+        84: iload_2
+        85: iconst_4
+        86: imul
+        87: bipush        24
+        89: iadd
+        90: invokestatic  #28                 // Method toInt32:([BI)I
+        93: istore_3
+        94: iconst_0
+        95: istore        4
+        97: aload_1
+        98: iload_3
+        99: iload         4
+       101: iadd
+       102: baload
+       103: ifne          117
+       106: aload_1
+       107: iload_3
+       108: iload         4
+       110: iadd
+       111: iconst_1
+       112: isub
+       113: baload
+       114: ifeq          123
+       117: iinc          4, 1
+       120: goto          97
+       123: iinc          4, -1
+       126: aload_0
+       127: getfield      #45                 // Field list:Ljava/util/ArrayList;
+       130: new           #49                 // class java/lang/String
+       133: dup
+       134: aload_1
+       135: iload_3
+       136: iload_3
+       137: iload         4
+       139: iadd
+       140: invokestatic  #55                 // Method java/util/Arrays.copyOfRange:([BII)[B
+       143: ldc           #57                 // String Windows-31J
+       145: invokespecial #60                 // Method java/lang/String."<init>":([BLjava/lang/String;)V
+       148: invokestatic  #66                 // Method com/tsoft_web/IntelliInput/IntelliInput.Sanitizing:(Ljava/lang/String;)Ljava/lang/String;
+       151: invokevirtual #70                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+       154: pop
+       155: goto          160
+       158: astore        5
+       160: goto          165
+       163: astore_3
+       164: return
+       165: iinc          2, 1
+       168: goto          75
+       171: return
+      Exception table:
+         from    to  target type
+           126   155   158   Class java/io/UnsupportedEncodingException
+            83   160   163   Class java/lang/Exception
+
+  public com.tsoft_web.IntelliInput.NativeStructure.CandidateList(char[]);
+    Code:
+         0: aload_0
+         1: invokespecial #24                 // Method java/lang/Object."<init>":()V
+         4: aload_0
+         5: aload_1
+         6: iconst_0
+         7: invokestatic  #82                 // Method toInt32:([CI)I
+        10: putfield      #30                 // Field dwSize:I
+        13: aload_0
+        14: aload_1
+        15: iconst_2
+        16: invokestatic  #82                 // Method toInt32:([CI)I
+        19: putfield      #32                 // Field dwStyle:I
+        22: aload_0
+        23: aload_1
+        24: iconst_4
+        25: invokestatic  #82                 // Method toInt32:([CI)I
+        28: putfield      #34                 // Field dwCount:I
+        31: aload_0
+        32: aload_1
+        33: bipush        6
+        35: invokestatic  #82                 // Method toInt32:([CI)I
+        38: putfield      #36                 // Field dwSelection:I
+        41: aload_0
+        42: aload_1
+        43: bipush        8
+        45: invokestatic  #82                 // Method toInt32:([CI)I
+        48: putfield      #38                 // Field dwPageStart:I
+        51: aload_0
+        52: aload_1
+        53: bipush        10
+        55: invokestatic  #82                 // Method toInt32:([CI)I
+        58: putfield      #40                 // Field dwPageSize:I
+        61: aload_0
+        62: new           #42                 // class java/util/ArrayList
+        65: dup
+        66: invokespecial #43                 // Method java/util/ArrayList."<init>":()V
+        69: putfield      #45                 // Field list:Ljava/util/ArrayList;
+        72: iconst_0
+        73: istore_2
+        74: iload_2
+        75: aload_0
+        76: getfield      #34                 // Field dwCount:I
+        79: if_icmpge     147
+        82: aload_1
+        83: iload_2
+        84: iconst_2
+        85: imul
+        86: bipush        12
+        88: iadd
+        89: invokestatic  #82                 // Method toInt32:([CI)I
+        92: iconst_2
+        93: idiv
+        94: istore_3
+        95: iconst_0
+        96: istore        4
+        98: aload_1
+        99: iload_3
+       100: iload         4
+       102: iadd
+       103: caload
+       104: ifeq          113
+       107: iinc          4, 1
+       110: goto          98
+       113: aload_0
+       114: getfield      #45                 // Field list:Ljava/util/ArrayList;
+       117: aload_1
+       118: iload_3
+       119: iload_3
+       120: iload         4
+       122: iadd
+       123: invokestatic  #87                 // Method java/util/Arrays.copyOfRange:([CII)[C
+       126: invokestatic  #93                 // Method com/sun/jna/Native.toString:([C)Ljava/lang/String;
+       129: invokestatic  #66                 // Method com/tsoft_web/IntelliInput/IntelliInput.Sanitizing:(Ljava/lang/String;)Ljava/lang/String;
+       132: invokevirtual #70                 // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+       135: pop
+       136: goto          141
+       139: astore_3
+       140: return
+       141: iinc          2, 1
+       144: goto          74
+       147: return
+      Exception table:
+         from    to  target type
+            82   136   139   Class java/lang/Exception
+
+  private int byteToInt(byte[], int);
+    Code:
+         0: iconst_0
+         1: istore_3
+         2: iconst_0
+         3: istore        4
+         5: iload         4
+         7: iconst_4
+         8: if_icmpge     32
+        11: iload_3
+        12: iconst_4
+        13: ishl
+        14: aload_1
+        15: iload_2
+        16: iload         4
+        18: iadd
+        19: baload
+        20: sipush        255
+        23: iand
+        24: iadd
+        25: istore_3
+        26: iinc          4, 1
+        29: goto          5
+        32: iload_3
+        33: ireturn
+
+  public static int toInt32(byte[], int);
+    Code:
+         0: aload_0
+         1: iload_1
+         2: iconst_3
+         3: iadd
+         4: baload
+         5: bipush        24
+         7: ishl
+         8: aload_0
+         9: iload_1
+        10: iconst_2
+        11: iadd
+        12: baload
+        13: bipush        16
+        15: ishl
+        16: iadd
+        17: aload_0
+        18: iload_1
+        19: iconst_1
+        20: iadd
+        21: baload
+        22: bipush        8
+        24: ishl
+        25: iadd
+        26: aload_0
+        27: iload_1
+        28: baload
+        29: iadd
+        30: ireturn
+
+  public static int toInt32(char[], int);
+    Code:
+         0: aload_0
+         1: iload_1
+         2: iconst_1
+         3: iadd
+         4: caload
+         5: bipush        16
+         7: ishl
+         8: aload_0
+         9: iload_1
+        10: caload
+        11: iadd
+        12: ireturn
+}

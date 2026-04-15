@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Gradle dependencies
+  - package-manager: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "suzumiya"
+    labels:
+      - "dependencies"
+    allow:
+      - dependency-type: "all"
