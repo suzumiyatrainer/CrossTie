@@ -32,7 +32,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
           
       - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
@@ -52,13 +52,13 @@ jobs:
           project: 'CrossTie'
           path: '.'
           format: 'SARIF'
-          args: '--enable-retired'
+          out: 'reports'
             
       - name: Upload results to Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: 'reports/dependency-check-report.sarif'
+          sarif_file: 'reports/dependency-check.sarif'
           category: 'dependency-check'
 
   secret-scanning:
