@@ -4,20 +4,20 @@ import cpw.mods.fml.common.Loader;
 import net.suzumiya.crosstie.CrossTie;
 
 /**
- * 実行時のMod検出システム
- * 
- * 存在しないModの最適化を自動的に無効化するために使用します。
+ * 起動時に導入済み Mod を検出するユーティリティ。
+ *
+ * 必要な Mod の有無を自動判定して、互換レイヤーの有効・無効を切り替えます。
  */
 public class ModDetector {
 
-    // ターゲットMod
+    // 対象 Mod
     public static boolean hasRTM = false;
     public static boolean hasBamboo = false;
     public static boolean hasOEMod = false;
     public static boolean hasATSAssist = false;
     public static boolean hasSignalController = false;
 
-    // 軽量化Mod (互換性確認用)
+    // 軽量化 Mod（互換性確認用）
     public static boolean hasOptiFine = false;
     public static boolean hasAngelica = false;
     public static boolean hasFalseTweaks = false;
@@ -27,32 +27,32 @@ public class ModDetector {
     public static boolean hasCoreTweaks = false;
 
     /**
-     * 全ての関連Modの存在を検出
+     * すべての対象 Mod の導入有無を確認する。
      */
     public static void detectMods() {
-        // ターゲットMod検出
+        // 対象 Mod を検出する
         hasRTM = Loader.isModLoaded("RTM");
         hasBamboo = Loader.isModLoaded("Bamboo");
         hasOEMod = Loader.isModLoaded("OEMod");
         hasATSAssist = Loader.isModLoaded("ATSAssist");
         hasSignalController = Loader.isModLoaded("SignalController");
 
-        // 軽量化Mod検出
+        // 軽量化 Mod を検出する
         hasAngelica = Loader.isModLoaded("angelica");
         hasFalseTweaks = Loader.isModLoaded("falsetweaks");
         hasBeddium = Loader.isModLoaded("beddium");
         hasSwanSong = Loader.isModLoaded("swansong");
         hasCoreTweaks = Loader.isModLoaded("coretweaks");
 
-        // OptiFineはリフレクションで検出（ModIDを持たないため）
+        // OptiFine は ModID を持たないため、反射で検出する
         hasOptiFine = checkOptiFine();
 
-        // FastCraftもリフレクションで検出
+        // FastCraft も反射で検出する
         hasFastCraft = checkFastCraft();
     }
 
     /**
-     * OptiFineの存在をリフレクションで確認
+     * OptiFine の導入有無を反射で確認する。
      */
     private static boolean checkOptiFine() {
         try {
@@ -69,7 +69,7 @@ public class ModDetector {
     }
 
     /**
-     * FastCraftの存在をリフレクションで確認
+     * FastCraft の導入有無を反射で確認する。
      */
     private static boolean checkFastCraft() {
         try {
@@ -81,19 +81,19 @@ public class ModDetector {
     }
 
     /**
-     * 検出したModをログに出力
+     * 検出した Mod をログに出力する。
      */
     public static void logDetectedMods() {
-        CrossTie.LOGGER.info("=== CrossTie Mod Detection ===");
+        CrossTie.LOGGER.info("=== CrossTie Mod 検出 ===");
 
-        CrossTie.LOGGER.info("Target Mods:");
+        CrossTie.LOGGER.info("対象 Mod:");
         logMod("RTM/KaizPatchX", hasRTM);
         logMod("Bamboo", hasBamboo);
         logMod("OEMod", hasOEMod);
         logMod("ATSAssist", hasATSAssist);
         logMod("SignalController", hasSignalController);
 
-        CrossTie.LOGGER.info("Performance Mods (Compatibility Layer):");
+        CrossTie.LOGGER.info("軽量化 Mod（互換レイヤー）:");
         logMod("OptiFine", hasOptiFine);
         logMod("Angelica", hasAngelica);
         logMod("FalseTweaks", hasFalseTweaks);
@@ -106,32 +106,32 @@ public class ModDetector {
     }
 
     private static void logMod(String modName, boolean detected) {
-        CrossTie.LOGGER.info("  {} - {}", modName, detected ? "FOUND" : "Not Found");
+        CrossTie.LOGGER.info("  {} - {}", modName, detected ? "検出" : "未検出");
     }
 
     /**
-     * RTMが存在するか確認
+     * RTM が導入されているかを返す。
      */
     public static boolean isRTMPresent() {
         return hasRTM;
     }
 
     /**
-     * いずれかのターゲットModが存在するか確認
+     * いずれかの対象 Mod が導入されているかを返す。
      */
     public static boolean hasAnyTargetMod() {
         return hasRTM || hasBamboo || hasOEMod || hasATSAssist || hasSignalController;
     }
 
     /**
-     * 互換性レイヤーが必要か確認
+     * 互換性レイヤーが必要かを返す。
      */
     public static boolean needsCompatibilityLayer() {
         return hasOptiFine || hasAngelica || hasFalseTweaks || hasBeddium || hasFastCraft;
     }
 
     /**
-     * クラスが存在するか確認 (Mixinロード時用)
+     * 指定クラスが読み込まれているかを確認する。（Mixin の条件分岐用）
      */
     public static boolean isClassLoaded(String className) {
         try {

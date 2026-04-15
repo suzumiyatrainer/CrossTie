@@ -10,6 +10,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+/**
+ * MachineBase 系 TileEntity の更新と描画範囲を調整する。
+ */
 @Mixin(targets = "jp.ngt.rtm.block.tileentity.TileEntityMachineBase", remap = false)
 public abstract class TileEntityMachineBaseMixin extends TileEntity {
 
@@ -23,8 +26,7 @@ public abstract class TileEntityMachineBaseMixin extends TileEntity {
             return;
         }
 
-            // TileEntityは座標が固定なので、キャッシュ可能だが、プレイヤー移動により変わる
-            // RenderDistance + 2 チャンク
+        // TileEntity は位置が固定なので、描画距離に応じて更新を止める
         double cullLimit = (renderChunks + 1) * 16.0D;
         double limitSq = cullLimit * cullLimit;
 

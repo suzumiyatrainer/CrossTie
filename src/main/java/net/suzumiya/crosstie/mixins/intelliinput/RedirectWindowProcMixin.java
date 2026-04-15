@@ -13,11 +13,10 @@ import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /**
- * Stabilizes IntelliInput's native callback path.
+ * IntelliInput のネイティブコールバック経路を安定化する。
  *
- * IntelliInput may throw LastErrorException(87) from CallWindowProc in some
- * render/input stacks. To keep the game alive, bypass its chained
- * CallWindowProc and route callback handling to DefWindowProc.
+ * 一部環境で CallWindowProc が LastErrorException(87) を投げることがあるため、
+ * その場合は DefWindowProc へフォールバックする。
  */
 @Pseudo
 @Mixin(targets = "com.tsoft_web.IntelliInput.RedirectWindowProc", remap = false)

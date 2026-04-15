@@ -8,13 +8,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * 列車エンティティ共通の最適化
+ * EntityTrainBase の更新を描画距離で間引く。
  */
 @Mixin(targets = "jp.ngt.rtm.entity.train.EntityTrainBase", remap = false)
 public abstract class EntityTrainBaseMixin {
 
     /**
-     * 描画距離外のエンティティの更新をスキップ
+     * 描画距離の外にある列車は更新を止める。
      */
     @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true)
     private void crosstie$cullDistantUpdates(CallbackInfo ci) {

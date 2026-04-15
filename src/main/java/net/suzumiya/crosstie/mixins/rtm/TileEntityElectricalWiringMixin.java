@@ -9,8 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * 架線・コネクタ等の更新処理最適化
- * クライアント側での通電エフェクト（パーティクル）などを距離制限
+ * 電線系 TileEntity の更新を描画距離で抑制する。
  */
 @Mixin(targets = "jp.ngt.rtm.electric.TileEntityElectricalWiring", remap = false)
 public abstract class TileEntityElectricalWiringMixin extends TileEntity {
@@ -26,7 +25,7 @@ public abstract class TileEntityElectricalWiringMixin extends TileEntity {
             if (renderChunks <= 0)
                 return;
 
-            // RenderDistance + 2 チャンク
+            // 描画距離 + 2 チャンク
             double cullLimit = (renderChunks + 2) * 16.0;
             double limitSq = cullLimit * cullLimit;
 

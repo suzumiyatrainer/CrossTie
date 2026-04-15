@@ -4,13 +4,11 @@ import java.lang.reflect.Method;
 import org.lwjgl.opengl.GL11;
 
 /**
- * Script-side GL11 bridge.
+ * スクリプト側から呼ばれる GL11 の仲介クラス。
  *
- * RTM scripts call GL11 methods directly. On Angelica 2.1.17, legacy matrix
- * functions can be unavailable on org.lwjgl.opengl.GL11 and crash with
- * "Function is not supported". This bridge routes known script calls to
- * Angelica GLStateManager when available, and falls back to LWJGL GL11
- * otherwise.
+ * RTM のスクリプトは GL11 を直接呼ぶため、Angelica 環境では古い行列系 API が
+ * 使えずに落ちることがあります。ここで既知の呼び出しを Angelica 側へ振り分け、
+ * 使えない場合は LWJGL の GL11 にフォールバックします。
  */
 public final class AngelicaScriptGLBridge {
 
@@ -45,7 +43,7 @@ public final class AngelicaScriptGLBridge {
         try {
             glStateManager = Class.forName(GL_STATE_MANAGER_CLASS, false, AngelicaScriptGLBridge.class.getClassLoader());
         } catch (ClassNotFoundException ignored) {
-            // Angelica absent.
+            // Angelica が無い場合
         }
         ANGELICA_GL_STATE_MANAGER = glStateManager;
 
@@ -103,7 +101,7 @@ public final class AngelicaScriptGLBridge {
         try {
             call.run();
         } catch (IllegalStateException ignored) {
-            // Keep rendering alive even when legacy fixed-function entrypoint is missing.
+            // 旧固定機能の入口が無くても描画を止めない
         }
     }
 

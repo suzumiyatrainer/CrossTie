@@ -12,10 +12,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Reinitializes Angelica client-array state before RenderGlobal builds startup display lists.
+ * RenderGlobal の初期化前に Angelica のクライアント状態を再初期化する。
  *
- * Angelica replays Tessellator draws through VertexAttribState during display-list compilation.
- * Startup sky/star display lists are especially sensitive because they run before the first world loads.
+ * ディスプレイリストの生成前に頂点属性やクライアントステートを整え、起動直後の
+ * 空・星空描画で落ちないようにする。
  */
 @Mixin(value = RenderGlobal.class)
 public class RenderGlobalInitMixin {
@@ -71,7 +71,7 @@ public class RenderGlobalInitMixin {
                 disableAttrib.invoke(null, i);
             }
         } catch (ReflectiveOperationException ignored) {
-            // Angelica absent or internals changed; skip the cleanup.
+            // Angelica が無い、または内部構造が変わっているので、後始末は行わない
         }
     }
 }

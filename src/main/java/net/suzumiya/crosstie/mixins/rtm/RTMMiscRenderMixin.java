@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * RTMの各種マシン・装飾・架線の描画最適化
+ * RTM の各種 TileEntity レンダラをまとめて距離カリングする。
  */
 @Mixin(targets = {
         "jp.ngt.rtm.electric.RenderElectricalWiring",
@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 }, remap = false)
 public abstract class RTMMiscRenderMixin extends TileEntitySpecialRenderer {
 
-    // renderTileEntityAtのエイリアス (Deobf / SRG)
+    // renderTileEntityAt の別名（Deobf / SRG）
     @Inject(method = { "renderTileEntityAt", "func_147500_a" }, at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$cullRender(TileEntity tileEntity, double x, double y, double z, float partialTicks,
             CallbackInfo ci) {
@@ -47,7 +47,7 @@ public abstract class RTMMiscRenderMixin extends TileEntitySpecialRenderer {
 
         double cullDist = renderChunks * 16.0;
 
-        // TileEntity.getDistanceFrom returns squared distance
+        // TileEntity の距離判定は二乗距離
         if (tileEntity.getDistanceFrom(mc.renderViewEntity.posX, mc.renderViewEntity.posY,
                 mc.renderViewEntity.posZ) > cullDist * cullDist) {
             ci.cancel();

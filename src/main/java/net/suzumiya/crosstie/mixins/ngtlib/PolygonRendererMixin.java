@@ -8,49 +8,40 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * PolygonRendererへのMixin。
- * 
- * hi03ExpressRailwayコンテキストがアクティブな場合、
- * Angelicaのディスプレイリスト最適化（VBO変換）をバイパスして
- * 直接OpenGL呼び出しを使用します。
- * 
- * これにより、DisplayListコンパイル内でPolygonRendererを使用する
- * hi03ExpressRailwayのバラスト描画問題を修正します。
+ * PolygonRenderer に対する mixin。
+ *
+ * hi03ExpressRailway の描画中は、Angelica の display list 変換を避けて OpenGL の
+ * 直接描画経路を使います。これで VBO 変換後の描画崩れを抑えます。
  */
 @Mixin(targets = "jp.ngt.ngtlib.renderer.PolygonRenderer", remap = false)
 public abstract class PolygonRendererMixin {
 
     /**
-     * startDrawing時にhi03コンテキストならglBeginをバイパスマーク
-     * 
-     * Note: Angelicaはglsm経由でGL11.glBegin()をインターセプトするため、
-     * この時点でコンテキストフラグを確認し、必要に応じてバイパスロジックを適用
+     * startDrawing 時は hi03 コンテキストを優先して、Angelica の介入を避ける。
      */
     @Inject(method = "startDrawing", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$bypassAngelicaStartDrawing(int mode, CallbackInfo ci) {
         if (Hi03ExpressRailwayContext.isActive()) {
-            // Angelicaのインターセプトをバイパスして直接LWJGL GL11を呼び出し
-            // org.lwjgl.opengl.GL11 を直接使用することで、
-            // AngelicaのGLStateManagerフックを回避
+            // Angelica を経由せず、直接 LWJGL の GL11 を呼ぶ
             org.lwjgl.opengl.GL11.glBegin(mode);
             ci.cancel();
         }
     }
 
     /**
-     * draw時にhi03コンテキストなら直接glEndを呼び出し
+     * draw 時は hi03 コンテキストを優先して、Angelica の介入を避ける。
      */
     @Inject(method = "draw", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$bypassAngelicaDraw(CallbackInfoReturnable<Integer> cir) {
         if (Hi03ExpressRailwayContext.isActive()) {
-            // Angelicaのインターセプトをバイパスして直接LWJGL GL11を呼び出し
+            // Angelica を経由せず、直接 LWJGL の GL11 を呼ぶ
             org.lwjgl.opengl.GL11.glEnd();
             cir.setReturnValue(0);
         }
     }
 
     /**
-     * addVertexWithUV時にhi03コンテキストなら直接GL実行
+     * addVertexWithUV 時は hi03 コンテキストを優先して、Angelica の介入を避ける。
      */
     @Inject(method = "addVertexWithUV", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$bypassAngelicaVertex(float x, float y, float z, float u, float v, CallbackInfo ci) {
@@ -62,7 +53,7 @@ public abstract class PolygonRendererMixin {
     }
 
     /**
-     * setNormal時にhi03コンテキストなら直接GL実行
+     * setNormal 時は hi03 コンテキストを優先して、Angelica の介入を避ける。
      */
     @Inject(method = "setNormal", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$bypassAngelicaNormal(float x, float y, float z, CallbackInfo ci) {

@@ -7,11 +7,11 @@ import java.io.File;
 public class CrossTieConfig {
     public static Configuration config;
 
-    // FPS Optimizations
+    // FPS 最適化
     public static boolean enableRenderCulling = true;
-    public static boolean fixAngelicaRailCulling = false; // Default false as per request
+    public static boolean fixAngelicaRailCulling = false; // 既定値は false
 
-    // TPS Optimizations
+    // TPS 最適化
     public static boolean enableTileEntityUpdates = true;
 
     public static void init(File configFile) {
@@ -23,16 +23,17 @@ public class CrossTieConfig {
         try {
             config.load();
 
-            // FPS Category
+            // FPS 設定項目
             enableRenderCulling = config.getBoolean("enableRenderCulling", "fps", true,
-                    "Enable render culling for RTM vehicles and machines.");
+                    "RTM の車両と機械に対する描画カリングを有効にします。");
 
             fixAngelicaRailCulling = config.getBoolean("fixAngelicaRailCulling", "fps", false,
-                    "Fixes rail culling issues with Angelica/Sodium by extending the bounding box of rails. May reduce FPS slightly when enabled.");
+                    "レールのバウンディングボックスを広げて、Angelica / Sodium で起きるレールカリング問題を修正します。"
+                            + "有効にすると FPS が少し下がる場合があります。");
 
-            // TPS Category
+            // TPS 設定項目
             enableTileEntityUpdates = config.getBoolean("enableTileEntityUpdates", "tps", true,
-                    "Enable server-side update optimizations for TileEntities.");
+                    "TileEntity のサーバー側更新最適化を有効にします。");
 
         } catch (Exception e) {
             FMLLog.getLogger().error("[CrossTie] Failed to load configuration", e);

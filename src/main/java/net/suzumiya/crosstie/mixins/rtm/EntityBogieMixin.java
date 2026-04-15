@@ -10,18 +10,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * EntityBogie最適化Mixin
- * 
- * 台車エンティティの負荷を軽減します。
+ * EntityBogie の更新を軽量化する mixin。
+ *
+ * サーバー側のアニメーション処理を止め、クライアント側も描画距離外では更新しない。
  */
 @Mixin(targets = "jp.ngt.rtm.entity.train.EntityBogie", remap = false)
 public abstract class EntityBogieMixin {
 
     /**
-     * サーバー側でのアニメーション/エフェクト処理をスキップ
-     * 
-     * EntityBogieには車輪の回転などのアニメーションがありますが、
-     * サーバー側では不要です。
+     * サーバー側では車輪アニメーションを実行しない。
      */
     @Inject(method = "updateWheelRotation", at = @At("HEAD"), cancellable = true, require = 0)
     private void crosstie$skipServerAnimation(CallbackInfo ci) {
@@ -32,29 +29,14 @@ public abstract class EntityBogieMixin {
     }
 
     /**
-     * 静止時の重い更新処理をスキップ
-     * 
-     * 速度がほぼ0の場合、レール検索などの重い更新をスキップします。
-     * ただし、必要な更新（当たり判定など）は残すため、一部分のみスキップします。
-     */
-    /*
-     * Note: RTMのコード構造に深く依存するため、現時点では安全のためアニメーションのみ最適化します。
-     * 
-     * @Inject(method = "updateBogiePos", at = @At("HEAD"), cancellable = true)
-     * private void crosstie$skipStaticUpdate(CallbackInfo ci) {
-     * if (Math.abs(this.getSpeed()) < CROSSTIE$SPEED_THRESHOLD) {
-     * ci.cancel();
-     * }
-     * }
+     * 描画距離外では bogie の更新を間引く。
      */
     @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$cullDistantUpdates(CallbackInfo ci) {
         Entity bogie = (Entity) (Object) this;
         if (bogie.worldObj.isRemote) {
-            // クライアント側の更新描画距離カリング
-            // 描画距離 + 2チャンク (1チャンク=16ブロック)
+            // クライアント側の描画距離に応じて更新を抑制する
             int renderChunks = CrossTie.proxy.getClientRenderDistance();
-            // デフォルト未満ならカリングしない
             if (renderChunks <= 0)
                 return;
 

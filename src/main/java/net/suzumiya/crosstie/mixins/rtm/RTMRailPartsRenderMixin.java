@@ -14,18 +14,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * RailPartsRenderer optimization and compatibility mixin.
- *
- * 讖溯・:
- * 1. 霍晞屬繝吶・繧ｹ縺ｮ繧ｫ繝ｪ繝ｳ繧ｰ譛驕ｩ蛹・
- * 2. hi03ExpressRailway Angelica莠呈鋤諤ｧ菫ｮ豁｣
+ * RailPartsRenderer の描画を安定化しつつ、hi03ExpressRailway だけ特別扱いする。
  */
 @Mixin(targets = "jp.ngt.rtm.render.RailPartsRenderer", remap = false)
 public abstract class RTMRailPartsRenderMixin {
 
     /**
-     * hi03ExpressRailway繝｢繝・Ν讀懷・縺ｨ繧ｳ繝ｳ繝・く繧ｹ繝域怏蜉ｹ蛹・
-     * renderRail髢句ｧ区凾縺ｫ繝｢繝・Ν蜷阪ｒ繝√ぉ繝・け
+     * hi03ExpressRailway のときだけ、描画コンテキストを有効にする。
      */
     @Inject(method = "renderRail", at = @At("HEAD"), remap = false)
     private void crosstie$enterHi03Context(TileEntity tileEntity, int index, double x, double y, double z,
@@ -36,12 +31,12 @@ public abstract class RTMRailPartsRenderMixin {
                 Hi03ExpressRailwayContext.enter();
             }
         } catch (Exception e) {
-            // 繝｢繝・Ν蜷榊叙蠕怜､ｱ謨玲凾縺ｯ辟｡隕・螳牙・縺ｫ繝輔か繝ｼ繝ｫ繝舌ャ繧ｯ)
+            // 失敗しても通常描画に戻すだけにする
         }
     }
 
     /**
-     * renderRail邨ゆｺ・凾縺ｫ繧ｳ繝ｳ繝・く繧ｹ繝医ｒ遒ｺ螳溘↓邨ゆｺ・
+     * renderRail の終了時にコンテキストを必ず解除する。
      */
     @Inject(method = "renderRail", at = @At("RETURN"), remap = false)
     private void crosstie$exitHi03Context(TileEntity tileEntity, int index, double x, double y, double z,
@@ -50,8 +45,7 @@ public abstract class RTMRailPartsRenderMixin {
     }
 
     /**
-     * 霍晞屬繝吶・繧ｹ縺ｮ繧ｫ繝ｪ繝ｳ繧ｰ譛驕ｩ蛹・
-     * 繝励Ξ繧､繝､繝ｼ縺九ｉ驕縺吶℃繧九Ξ繝ｼ繝ｫ縺ｮ繝ｬ繝ｳ繝繝ｪ繝ｳ繧ｰ繧偵せ繧ｭ繝・・
+     * 描画距離外のレール部品は描画しない。
      */
     @Inject(method = "renderRail", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$cullRailParts(TileEntity tileEntity, int index, double x, double y, double z,
@@ -72,7 +66,7 @@ public abstract class RTMRailPartsRenderMixin {
 
         double cullDist = renderChunks * 16.0;
 
-        // TileEntity.getDistanceFrom returns squared distance
+        // TileEntity の距離判定は二乗距離
         if (tileEntity.getDistanceFrom(mc.renderViewEntity.posX, mc.renderViewEntity.posY,
                 mc.renderViewEntity.posZ) > cullDist * cullDist) {
             ci.cancel();

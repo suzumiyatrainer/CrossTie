@@ -14,8 +14,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /**
- * Rewrites RTM script GL11 method calls to a CrossTie bridge so Angelica can
- * handle legacy matrix APIs safely.
+ * RTM スクリプト内の GL11 呼び出しを CrossTie のブリッジに書き換える。
+ *
+ * Angelica 環境で古い行列系 API が直接呼ばれても落ちないように、スクリプト文字列を
+ * 実行前に差し替えます。
  */
 @Mixin(targets = "jp.ngt.ngtlib.io.ScriptUtil", remap = false)
 public abstract class ScriptUtilMixin {

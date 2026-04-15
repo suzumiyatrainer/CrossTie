@@ -8,8 +8,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * BambooModのTileEntity最適化
- * 更新処理が重いTileEntityを距離カリングします。
+ * Bamboo Mod の TileEntity 更新を距離で抑制する。
+ *
+ * クライアント側は描画範囲外の更新を止め、サーバー側は更新頻度を落として負荷を下げる。
  */
 @Mixin(targets = {
         "ruby.bamboo.tileentity.TileEntityCampfire",
@@ -30,7 +31,7 @@ public abstract class BambooTileEntityMixin extends TileEntity {
             if (renderChunks <= 0)
                 return;
 
-            // クライアント側チェック
+            // クライアント側は描画距離 + 2 チャンクで間引く
             double cullLimit = renderChunks * 16.0;
             double limitSq = cullLimit * cullLimit;
 
@@ -39,16 +40,13 @@ public abstract class BambooTileEntityMixin extends TileEntity {
                 ci.cancel();
             }
         } else {
-            // サーバー側最適化: 手動ループでプレイヤー確認
-            // 20tickに1回だけチェック (負荷分散)
+            // サーバー側は更新を半分に抑え、必要時だけ近くのプレイヤーを確認する
             if ((this.worldObj.getTotalWorldTime() + this.hashCode()) % 20 == 0) {
                 boolean isPlayerNear = false;
-                double limitSq = 64.0 * 64.0; // 64m以内
-
+                double limitSq = 64.0 * 64.0;
                 for (Object obj : this.worldObj.playerEntities) {
                     if (obj instanceof net.minecraft.entity.Entity) {
                         net.minecraft.entity.Entity p = (net.minecraft.entity.Entity) obj;
-                        // getDistanceFrom returns squared distance
                         if (this.getDistanceFrom(p.posX, p.posY, p.posZ) < limitSq) {
                             isPlayerNear = true;
                             break;
@@ -56,33 +54,10 @@ public abstract class BambooTileEntityMixin extends TileEntity {
                     }
                 }
 
-                // プレイヤーが近くにいなければキャンセル
-                // ただし、この判定は20tickに1回しか行われないため、
-                // 「判定したtickだけキャンセルする」ことになり、間引き実行(Throttling)になる。
-                // これにより負荷は約1/20になる。完全停止ではないので調理も少しずつ進む。
                 if (!isPlayerNear) {
                     ci.cancel();
                 }
             } else {
-                // チェックしないtickも、近くにいないと仮定してスキップする？
-                // いや、状態を持てないので、「チェックの時だけ動く」or「チェックの時だけ止まる」のどちらか。
-                // 上記ロジックだと「チェックした時に近くにいなければ止まる」だけなので、19/20は通常通り動いてしまう。
-
-                // 逆にしよう。「プレイヤーが近くにいるなら動く」
-                // しかし状態保存できない。
-
-                // 妥協案: サーバー側では「無条件で間引く」
-                // プレイヤー距離チェック自体が重いので、遠くのチャンクローダー内での動作を軽くしたいなら
-                // 「2tickに1回実行」などの単純な間引きがベスト。
-                // BambooのTEは軽いので、何もしないのが一番安全かも。
-
-                // しかしユーザーの要望に応えるなら:
-                // 「プレイヤー距離チェックを行い、遠ければキャンセル」
-                // これを毎tickやるのは、TEが1万個あると重い。
-
-                // 今回は「安全確実な単純間引き」にします。
-                // サーバー側では常に 1/2 の頻度で実行 (2回に1回スキップ)
-                // これなら全域で軽量化され、副作用も少ない(調理時間が2倍になるだけ)。
                 if (this.worldObj.getTotalWorldTime() % 2 != 0) {
                     ci.cancel();
                 }

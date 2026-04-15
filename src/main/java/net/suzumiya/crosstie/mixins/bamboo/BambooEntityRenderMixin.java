@@ -10,8 +10,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * BambooModのエンティティ描画最適化
- * 蛍、風車、水車などのエンティティ描画を描画距離外でスキップします。
+ * Bamboo Mod の Entity 描画を距離で間引く。
+ *
+ * 飛翔系や装飾系の Entity を、描画距離の外では描画しないようにする。
  */
 @Mixin(targets = {
         "ruby.bamboo.render.RenderFirefly",
@@ -36,10 +37,10 @@ public abstract class BambooEntityRenderMixin extends Render {
         if (renderChunks < 4)
             renderChunks = 4;
 
-        // 描画距離 + 2チャンク (Entityは移動するため少し余裕を持たせる)
+        // 描画距離 + 2 チャンクの範囲まで許可する
         double cullDist = (renderChunks + 2) * 16.0;
 
-        // Entity.getDistanceSq returns squared distance (This is correct for Entity)
+        // Entity の距離判定は二乗距離で行う
         if (entity.getDistanceSqToEntity(mc.renderViewEntity) > cullDist * cullDist) {
             ci.cancel();
         }

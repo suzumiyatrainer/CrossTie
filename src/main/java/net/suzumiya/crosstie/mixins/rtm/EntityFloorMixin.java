@@ -8,8 +8,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * 床エンティティの最適化
- * プロファイルで大量に確認されたため、個別にカリングを適用
+ * EntityFloor の更新を間引いて軽量化する。
+ *
+ * プロファイルで重くなりやすい床系エンティティを、プレイヤーから遠い場合に止める。
  */
 @Mixin(targets = "jp.ngt.rtm.entity.train.parts.EntityFloor", remap = false)
 public abstract class EntityFloorMixin {

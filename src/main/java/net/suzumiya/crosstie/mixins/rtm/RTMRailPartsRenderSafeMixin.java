@@ -15,8 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Reimplements renderRail with explicit cleanup so hi03 context cannot leak into
- * unrelated Angelica display-list compilation.
+ * renderRail を明示的に後始末する形で再実装し、hi03 の状態漏れを防ぐ。
  */
 @Mixin(targets = "jp.ngt.rtm.render.RailPartsRenderer", remap = false)
 public abstract class RTMRailPartsRenderSafeMixin {
@@ -47,7 +46,7 @@ public abstract class RTMRailPartsRenderSafeMixin {
                 try {
                     GL11.glEndList();
                 } catch (RuntimeException ignored) {
-                    // Best-effort cleanup if compile aborted after opening a native list.
+                    // ネイティブの list を開いたまま中断した場合の最終手段の後始末
                 }
             }
             Hi03ExpressRailwayContext.reset();

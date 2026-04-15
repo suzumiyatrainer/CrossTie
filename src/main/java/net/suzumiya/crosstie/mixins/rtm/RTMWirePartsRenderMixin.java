@@ -10,15 +10,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * WirePartsRenderer optimization mixin.
- * Performs distance-based culling for wire rendering.
+ * WirePartsRenderer を距離で間引く。
  */
 @Mixin(targets = "jp.ngt.rtm.render.WirePartsRenderer", remap = false)
 public abstract class RTMWirePartsRenderMixin {
 
     /**
-     * Cull wires that are too far from the player.
-     * Uses exact parameter types as required by Mixin.
+     * プレイヤーから遠いワイヤーは描画しない。
      */
     @Inject(method = "renderWire", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$cullWireParts(TileEntity tileEntity, CallbackInfo ci) {
@@ -36,7 +34,7 @@ public abstract class RTMWirePartsRenderMixin {
 
         double cullDist = renderChunks * 16.0;
 
-        // TileEntity.getDistanceFrom returns squared distance
+        // TileEntity の距離判定は二乗距離
         if (tileEntity.getDistanceFrom(mc.renderViewEntity.posX, mc.renderViewEntity.posY,
                 mc.renderViewEntity.posZ) > cullDist * cullDist) {
             ci.cancel();

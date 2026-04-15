@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * BambooModの描画最適化
+ * Bamboo Mod の TileEntity 描画を距離で間引く。
  */
 @Mixin(targets = {
         "ruby.bamboo.render.tileentity.RenderCampfire",
@@ -35,7 +35,7 @@ public abstract class BambooRenderMixin extends TileEntitySpecialRenderer {
 
         double cullDist = renderChunks * 16.0;
 
-        // TileEntity.getDistanceFrom returns squared distance
+        // TileEntity の距離判定は二乗距離で行う
         if (tileEntity.getDistanceFrom(mc.renderViewEntity.posX, mc.renderViewEntity.posY,
                 mc.renderViewEntity.posZ) > cullDist * cullDist) {
             ci.cancel();

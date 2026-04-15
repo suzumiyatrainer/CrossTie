@@ -1,13 +1,11 @@
 package net.suzumiya.crosstie.util;
 
 /**
- * hi03ExpressRailwayレンダリングコンテキストトラッカー
- * 
- * DisplayListコンパイル内でPolygonRendererを使用するhi03ExpressRailwayモデルの
- * レンダリング中かどうかを追跡します。
- * 
- * このコンテキストがアクティブな場合、Angelicaのディスプレイリスト最適化をバイパスし、
- * ネイティブOpenGLのディスプレイリストを使用します。
+ * hi03ExpressRailway 用の描画コンテキストを管理するクラス。
+ *
+ * DisplayList コンパイル中に hi03ExpressRailway の描画を通常の OpenGL 経路へ
+ * 切り替えるために使います。Angelica のディスプレイリスト処理と干渉しないよう、
+ * 状態をスレッドローカルで保持します。
  */
 public class Hi03ExpressRailwayContext {
 
@@ -16,16 +14,16 @@ public class Hi03ExpressRailwayContext {
     private static final ThreadLocal<Boolean> USING_LEGACY_DISPLAY_LIST = ThreadLocal.withInitial(() -> false);
 
     /**
-     * コンテキストがアクティブかどうかを返します
-     * 
-     * @return hi03ExpressRailwayレンダリング中の場合true
+     * コンテキストが有効かを返す。
+     *
+     * @return hi03ExpressRailway の描画中なら true
      */
     public static boolean isActive() {
         return ACTIVE.get();
     }
 
     /**
-     * hi03ExpressRailwayレンダリングコンテキストに入ります
+     * hi03ExpressRailway の描画コンテキストに入る。
      */
     public static void enter() {
         ACTIVE.set(true);
@@ -34,7 +32,7 @@ public class Hi03ExpressRailwayContext {
     }
 
     /**
-     * hi03ExpressRailwayレンダリングコンテキストを終了します
+     * hi03ExpressRailway の描画コンテキストを抜ける。
      */
     public static void exit() {
         ACTIVE.set(false);
@@ -43,43 +41,43 @@ public class Hi03ExpressRailwayContext {
     }
 
     /**
-     * ディスプレイリストコンパイルをスキップ中かどうかを返します
-     * 
-     * @return スキップ中の場合true
+     * ディスプレイリストのコンパイルをスキップするかを返す。
+     *
+     * @return スキップ中なら true
      */
     public static boolean isSkippingDisplayList() {
         return SKIPPING_DISPLAY_LIST.get();
     }
 
     /**
-     * ディスプレイリストコンパイルのスキップ状態を設定
-     * 
-     * @param skipping スキップ中かどうか
+     * ディスプレイリストのコンパイルをスキップするかを設定する。
+     *
+     * @param skipping スキップするなら true
      */
     public static void setSkippingDisplayList(boolean skipping) {
         SKIPPING_DISPLAY_LIST.set(skipping);
     }
 
     /**
-     * レガシー(ネイティブOpenGL)ディスプレイリストを使用中かどうかを返します
-     * 
-     * @return ネイティブOpenGLディスプレイリストを使用中の場合true
+     * 旧来の OpenGL ディスプレイリストを使っているかを返す。
+     *
+     * @return 旧経路を使っているなら true
      */
     public static boolean isUsingLegacyDisplayList() {
         return USING_LEGACY_DISPLAY_LIST.get();
     }
 
     /**
-     * レガシーディスプレイリスト使用状態を設定
-     * 
-     * @param using レガシーディスプレイリストを使用中かどうか
+     * 旧来のディスプレイリストを使っているかを設定する。
+     *
+     * @param using 旧経路を使うなら true
      */
     public static void setUsingLegacyDisplayList(boolean using) {
         USING_LEGACY_DISPLAY_LIST.set(using);
     }
 
     /**
-     * コンテキストをリセットします（エラーリカバリ用）
+     * コンテキストをリセットする。エラー回復時にも使う。
      */
     public static void reset() {
         ACTIVE.remove();

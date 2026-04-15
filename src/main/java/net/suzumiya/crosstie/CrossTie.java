@@ -10,10 +10,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * CrossTie - RTM/KaizPatchX及び関連Mod向け最適化Mod
- * 
- * TPS（サーバー処理）とFPS（クライアント描画）の両面から最適化を提供します。
- * UniMixinsベースのLate Mixinを使用してバイナリModに介入します。
+ * CrossTie - RTM / KaizPatchX 向けの描画・更新最適化 Mod。
+ *
+ * TPS 側の更新制御と FPS 側の描画制御を両方扱い、UniMixins の Late Mixin を使って
+ * バイナリ Mod に差し込みます。
  */
 @Mod(modid = Tags.MODID, name = Tags.MODNAME, version = Tags.VERSION, dependencies = "required-after:unimixins")
 public class CrossTie {
@@ -28,9 +28,9 @@ public class CrossTie {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        LOGGER.info("CrossTie Pre-Initialization");
+        LOGGER.info("CrossTie 初期化前処理");
 
-        // Mod検出システム初期化
+        // Mod 検出システムを初期化する
         ModDetector.detectMods();
         ModDetector.logDetectedMods();
 
@@ -39,13 +39,13 @@ public class CrossTie {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        LOGGER.info("CrossTie Initialization");
+        LOGGER.info("CrossTie 初期化");
         proxy.init(event);
     }
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
-        LOGGER.info("CrossTie Post-Initialization");
+        LOGGER.info("CrossTie 初期化後処理");
         proxy.postInit(event);
     }
 
