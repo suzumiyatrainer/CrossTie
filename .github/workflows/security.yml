@@ -64,6 +64,8 @@ jobs:
   secret-scanning:
     name: Secret Scanning
     runs-on: ubuntu-latest
+    # スケジュール実行時はコミットがないためスキップ
+    if: github.event_name != 'schedule'
     
     steps:
       - name: Checkout code
