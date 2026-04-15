@@ -42,7 +42,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew build --no-daemon
+        run: bash ./gradlew build --no-daemon
 
       - name: Select publish artifact
         id: artifact
