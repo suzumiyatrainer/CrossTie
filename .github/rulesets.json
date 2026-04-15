@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "rulesets": [
+    {
+      "name": "Protect master branch",
+      "description": "Master branch protection rules for code quality and security",
+      "target": "branch",
+      "rules": [
+        {
+          "type": "deletion"
+        },
+        {
+          "type": "non_fast_forward"
+        },
+        {
+          "type": "pull_request",
+          "parameters": {
+            "required_approving_review_count": 1,
+            "dismiss_stale_review_on_push": true,
+            "require_code_owner_reviews": false
+          }
+        },
+        {
+          "type": "required_status_checks",
+          "parameters": {
+            "strict_required_status_checks_policy": true,
+            "required_status_checks": []
+          }
+        },
+        {
+          "type": "commit_message_pattern",
+          "parameters": {
+            "operator": "starts_with",
+            "pattern": "^(feat|fix|docs|style|refactor|perf|test|chore):"
+          }
+        }
+      ],
+      "created_at": "2026-04-15T00:00:00Z",
+      "updated_at": "2026-04-15T00:00:00Z"
+    }
+  ]
+}

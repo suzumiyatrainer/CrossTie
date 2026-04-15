@@ -1,0 +1,18 @@
+# Code Owners for CrossTie Project
+
+# セキュリティ関連ファイル
+.github/                 @suzumiyatrainer
+SECURITY.md              @suzumiyatrainer
+CONTRIBUTING.md          @suzumiyatrainer
+
+# GitHub Actions とワークフロー
+.github/workflows/       @suzumiyatrainer
+
+# メインの設定ファイル
+build.gradle             @suzumiyatrainer
+settings.gradle          @suzumiyatrainer
+build.gradle.kts         @suzumiyatrainer
+
+# ライセンスとREADME
+LICENSE                  @suzumiyatrainer
+README.md                @suzumiyatrainer
