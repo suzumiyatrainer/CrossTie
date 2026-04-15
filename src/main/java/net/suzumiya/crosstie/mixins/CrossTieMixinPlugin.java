@@ -30,6 +30,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     private boolean isClient;
     private boolean hasAngelica;
     private boolean hasIntelliInput;
+    private boolean hasRtm;
+    private boolean hasBamboo;
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -38,6 +40,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 .getResource("com/gtnewhorizons/angelica/glsm/DisplayListManager.class") != null;
         hasIntelliInput = getClass().getClassLoader()
                 .getResource("com/tsoft_web/IntelliInput/RedirectWindowProc.class") != null;
+        hasRtm = getClass().getClassLoader().getResource("jp/ngt/rtm/RTMCore.class") != null
+                || getClass().getClassLoader().getResource("jp/ngt/ngtlib/io/ScriptUtil.class") != null;
+        hasBamboo = getClass().getClassLoader().getResource("ruby/bamboo/BambooCore.class") != null;
     }
 
     @Override
@@ -53,6 +58,18 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         }
         if ("net.suzumiya.crosstie.mixins.intelliinput.RedirectWindowProcMixin".equals(mixinClassName)) {
             return isClient && hasIntelliInput;
+        }
+
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.rtm.")) {
+            return hasRtm;
+        }
+
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.ngtlib.")) {
+            return hasRtm;
+        }
+
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.bamboo.")) {
+            return hasBamboo;
         }
 
         if (!isClient && CLIENT_ONLY_MIXINS.contains(mixinClassName)) {

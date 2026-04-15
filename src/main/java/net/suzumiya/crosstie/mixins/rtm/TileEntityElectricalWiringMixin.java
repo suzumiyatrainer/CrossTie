@@ -1,6 +1,5 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import jp.ngt.rtm.electric.TileEntityElectricalWiring;
 import net.minecraft.tileentity.TileEntity;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
@@ -13,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * 架線・コネクタ等の更新処理最適化
  * クライアント側での通電エフェクト（パーティクル）などを距離制限
  */
-@Mixin(value = TileEntityElectricalWiring.class, remap = false)
+@Mixin(targets = "jp.ngt.rtm.electric.TileEntityElectricalWiring", remap = false)
 public abstract class TileEntityElectricalWiringMixin extends TileEntity {
 
     @Inject(method = "updateEntity", at = @At("HEAD"), cancellable = true)

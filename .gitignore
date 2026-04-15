@@ -86,3 +86,7 @@ libs/*
 
 # Other
 *.editorconfig
+
+# VSCode Workspace
+.Project-Workspace/
+CrossTie.code-workspace

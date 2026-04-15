@@ -8,7 +8,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-import jp.ngt.ngtlib.io.ScriptUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * Rewrites RTM script GL11 method calls to a CrossTie bridge so Angelica can
  * handle legacy matrix APIs safely.
  */
-@Mixin(value = ScriptUtil.class, remap = false)
+@Mixin(targets = "jp.ngt.ngtlib.io.ScriptUtil", remap = false)
 public abstract class ScriptUtilMixin {
 
     @Unique

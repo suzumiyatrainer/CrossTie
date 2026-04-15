@@ -1,6 +1,5 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import jp.ngt.rtm.electric.TileEntitySignal;
 import net.suzumiya.crosstie.CrossTie;
 import net.minecraft.tileentity.TileEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,7 +10,7 @@ import org.spongepowered.asm.mixin.Overwrite;
  * RTMデフォルトの「チャンク読み込み距離全体」から、
  * バニラ標準または設定された描画距離に基づいて制限する。
  */
-@Mixin(value = TileEntitySignal.class, remap = false)
+@Mixin(targets = "jp.ngt.rtm.electric.TileEntitySignal", remap = false)
 public abstract class TileEntitySignalMixin extends TileEntity {
 
     /**

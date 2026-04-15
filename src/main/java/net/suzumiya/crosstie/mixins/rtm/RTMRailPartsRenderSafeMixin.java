@@ -1,14 +1,15 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import jp.ngt.rtm.rail.TileEntityLargeRailCore;
-import jp.ngt.rtm.rail.util.RailProperty;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import net.minecraft.client.Minecraft;
+import net.minecraft.tileentity.TileEntity;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -20,17 +21,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "jp.ngt.rtm.render.RailPartsRenderer", remap = false)
 public abstract class RTMRailPartsRenderSafeMixin {
 
-    @Shadow
-    protected int currentRailIndex;
-
-    @Shadow
-    protected abstract void renderRailStatic(TileEntityLargeRailCore tileEntity, double x, double y, double z, float par8);
-
-    @Shadow
-    protected abstract void renderRailDynamic(TileEntityLargeRailCore tileEntity, double x, double y, double z, float par8);
+    @Unique
+    private static final String TARGET_CLASS_NAME = "jp.ngt.rtm.rail.TileEntityLargeRailCore";
 
     @Inject(method = "renderRail", at = @At("HEAD"), cancellable = true, remap = false)
-    private void crosstie$renderRailSafely(TileEntityLargeRailCore tileEntity, int index, double x, double y, double z,
+    private void crosstie$renderRailSafely(TileEntity tileEntity, int index, double x, double y, double z,
             float par8, CallbackInfo ci) {
         if (this.crosstie$shouldCullRail(tileEntity)) {
             ci.cancel();
@@ -38,13 +33,13 @@ public abstract class RTMRailPartsRenderSafeMixin {
         }
 
         try {
-            this.currentRailIndex = index;
+            this.crosstie$setCurrentRailIndex(index);
             if (this.crosstie$isHi03Rail(tileEntity)) {
                 Hi03ExpressRailwayContext.enter();
             }
 
-            this.renderRailStatic(tileEntity, x, y, z, par8);
-            this.renderRailDynamic(tileEntity, x, y, z, par8);
+            this.crosstie$invokeRailRenderer("renderRailStatic", tileEntity, x, y, z, par8);
+            this.crosstie$invokeRailRenderer("renderRailDynamic", tileEntity, x, y, z, par8);
         } catch (Exception e) {
             throw new RuntimeException("On init script", e);
         } finally {
@@ -61,17 +56,16 @@ public abstract class RTMRailPartsRenderSafeMixin {
         ci.cancel();
     }
 
-    private boolean crosstie$isHi03Rail(TileEntityLargeRailCore tileEntity) {
+    private boolean crosstie$isHi03Rail(TileEntity tileEntity) {
         try {
-            RailProperty property = tileEntity.getProperty();
-            return property != null && property.railModel != null
-                    && property.railModel.contains("hi03ExpressRailway");
+            String railModel = this.crosstie$getRailModel(tileEntity);
+            return railModel != null && railModel.contains("hi03ExpressRailway");
         } catch (Exception ignored) {
             return false;
         }
     }
 
-    private boolean crosstie$shouldCullRail(TileEntityLargeRailCore tileEntity) {
+    private boolean crosstie$shouldCullRail(TileEntity tileEntity) {
         if (!CrossTieConfig.enableRenderCulling) {
             return false;
         }
@@ -89,5 +83,47 @@ public abstract class RTMRailPartsRenderSafeMixin {
         double cullDist = renderChunks * 16.0;
         return tileEntity.getDistanceFrom(mc.renderViewEntity.posX, mc.renderViewEntity.posY,
                 mc.renderViewEntity.posZ) > cullDist * cullDist;
+    }
+
+    @Unique
+    private void crosstie$setCurrentRailIndex(int index) {
+        try {
+            Field currentRailIndex = this.getClass().getDeclaredField("currentRailIndex");
+            currentRailIndex.setAccessible(true);
+            currentRailIndex.setInt(this, index);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Unable to update rail index", e);
+        }
+    }
+
+    @Unique
+    private void crosstie$invokeRailRenderer(String methodName, TileEntity tileEntity, double x, double y, double z,
+            float par8) {
+        try {
+            Class<?> targetClass = Class.forName(TARGET_CLASS_NAME);
+            Method method = this.getClass().getDeclaredMethod(methodName, targetClass, double.class, double.class,
+                    double.class, float.class);
+            method.setAccessible(true);
+            method.invoke(this, tileEntity, x, y, z, par8);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Unable to invoke " + methodName, e);
+        }
+    }
+
+    @Unique
+    private String crosstie$getRailModel(TileEntity tileEntity) {
+        try {
+            Method getProperty = tileEntity.getClass().getMethod("getProperty");
+            Object property = getProperty.invoke(tileEntity);
+            if (property == null) {
+                return null;
+            }
+
+            Field railModelField = property.getClass().getField("railModel");
+            Object railModel = railModelField.get(property);
+            return railModel instanceof String ? (String) railModel : null;
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
     }
 }

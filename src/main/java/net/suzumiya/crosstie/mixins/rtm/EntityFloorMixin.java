@@ -1,6 +1,6 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import jp.ngt.rtm.entity.train.parts.EntityFloor;
+import net.minecraft.entity.Entity;
 import net.suzumiya.crosstie.CrossTie;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,12 +11,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * 床エンティティの最適化
  * プロファイルで大量に確認されたため、個別にカリングを適用
  */
-@Mixin(value = EntityFloor.class, remap = false)
+@Mixin(targets = "jp.ngt.rtm.entity.train.parts.EntityFloor", remap = false)
 public abstract class EntityFloorMixin {
 
     @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true)
     private void crosstie$cullDistantUpdates(CallbackInfo ci) {
-        EntityFloor entity = (EntityFloor) (Object) this;
+        Entity entity = (Entity) (Object) this;
         if (entity.worldObj.isRemote) {
             int renderChunks = CrossTie.proxy.getClientRenderDistance();
             if (renderChunks <= 0)

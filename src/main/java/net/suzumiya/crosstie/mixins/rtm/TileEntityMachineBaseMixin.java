@@ -1,6 +1,5 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import jp.ngt.rtm.block.tileentity.TileEntityMachineBase;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.suzumiya.crosstie.CrossTie;
@@ -11,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = TileEntityMachineBase.class, remap = false)
+@Mixin(targets = "jp.ngt.rtm.block.tileentity.TileEntityMachineBase", remap = false)
 public abstract class TileEntityMachineBaseMixin extends TileEntity {
 
     @Inject(method = "updateEntity", at = @At("HEAD"), cancellable = true)

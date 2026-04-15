@@ -1,6 +1,6 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import jp.ngt.rtm.entity.train.EntityBogie;
+import net.minecraft.entity.Entity;
 import net.suzumiya.crosstie.CrossTie;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * 
  * 台車エンティティの負荷を軽減します。
  */
-@Mixin(value = EntityBogie.class, remap = false)
+@Mixin(targets = "jp.ngt.rtm.entity.train.EntityBogie", remap = false)
 public abstract class EntityBogieMixin {
 
     /**
@@ -25,7 +25,7 @@ public abstract class EntityBogieMixin {
      */
     @Inject(method = "updateWheelRotation", at = @At("HEAD"), cancellable = true, require = 0)
     private void crosstie$skipServerAnimation(CallbackInfo ci) {
-        EntityBogie bogie = (EntityBogie) (Object) this;
+        Entity bogie = (Entity) (Object) this;
         if (!bogie.worldObj.isRemote) {
             ci.cancel();
         }
@@ -49,7 +49,7 @@ public abstract class EntityBogieMixin {
      */
     @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$cullDistantUpdates(CallbackInfo ci) {
-        EntityBogie bogie = (EntityBogie) (Object) this;
+        Entity bogie = (Entity) (Object) this;
         if (bogie.worldObj.isRemote) {
             // クライアント側の更新描画距離カリング
             // 描画距離 + 2チャンク (1チャンク=16ブロック)

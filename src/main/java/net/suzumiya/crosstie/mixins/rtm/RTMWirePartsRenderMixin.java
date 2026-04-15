@@ -1,9 +1,6 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import jp.ngt.rtm.electric.TileEntityElectricalWiring;
-import jp.ngt.rtm.electric.Connection;
-import jp.ngt.ngtlib.math.Vec3;
-import jp.ngt.rtm.render.RenderPass;
+import net.minecraft.tileentity.TileEntity;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
 import net.minecraft.client.Minecraft;
@@ -24,8 +21,7 @@ public abstract class RTMWirePartsRenderMixin {
      * Uses exact parameter types as required by Mixin.
      */
     @Inject(method = "renderWire", at = @At("HEAD"), cancellable = true, remap = false)
-    private void crosstie$cullWireParts(TileEntityElectricalWiring tileEntity, Connection connection, Vec3 target,
-            float par8, RenderPass pass, CallbackInfo ci) {
+    private void crosstie$cullWireParts(TileEntity tileEntity, CallbackInfo ci) {
         if (!CrossTieConfig.enableRenderCulling) {
             return;
         }
