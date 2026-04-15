@@ -3,6 +3,7 @@
 .settings
 /build/
 /out/
+.gradle-user-home/
 
 # IDE
 /.idea/
@@ -82,7 +83,6 @@ TOOLCHAIN_SOLUTION.md
 # libs
 libs
 libs/*
-!libs.zip
 
 # Other
 *.editorconfig

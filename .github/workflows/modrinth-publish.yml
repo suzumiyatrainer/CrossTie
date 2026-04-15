@@ -18,6 +18,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     env:
+      ORG_GRADLE_PROJECT_privateMavenUrl: ${{ secrets.PRIVATE_MAVEN_URL }}
+      ORG_GRADLE_PROJECT_privateMavenUser: ${{ secrets.PRIVATE_MAVEN_USER }}
+      ORG_GRADLE_PROJECT_privateMavenPassword: ${{ secrets.PRIVATE_MAVEN_PASSWORD }}
       RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.event.release.tag_name }}
       RELEASE_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.event.release.name || github.event.release.tag_name }}
       RELEASE_CHANGELOG: ${{ github.event_name == 'workflow_dispatch' && format('Manual publish for {0}', inputs.release_tag) || github.event.release.body || github.event.release.name || github.event.release.tag_name }}
@@ -27,11 +30,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ env.RELEASE_TAG }}
-
-      - name: Restore dependencies
-        run: |
-          mkdir -p libs
-          unzip -P "${{ secrets.LIBS_PASSWORD }}" libs.zip -d libs
 
       - name: Set up JDK 8
         uses: actions/setup-java@v4

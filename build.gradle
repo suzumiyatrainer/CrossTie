@@ -10,6 +10,13 @@ version = '1.0.0-Alpha5'
 group = project.modGroup
 archivesBaseName = 'CrossTie'
 
+def privateMavenUrl = (findProperty('privateMavenUrl') ?: '').toString().trim()
+def privateMavenUser = (findProperty('privateMavenUser') ?: '').toString().trim()
+def privateMavenPassword = (findProperty('privateMavenPassword') ?: '').toString().trim()
+def bambooCoordinate = (findProperty('bambooCoordinate') ?: 'ruby.bamboo:Bamboo:2.6.8.5').toString().trim()
+def rtmCoordinate = (findProperty('rtmCoordinate') ?: 'jp.ngt.rtm:RTM:1.7.10_20200822+KaizPatchX-1.9.6').toString().trim()
+def usePrivateMaven = !privateMavenUrl.isEmpty()
+
 minecraft {
     mcVersion = '1.7.10'
     
@@ -38,14 +45,22 @@ repositories {
         name = 'JitPack'
         url = 'https://jitpack.io'
     }
+    if (usePrivateMaven) {
+        maven {
+            name = 'Private Maven'
+            url = uri(privateMavenUrl)
+            credentials {
+                username = privateMavenUser
+                password = privateMavenPassword
+            }
+        }
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-
     // UniMixins (Late Mixin support)
     implementation('com.github.LegacyModdingMC.UniMixins:unimixins-all-1.7.10:0.2.1')
-    
+
     // Annotation processor for Mixins
     annotationProcessor('org.ow2.asm:asm-debug-all:5.0.3')
     annotationProcessor('com.google.guava:guava:24.1.1-jre')
@@ -55,8 +70,14 @@ dependencies {
     compileOnly('org.ow2.asm:asm-all:5.0.3') // Try asm-all instead of debug-all
     compileOnly('org.ow2.asm:asm-commons:5.0.3') // Explicitly add commons just in case
 
-    // Load all jars from 'libs' directory (for testing with other mods)
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    if (usePrivateMaven) {
+        // Development/runtime dependencies resolved from the private Maven.
+        devOnlyNonPublishable(rfg.deobf(bambooCoordinate))
+        devOnlyNonPublishable(rfg.deobf(rtmCoordinate))
+    } else {
+        // Local fallback for offline development.
+        implementation fileTree(dir: 'libs', include: ['*.jar'])
+    }
 }
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }

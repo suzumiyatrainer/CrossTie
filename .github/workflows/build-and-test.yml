@@ -9,15 +9,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ORG_GRADLE_PROJECT_privateMavenUrl: ${{ secrets.PRIVATE_MAVEN_URL }}
+      ORG_GRADLE_PROJECT_privateMavenUser: ${{ secrets.PRIVATE_MAVEN_USER }}
+      ORG_GRADLE_PROJECT_privateMavenPassword: ${{ secrets.PRIVATE_MAVEN_PASSWORD }}
     
     steps:
     - uses: actions/checkout@v3
 
-    - name: Restore dependencies
-      run: |
-        mkdir -p libs
-        unzip -P "${{ secrets.LIBS_PASSWORD }}" libs.zip -d libs
-    
     - name: Set up JDK 8
       uses: actions/setup-java@v3
       with:
