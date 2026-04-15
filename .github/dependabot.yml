@@ -1,7 +1,7 @@
 version: 2
 updates:
   # Gradle dependencies
-  - package-manager: "gradle"
+  - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "weekly"
