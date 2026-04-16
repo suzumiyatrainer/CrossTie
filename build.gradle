@@ -105,25 +105,29 @@ jar {
 }
 
 processResources {
-    // Replace properties in mcmod.info
-    inputs.property 'modVersion', project.version
-    inputs.property 'minecraftVersion', '1.7.10'
-    inputs.property 'modId', project.modId
-    inputs.property 'modName', project.modName
+    // 1. 必要な値をローカル変数にコピーする（Configuration Cache対策）
+    def mod_version = project.version
+    def mod_id = project.modId
+    def mod_name = project.modName
+    def mc_version = '1.7.10'
+
+    inputs.property 'modVersion', mod_version
+    inputs.property 'minecraftVersion', mc_version
+    inputs.property 'modId', mod_id
+    inputs.property 'modName', mod_name
 
     filesMatching('mcmod.info') {
         expand(
-            'modVersion': project.version,
-            'minecraftVersion': '1.7.10',
-            'modId': project.modId,
-            'modName': project.modName
+            'modVersion': mod_version,
+            'minecraftVersion': mc_version,
+            'modId': mod_id,
+            'modName': mod_name
         )
     }
     
-    // fmlbranding.properties - タイトル画面とローディング画面にCrossTieバージョンを表示
     filesMatching('fmlbranding.properties') {
         expand(
-            'modVersion': project.version
+            'modVersion': mod_version
         )
     }
 }
