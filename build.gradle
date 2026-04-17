@@ -71,12 +71,12 @@ configurations.configureEach {
 
         // These upgrades can affect legacy 1.7.10 runtime behavior, so they are opt-in.
         if (forceSafeNetty) {
-            force 'io.netty:netty-all:4.1.119.Final'
+            force 'io.netty:netty-all:4.2.12.Final'
         }
         if (forceSafeScala) {
-            force 'org.scala-lang:scala-library:2.11.12'
-            force 'org.scala-lang:scala-compiler:2.11.12'
-            force 'org.scala-lang:scala-reflect:2.11.12'
+            force 'org.scala-lang:scala-library:2.13.18'
+            force 'org.scala-lang:scala-compiler:2.13.18'
+            force 'org.scala-lang:scala-reflect:2.13.18'
         }
     }
 }
@@ -100,7 +100,7 @@ dependencies {
 
     // Annotation processor for Mixins
     annotationProcessor('org.ow2.asm:asm-debug-all:5.0.3')
-    annotationProcessor('com.google.guava:guava:24.1.1-jre')
+    annotationProcessor('com.google.guava:guava:32.0.0-jre')
     annotationProcessor('com.google.code.gson:gson:2.10.1')
 
     // ASM for compilation
