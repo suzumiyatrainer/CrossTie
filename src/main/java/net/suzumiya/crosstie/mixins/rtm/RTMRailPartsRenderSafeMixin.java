@@ -34,6 +34,8 @@ public abstract class RTMRailPartsRenderSafeMixin {
     };
     @Unique
     private static final int CROSSTIE_GL_CLIENT_ALL_ATTRIB_BITS = 0xFFFFFFFF;
+    @Unique
+    private static final int CROSSTIE_AABB_CULL_MARGIN_CHUNKS = 2;
 
     @Inject(method = "renderRail(Ljp/ngt/rtm/rail/TileEntityLargeRailCore;IDDDF)V", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$renderRailSafely(@Coerce Object tileEntity, int index, double x, double y, double z,
@@ -103,7 +105,9 @@ public abstract class RTMRailPartsRenderSafeMixin {
 
         AxisAlignedBB railAabb = this.crosstie$getEffectiveRailAabb(tileEntity);
         if (railAabb != null) {
-            return this.crosstie$distanceSqToAabb(px, py, pz, railAabb) > cullDistSq;
+            double aabbCullDist = (renderChunks + CROSSTIE_AABB_CULL_MARGIN_CHUNKS) * 16.0D;
+            double aabbCullDistSq = aabbCullDist * aabbCullDist;
+            return this.crosstie$distanceSqToAabb(px, py, pz, railAabb) > aabbCullDistSq;
         }
 
         return tileEntity.getDistanceFrom(px, py, pz) > cullDistSq;

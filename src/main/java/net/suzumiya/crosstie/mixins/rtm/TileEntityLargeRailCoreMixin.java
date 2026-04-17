@@ -29,7 +29,7 @@ public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
     public double getMaxRenderDistanceSquared() {
         int renderDistance = CrossTie.proxy.getClientRenderDistance();
         if (renderDistance > 0) {
-            double blockDistance = Math.max(renderDistance, CROSSTIE_FORCE_RENDER_CHUNKS) * 16.0D;
+            double blockDistance = (renderDistance + CROSSTIE_FORCE_RENDER_CHUNKS) * 16.0D;
             return blockDistance * blockDistance;
         }
         return CROSSTIE_FORCE_RENDER_DISTANCE_BLOCKS * CROSSTIE_FORCE_RENDER_DISTANCE_BLOCKS;
