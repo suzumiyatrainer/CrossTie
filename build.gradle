@@ -74,9 +74,9 @@ configurations.configureEach {
             force 'io.netty:netty-all:4.2.12.Final'
         }
         if (forceSafeScala) {
-            force 'org.scala-lang:scala-library:2.13.18'
-            force 'org.scala-lang:scala-compiler:2.13.18'
-            force 'org.scala-lang:scala-reflect:2.13.18'
+            force 'org.scala-lang:scala-library:3.8.3'
+            force 'org.scala-lang:scala-compiler:3.8.3'
+            force 'org.scala-lang:scala-reflect:3.8.3'
         }
     }
 }
@@ -87,7 +87,7 @@ dependencies {
         implementation('com.google.code.gson:gson:2.10.1') {
             because 'Fixes vulnerable Gson versions before 2.8.9 and aligns all transitive Gson artifacts.'
         }
-        implementation('org.apache.commons:commons-compress:1.26.2') {
+        implementation('org.apache.commons:commons-compress:1.28.0') {
             because 'Fixes multiple archive parsing DoS issues present in older commons-compress releases.'
         }
         implementation('commons-io:commons-io:2.21.0') {
