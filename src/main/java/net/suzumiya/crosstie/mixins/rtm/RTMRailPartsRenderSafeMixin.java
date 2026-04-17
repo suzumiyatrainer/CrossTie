@@ -4,6 +4,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.AxisAlignedBB;
+import jp.ngt.rtm.rail.TileEntityLargeRailCore;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
@@ -22,9 +24,16 @@ public abstract class RTMRailPartsRenderSafeMixin {
 
     @Unique
     private static final String TARGET_CLASS_NAME = "jp.ngt.rtm.rail.TileEntityLargeRailCore";
+    @Unique
+    private static final String[] CROSSTIE_RAIL_INDEX_FIELD_CANDIDATES = {
+            "currentRailIndex",
+            "railIndex",
+            "currentIndex",
+            "index"
+    };
 
     @Inject(method = "renderRail", at = @At("HEAD"), cancellable = true, remap = false)
-    private void crosstie$renderRailSafely(TileEntity tileEntity, int index, double x, double y, double z,
+    private void crosstie$renderRailSafely(TileEntityLargeRailCore tileEntity, int index, double x, double y, double z,
             float par8, CallbackInfo ci) {
         if (this.crosstie$shouldCullRail(tileEntity)) {
             ci.cancel();
@@ -79,20 +88,64 @@ public abstract class RTMRailPartsRenderSafeMixin {
             renderChunks = 4;
         }
 
-        double cullDist = renderChunks * 16.0;
-        return tileEntity.getDistanceFrom(mc.renderViewEntity.posX, mc.renderViewEntity.posY,
-                mc.renderViewEntity.posZ) > cullDist * cullDist;
+        double cullDist = renderChunks * 16.0D;
+        double cullDistSq = cullDist * cullDist;
+        double px = mc.renderViewEntity.posX;
+        double py = mc.renderViewEntity.posY;
+        double pz = mc.renderViewEntity.posZ;
+
+        AxisAlignedBB railAabb = tileEntity.getRenderBoundingBox();
+        if (railAabb != null) {
+            return this.crosstie$distanceSqToAabb(px, py, pz, railAabb) > cullDistSq;
+        }
+
+        return tileEntity.getDistanceFrom(px, py, pz) > cullDistSq;
+    }
+
+    @Unique
+    private double crosstie$distanceSqToAabb(double x, double y, double z, AxisAlignedBB aabb) {
+        double dx = 0.0D;
+        if (x < aabb.minX) {
+            dx = aabb.minX - x;
+        } else if (x > aabb.maxX) {
+            dx = x - aabb.maxX;
+        }
+
+        double dy = 0.0D;
+        if (y < aabb.minY) {
+            dy = aabb.minY - y;
+        } else if (y > aabb.maxY) {
+            dy = y - aabb.maxY;
+        }
+
+        double dz = 0.0D;
+        if (z < aabb.minZ) {
+            dz = aabb.minZ - z;
+        } else if (z > aabb.maxZ) {
+            dz = z - aabb.maxZ;
+        }
+
+        return dx * dx + dy * dy + dz * dz;
     }
 
     @Unique
     private void crosstie$setCurrentRailIndex(int index) {
-        try {
-            Field currentRailIndex = this.getClass().getDeclaredField("currentRailIndex");
-            currentRailIndex.setAccessible(true);
-            currentRailIndex.setInt(this, index);
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Unable to update rail index", e);
+        for (String fieldName : CROSSTIE_RAIL_INDEX_FIELD_CANDIDATES) {
+            try {
+                Field currentRailIndex = this.getClass().getDeclaredField(fieldName);
+                if (currentRailIndex.getType() != int.class) {
+                    continue;
+                }
+                currentRailIndex.setAccessible(true);
+                currentRailIndex.setInt(this, index);
+                return;
+            } catch (ReflectiveOperationException ignored) {
+                // Ignore and continue with fallback candidates.
+            }
         }
+
+        // KaizPatchX variants may not expose a writable index field.
+        // Rendering can continue without hard-failing.
     }
 
     @Unique

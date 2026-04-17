@@ -2,6 +2,7 @@ package net.suzumiya.crosstie.mixins.rtm;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import jp.ngt.rtm.rail.TileEntityLargeRailCore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
 import net.suzumiya.crosstie.CrossTie;
@@ -23,7 +24,7 @@ public abstract class RTMRailPartsRenderMixin {
      * hi03ExpressRailway のときだけ、描画コンテキストを有効にする。
      */
     @Inject(method = "renderRail", at = @At("HEAD"), remap = false)
-    private void crosstie$enterHi03Context(TileEntity tileEntity, int index, double x, double y, double z,
+    private void crosstie$enterHi03Context(TileEntityLargeRailCore tileEntity, int index, double x, double y, double z,
             float par8, CallbackInfo ci) {
         try {
             String railModel = crosstie$getRailModel(tileEntity);
@@ -39,7 +40,7 @@ public abstract class RTMRailPartsRenderMixin {
      * renderRail の終了時にコンテキストを必ず解除する。
      */
     @Inject(method = "renderRail", at = @At("RETURN"), remap = false)
-    private void crosstie$exitHi03Context(TileEntity tileEntity, int index, double x, double y, double z,
+    private void crosstie$exitHi03Context(TileEntityLargeRailCore tileEntity, int index, double x, double y, double z,
             float par8, CallbackInfo ci) {
         Hi03ExpressRailwayContext.exit();
     }
@@ -48,7 +49,7 @@ public abstract class RTMRailPartsRenderMixin {
      * 描画距離外のレール部品は描画しない。
      */
     @Inject(method = "renderRail", at = @At("HEAD"), cancellable = true, remap = false)
-    private void crosstie$cullRailParts(TileEntity tileEntity, int index, double x, double y, double z,
+    private void crosstie$cullRailParts(TileEntityLargeRailCore tileEntity, int index, double x, double y, double z,
             float par8, CallbackInfo ci) {
         if (!CrossTieConfig.enableRenderCulling) {
             return;

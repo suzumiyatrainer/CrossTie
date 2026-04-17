@@ -1,9 +1,12 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import net.minecraft.tileentity.TileEntity;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
 import net.minecraft.client.Minecraft;
+import jp.ngt.ngtlib.math.Vec3;
+import jp.ngt.rtm.electric.Connection;
+import jp.ngt.rtm.electric.TileEntityElectricalWiring;
+import jp.ngt.rtm.render.RenderPass;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,7 +22,8 @@ public abstract class RTMWirePartsRenderMixin {
      * プレイヤーから遠いワイヤーは描画しない。
      */
     @Inject(method = "renderWire", at = @At("HEAD"), cancellable = true, remap = false)
-    private void crosstie$cullWireParts(TileEntity tileEntity, CallbackInfo ci) {
+    private void crosstie$cullWireParts(TileEntityElectricalWiring tileEntity, Connection connection, Vec3 target,
+            float par8, RenderPass pass, CallbackInfo ci) {
         if (!CrossTieConfig.enableRenderCulling) {
             return;
         }

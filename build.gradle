@@ -33,6 +33,9 @@ minecraft {
         extraRunJvmArguments.add("-Dmixin.debug=${project.findProperty('usesMixinDebug') ?: 'false'}")
     }
     extraRunJvmArguments.add("-Dlog4j.configurationFile=${project.file('src/main/resources/log4j2.xml').toURI().toString()}")
+    // Defense-in-depth for Log4Shell-class issues.
+    extraRunJvmArguments.add('-Dlog4j2.formatMsgNoLookups=true')
+    extraRunJvmArguments.add('-Dlog4j2.enableJndiLookup=false')
 }
 
 repositories {
@@ -53,6 +56,18 @@ repositories {
                 username = privateMavenUser
                 password = privateMavenPassword
             }
+        }
+    }
+}
+
+configurations.configureEach {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'org.apache.logging.log4j'
+                && (details.requested.name == 'log4j-api' || details.requested.name == 'log4j-core')) {
+            // 1.7.10/FML relies on old internal APIs removed in modern Log4j.
+            // GTNH's patched artifact keeps compatibility while mitigating Log4Shell.
+            details.useVersion '2.0-beta9-fixed'
+            details.because 'Use GTNH-patched Log4j compatible with 1.7.10 and hardened against Log4Shell'
         }
     }
 }

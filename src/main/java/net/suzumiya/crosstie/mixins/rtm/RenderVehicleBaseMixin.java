@@ -2,6 +2,8 @@ package net.suzumiya.crosstie.mixins.rtm;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
+import jp.ngt.rtm.entity.vehicle.EntityVehicleBase;
+import jp.ngt.rtm.modelpack.modelset.ModelSetVehicleBaseClient;
 import net.suzumiya.crosstie.config.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -47,7 +49,8 @@ public abstract class RenderVehicleBaseMixin {
      * ライトエフェクトの描画を、描画距離の外では止める。
      */
     @Inject(method = "renderLightEffect", at = @At("HEAD"), cancellable = true)
-    private void crosstie$cullLightEffects(Object vehicle, Object modelset, CallbackInfo ci) {
+    private void crosstie$cullLightEffects(EntityVehicleBase vehicle, ModelSetVehicleBaseClient modelset,
+            CallbackInfo ci) {
         if (!CrossTieConfig.enableRenderCulling) {
             return;
         }
@@ -61,8 +64,7 @@ public abstract class RenderVehicleBaseMixin {
         int effectChunks = Math.max(4, renderChunks - 4);
         double effectDist = effectChunks * 16.0;
 
-        Entity entity = (Entity) vehicle;
-        if (entity.getDistanceSqToEntity(mc.renderViewEntity) > effectDist * effectDist) {
+        if (vehicle.getDistanceSqToEntity(mc.renderViewEntity) > effectDist * effectDist) {
             ci.cancel();
         }
     }
@@ -71,7 +73,8 @@ public abstract class RenderVehicleBaseMixin {
      * ロールサインの描画を、描画距離の外では止める。
      */
     @Inject(method = "renderRollsign", at = @At("HEAD"), cancellable = true)
-    private void crosstie$cullRollsigns(Object vehicle, Object modelset, CallbackInfo ci) {
+    private void crosstie$cullRollsigns(EntityVehicleBase vehicle, ModelSetVehicleBaseClient modelset,
+            CallbackInfo ci) {
         if (!CrossTieConfig.enableRenderCulling) {
             return;
         }
@@ -84,8 +87,7 @@ public abstract class RenderVehicleBaseMixin {
         // 描画距離 + 1 チャンクまで表示する
         double signDist = (renderChunks + 1) * 16.0;
 
-        Entity entity = (Entity) vehicle;
-        if (entity.getDistanceSqToEntity(mc.renderViewEntity) > signDist * signDist) {
+        if (vehicle.getDistanceSqToEntity(mc.renderViewEntity) > signDist * signDist) {
             ci.cancel();
         }
     }
