@@ -9,6 +9,7 @@ import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,6 +32,8 @@ public abstract class RTMRailPartsRenderSafeMixin {
             "currentIndex",
             "index"
     };
+    @Unique
+    private static final int CROSSTIE_GL_CLIENT_ALL_ATTRIB_BITS = 0xFFFFFFFF;
 
     @Inject(method = "renderRail(Ljp/ngt/rtm/rail/TileEntityLargeRailCore;IDDDF)V", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$renderRailSafely(@Coerce Object tileEntity, int index, double x, double y, double z,
@@ -41,7 +44,9 @@ public abstract class RTMRailPartsRenderSafeMixin {
             return;
         }
 
+        boolean glStateCaptured = false;
         try {
+            glStateCaptured = this.crosstie$captureGLState();
             this.crosstie$setCurrentRailIndex(index);
             if (this.crosstie$isHi03Rail(railTile)) {
                 Hi03ExpressRailwayContext.enter();
@@ -60,6 +65,7 @@ public abstract class RTMRailPartsRenderSafeMixin {
                 }
             }
             Hi03ExpressRailwayContext.reset();
+            this.crosstie$restoreGLState(glStateCaptured);
         }
 
         ci.cancel();
@@ -255,6 +261,48 @@ public abstract class RTMRailPartsRenderSafeMixin {
             return railModel instanceof String ? (String) railModel : null;
         } catch (ReflectiveOperationException ignored) {
             return null;
+        }
+    }
+
+    @Unique
+    private boolean crosstie$captureGLState() {
+        try {
+            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+            GL11.glPushClientAttrib(CROSSTIE_GL_CLIENT_ALL_ATTRIB_BITS);
+            GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            GL11.glPushMatrix();
+            GL11.glMatrixMode(GL11.GL_TEXTURE);
+            GL11.glPushMatrix();
+            GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            return true;
+        } catch (RuntimeException ignored) {
+            return false;
+        }
+    }
+
+    @Unique
+    private void crosstie$restoreGLState(boolean glStateCaptured) {
+        if (!glStateCaptured) {
+            return;
+        }
+
+        try {
+            GL11.glMatrixMode(GL11.GL_TEXTURE);
+            GL11.glPopMatrix();
+            GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            GL11.glPopMatrix();
+            GL11.glPopClientAttrib();
+            GL11.glPopAttrib();
+        } catch (RuntimeException ignored) {
+            // Keep rendering alive even if a broken script left the GL stack inconsistent.
+        } finally {
+            // Reset commonly leaked state so chunk/shader rendering does not inherit rail script values.
+            GL13.glActiveTexture(GL13.GL_TEXTURE0);
+            GL13.glClientActiveTexture(GL13.GL_TEXTURE0);
+            GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+            GL11.glDepthMask(true);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glEnable(GL11.GL_ALPHA_TEST);
         }
     }
 }
