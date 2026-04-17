@@ -67,7 +67,7 @@ configurations.configureEach {
         // Security baseline for transitive legacy dependencies.
         force 'com.google.code.gson:gson:2.10.1'
         force 'org.apache.commons:commons-compress:1.26.2'
-        force 'commons-io:commons-io:2.14.0'
+        force 'commons-io:commons-io:2.21.0'
 
         // These upgrades can affect legacy 1.7.10 runtime behavior, so they are opt-in.
         if (forceSafeNetty) {
@@ -90,7 +90,7 @@ dependencies {
         implementation('org.apache.commons:commons-compress:1.26.2') {
             because 'Fixes multiple archive parsing DoS issues present in older commons-compress releases.'
         }
-        implementation('commons-io:commons-io:2.14.0') {
+        implementation('commons-io:commons-io:2.21.0') {
             because 'Fixes XmlStreamReader uncontrolled resource consumption issue (CVE in versions < 2.14.0).'
         }
     }
