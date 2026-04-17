@@ -16,6 +16,8 @@ def privateMavenPassword = (findProperty('privateMavenPassword') ?: '').toString
 def bambooCoordinate = (findProperty('bambooCoordinate') ?: 'ruby.bamboo:Bamboo:2.6.8.5').toString().trim()
 def rtmCoordinate = (findProperty('rtmCoordinate') ?: 'jp.ngt.rtm:RTM:1.7.10_20200822+KaizPatchX-1.9.6').toString().trim()
 def usePrivateMaven = !privateMavenUrl.isEmpty()
+def forceSafeNetty = (findProperty('forceSafeNetty') ?: 'false').toString().toBoolean()
+def forceSafeScala = (findProperty('forceSafeScala') ?: 'false').toString().toBoolean()
 
 minecraft {
     mcVersion = '1.7.10'
@@ -60,15 +62,46 @@ repositories {
     }
 }
 
+configurations.configureEach {
+    resolutionStrategy {
+        // Security baseline for transitive legacy dependencies.
+        force 'com.google.code.gson:gson:2.10.1'
+        force 'org.apache.commons:commons-compress:1.26.2'
+        force 'commons-io:commons-io:2.14.0'
+
+        // These upgrades can affect legacy 1.7.10 runtime behavior, so they are opt-in.
+        if (forceSafeNetty) {
+            force 'io.netty:netty-all:4.1.119.Final'
+        }
+        if (forceSafeScala) {
+            force 'org.scala-lang:scala-library:2.11.12'
+            force 'org.scala-lang:scala-compiler:2.11.12'
+            force 'org.scala-lang:scala-reflect:2.11.12'
+        }
+    }
+}
+
 
 dependencies {
+    constraints {
+        implementation('com.google.code.gson:gson:2.10.1') {
+            because 'Fixes vulnerable Gson versions before 2.8.9 and aligns all transitive Gson artifacts.'
+        }
+        implementation('org.apache.commons:commons-compress:1.26.2') {
+            because 'Fixes multiple archive parsing DoS issues present in older commons-compress releases.'
+        }
+        implementation('commons-io:commons-io:2.14.0') {
+            because 'Fixes XmlStreamReader uncontrolled resource consumption issue (CVE in versions < 2.14.0).'
+        }
+    }
+
     // UniMixins (Late Mixin support)
     implementation('com.github.LegacyModdingMC.UniMixins:unimixins-all-1.7.10:0.2.1')
 
     // Annotation processor for Mixins
     annotationProcessor('org.ow2.asm:asm-debug-all:5.0.3')
     annotationProcessor('com.google.guava:guava:24.1.1-jre')
-    annotationProcessor('com.google.code.gson:gson:2.8.6')
+    annotationProcessor('com.google.code.gson:gson:2.10.1')
 
     // ASM for compilation
     compileOnly('org.ow2.asm:asm-all:5.0.3') // Try asm-all instead of debug-all
