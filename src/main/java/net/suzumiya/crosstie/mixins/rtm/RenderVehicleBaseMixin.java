@@ -2,11 +2,10 @@ package net.suzumiya.crosstie.mixins.rtm;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
-import jp.ngt.rtm.entity.vehicle.EntityVehicleBase;
-import jp.ngt.rtm.modelpack.modelset.ModelSetVehicleBaseClient;
 import net.suzumiya.crosstie.config.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -48,8 +47,8 @@ public abstract class RenderVehicleBaseMixin {
     /**
      * ライトエフェクトの描画を、描画距離の外では止める。
      */
-    @Inject(method = "renderLightEffect", at = @At("HEAD"), cancellable = true)
-    private void crosstie$cullLightEffects(EntityVehicleBase vehicle, ModelSetVehicleBaseClient modelset,
+    @Inject(method = "renderLightEffect(Ljp/ngt/rtm/entity/vehicle/EntityVehicleBase;Ljp/ngt/rtm/modelpack/modelset/ModelSetVehicleBaseClient;)V", at = @At("HEAD"), cancellable = true, remap = false)
+    private void crosstie$cullLightEffects(@Coerce Object vehicle, @Coerce Object modelset,
             CallbackInfo ci) {
         if (!CrossTieConfig.enableRenderCulling) {
             return;
@@ -64,7 +63,7 @@ public abstract class RenderVehicleBaseMixin {
         int effectChunks = Math.max(4, renderChunks - 4);
         double effectDist = effectChunks * 16.0;
 
-        if (vehicle.getDistanceSqToEntity(mc.renderViewEntity) > effectDist * effectDist) {
+        if (((Entity) vehicle).getDistanceSqToEntity(mc.renderViewEntity) > effectDist * effectDist) {
             ci.cancel();
         }
     }
@@ -72,8 +71,8 @@ public abstract class RenderVehicleBaseMixin {
     /**
      * ロールサインの描画を、描画距離の外では止める。
      */
-    @Inject(method = "renderRollsign", at = @At("HEAD"), cancellable = true)
-    private void crosstie$cullRollsigns(EntityVehicleBase vehicle, ModelSetVehicleBaseClient modelset,
+    @Inject(method = "renderRollsign(Ljp/ngt/rtm/entity/vehicle/EntityVehicleBase;Ljp/ngt/rtm/modelpack/modelset/ModelSetVehicleBaseClient;)V", at = @At("HEAD"), cancellable = true, remap = false)
+    private void crosstie$cullRollsigns(@Coerce Object vehicle, @Coerce Object modelset,
             CallbackInfo ci) {
         if (!CrossTieConfig.enableRenderCulling) {
             return;
@@ -87,7 +86,7 @@ public abstract class RenderVehicleBaseMixin {
         // 描画距離 + 1 チャンクまで表示する
         double signDist = (renderChunks + 1) * 16.0;
 
-        if (vehicle.getDistanceSqToEntity(mc.renderViewEntity) > signDist * signDist) {
+        if (((Entity) vehicle).getDistanceSqToEntity(mc.renderViewEntity) > signDist * signDist) {
             ci.cancel();
         }
     }

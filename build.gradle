@@ -60,17 +60,6 @@ repositories {
     }
 }
 
-configurations.configureEach {
-    resolutionStrategy.eachDependency { details ->
-        if (details.requested.group == 'org.apache.logging.log4j'
-                && (details.requested.name == 'log4j-api' || details.requested.name == 'log4j-core')) {
-            // 1.7.10/FML relies on old internal APIs removed in modern Log4j.
-            // GTNH's patched artifact keeps compatibility while mitigating Log4Shell.
-            details.useVersion '2.0-beta9-fixed'
-            details.because 'Use GTNH-patched Log4j compatible with 1.7.10 and hardened against Log4Shell'
-        }
-    }
-}
 
 dependencies {
     // UniMixins (Late Mixin support)
@@ -93,6 +82,7 @@ dependencies {
         // Local fallback for offline development.
         implementation fileTree(dir: 'libs', include: ['*.jar'])
     }
+
 }
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
@@ -120,7 +110,6 @@ jar {
 }
 
 processResources {
-    // 1. 必要な値をローカル変数にコピーする（Configuration Cache対策）
     def mod_version = project.version
     def mod_id = project.modId
     def mod_name = project.modName

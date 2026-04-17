@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
-import jp.ngt.rtm.rail.TileEntityLargeRailCore;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
@@ -13,6 +12,7 @@ import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -32,22 +32,23 @@ public abstract class RTMRailPartsRenderSafeMixin {
             "index"
     };
 
-    @Inject(method = "renderRail", at = @At("HEAD"), cancellable = true, remap = false)
-    private void crosstie$renderRailSafely(TileEntityLargeRailCore tileEntity, int index, double x, double y, double z,
+    @Inject(method = "renderRail(Ljp/ngt/rtm/rail/TileEntityLargeRailCore;IDDDF)V", at = @At("HEAD"), cancellable = true, remap = false)
+    private void crosstie$renderRailSafely(@Coerce Object tileEntity, int index, double x, double y, double z,
             float par8, CallbackInfo ci) {
-        if (this.crosstie$shouldCullRail(tileEntity)) {
+        TileEntity railTile = (TileEntity) tileEntity;
+        if (this.crosstie$shouldCullRail(railTile)) {
             ci.cancel();
             return;
         }
 
         try {
             this.crosstie$setCurrentRailIndex(index);
-            if (this.crosstie$isHi03Rail(tileEntity)) {
+            if (this.crosstie$isHi03Rail(railTile)) {
                 Hi03ExpressRailwayContext.enter();
             }
 
-            this.crosstie$invokeRailRenderer("renderRailStatic", tileEntity, x, y, z, par8);
-            this.crosstie$invokeRailRenderer("renderRailDynamic", tileEntity, x, y, z, par8);
+            this.crosstie$invokeRailRenderer("renderRailStatic", railTile, x, y, z, par8);
+            this.crosstie$invokeRailRenderer("renderRailDynamic", railTile, x, y, z, par8);
         } catch (Exception e) {
             throw new RuntimeException("On init script", e);
         } finally {
@@ -94,7 +95,7 @@ public abstract class RTMRailPartsRenderSafeMixin {
         double py = mc.renderViewEntity.posY;
         double pz = mc.renderViewEntity.posZ;
 
-        AxisAlignedBB railAabb = tileEntity.getRenderBoundingBox();
+        AxisAlignedBB railAabb = this.crosstie$getEffectiveRailAabb(tileEntity);
         if (railAabb != null) {
             return this.crosstie$distanceSqToAabb(px, py, pz, railAabb) > cullDistSq;
         }
@@ -126,6 +127,84 @@ public abstract class RTMRailPartsRenderSafeMixin {
         }
 
         return dx * dx + dy * dy + dz * dz;
+    }
+
+    @Unique
+    private AxisAlignedBB crosstie$getEffectiveRailAabb(TileEntity tileEntity) {
+        AxisAlignedBB baseAabb = tileEntity.getRenderBoundingBox();
+        AxisAlignedBB mapAabb = this.crosstie$buildRailMapAabb(tileEntity);
+        if (baseAabb == null) {
+            return mapAabb;
+        }
+        if (mapAabb == null) {
+            return baseAabb;
+        }
+        return baseAabb.func_111270_a(mapAabb);
+    }
+
+    @Unique
+    private AxisAlignedBB crosstie$buildRailMapAabb(TileEntity tileEntity) {
+        try {
+            Method getAllRailMaps = tileEntity.getClass().getMethod("getAllRailMaps");
+            Object mapsObj = getAllRailMaps.invoke(tileEntity);
+            if (!(mapsObj instanceof Object[])) {
+                return null;
+            }
+
+            Object[] maps = (Object[]) mapsObj;
+            if (maps.length == 0) {
+                return null;
+            }
+
+            int[] holder = {
+                    Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE,
+                    Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE
+            };
+            boolean hasPoint = false;
+            for (Object map : maps) {
+                if (map == null) {
+                    continue;
+                }
+                Method getStartRP = map.getClass().getMethod("getStartRP");
+                Method getEndRP = map.getClass().getMethod("getEndRP");
+                Object start = getStartRP.invoke(map);
+                Object end = getEndRP.invoke(map);
+                hasPoint |= this.crosstie$accumulateRailPos(start, holder);
+                hasPoint |= this.crosstie$accumulateRailPos(end, holder);
+            }
+            if (!hasPoint) {
+                return null;
+            }
+
+            return AxisAlignedBB.getBoundingBox(holder[0] - 3.5D, holder[1] - 10.0D, holder[2] - 3.5D,
+                    holder[3] + 5.5D, holder[4] + 2.0D, holder[5] + 5.5D);
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
+    }
+
+    @Unique
+    private boolean crosstie$accumulateRailPos(Object railPos, int[] holder) {
+        if (railPos == null) {
+            return false;
+        }
+        try {
+            Field xField = railPos.getClass().getField("blockX");
+            Field yField = railPos.getClass().getField("blockY");
+            Field zField = railPos.getClass().getField("blockZ");
+            int x = xField.getInt(railPos);
+            int y = yField.getInt(railPos);
+            int z = zField.getInt(railPos);
+            holder[0] = Math.min(holder[0], x);
+            holder[1] = Math.min(holder[1], y);
+            holder[2] = Math.min(holder[2], z);
+            holder[3] = Math.max(holder[3], x);
+            holder[4] = Math.max(holder[4], y);
+            holder[5] = Math.max(holder[5], z);
+            return true;
+        } catch (ReflectiveOperationException ignored) {
+            return false;
+        }
     }
 
     @Unique

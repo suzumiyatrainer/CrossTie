@@ -2,6 +2,8 @@ package net.suzumiya.crosstie.mixins.rtm;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
@@ -46,7 +48,7 @@ public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
             return;
         }
 
-        AxisAlignedBB railAabb = cir.getReturnValue();
+        AxisAlignedBB railAabb = this.crosstie$getEffectiveRailAabb(cir.getReturnValue());
         if (railAabb == null) {
             return;
         }
@@ -63,12 +65,80 @@ public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
             return;
         }
 
-        if (CrossTie.proxy.getClientPlayer() != null) {
-            double forceDistanceSq = CROSSTIE_FORCE_RENDER_DISTANCE_BLOCKS * CROSSTIE_FORCE_RENDER_DISTANCE_BLOCKS;
-            if (CrossTie.proxy.getClientPlayer().getDistanceSq(this.xCoord + 0.5D, this.yCoord + 0.5D,
-                    this.zCoord + 0.5D) <= forceDistanceSq) {
-                cir.setReturnValue(INFINITE_EXTENT_AABB);
+    }
+
+    @Unique
+    private AxisAlignedBB crosstie$getEffectiveRailAabb(AxisAlignedBB baseAabb) {
+        AxisAlignedBB mapAabb = this.crosstie$buildRailMapAabb();
+        if (baseAabb == null) {
+            return mapAabb;
+        }
+        if (mapAabb == null) {
+            return baseAabb;
+        }
+        return baseAabb.func_111270_a(mapAabb);
+    }
+
+    @Unique
+    private AxisAlignedBB crosstie$buildRailMapAabb() {
+        try {
+            Method getAllRailMaps = this.getClass().getMethod("getAllRailMaps");
+            Object mapsObj = getAllRailMaps.invoke(this);
+            if (!(mapsObj instanceof Object[])) {
+                return null;
             }
+
+            Object[] maps = (Object[]) mapsObj;
+            if (maps.length == 0) {
+                return null;
+            }
+
+            int[] holder = {
+                    Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE,
+                    Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE
+            };
+            boolean hasPoint = false;
+            for (Object map : maps) {
+                if (map == null) {
+                    continue;
+                }
+                Method getStartRP = map.getClass().getMethod("getStartRP");
+                Method getEndRP = map.getClass().getMethod("getEndRP");
+                hasPoint |= this.crosstie$accumulateRailPos(getStartRP.invoke(map), holder);
+                hasPoint |= this.crosstie$accumulateRailPos(getEndRP.invoke(map), holder);
+            }
+            if (!hasPoint) {
+                return null;
+            }
+
+            return AxisAlignedBB.getBoundingBox(holder[0] - 3.5D, holder[1] - 10.0D, holder[2] - 3.5D,
+                    holder[3] + 5.5D, holder[4] + 2.0D, holder[5] + 5.5D);
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
+    }
+
+    @Unique
+    private boolean crosstie$accumulateRailPos(Object railPos, int[] holder) {
+        if (railPos == null) {
+            return false;
+        }
+        try {
+            Field xField = railPos.getClass().getField("blockX");
+            Field yField = railPos.getClass().getField("blockY");
+            Field zField = railPos.getClass().getField("blockZ");
+            int x = xField.getInt(railPos);
+            int y = yField.getInt(railPos);
+            int z = zField.getInt(railPos);
+            holder[0] = Math.min(holder[0], x);
+            holder[1] = Math.min(holder[1], y);
+            holder[2] = Math.min(holder[2], z);
+            holder[3] = Math.max(holder[3], x);
+            holder[4] = Math.max(holder[4], y);
+            holder[5] = Math.max(holder[5], z);
+            return true;
+        } catch (ReflectiveOperationException ignored) {
+            return false;
         }
     }
 }
