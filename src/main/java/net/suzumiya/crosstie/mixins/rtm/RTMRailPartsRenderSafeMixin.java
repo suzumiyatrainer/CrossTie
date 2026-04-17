@@ -155,7 +155,7 @@ public abstract class RTMRailPartsRenderSafeMixin {
     @Unique
     private AxisAlignedBB crosstie$buildRailMapAabb(TileEntity tileEntity) {
         try {
-            Method getAllRailMaps = tileEntity.getClass().getMethod("getAllRailMaps");
+            Method getAllRailMaps = this.crosstie$findMethod(tileEntity.getClass(), "getAllRailMaps");
             Object mapsObj = getAllRailMaps.invoke(tileEntity);
             if (!(mapsObj instanceof Object[])) {
                 return null;
@@ -175,8 +175,8 @@ public abstract class RTMRailPartsRenderSafeMixin {
                 if (map == null) {
                     continue;
                 }
-                Method getStartRP = map.getClass().getMethod("getStartRP");
-                Method getEndRP = map.getClass().getMethod("getEndRP");
+                Method getStartRP = this.crosstie$findMethod(map.getClass(), "getStartRP");
+                Method getEndRP = this.crosstie$findMethod(map.getClass(), "getEndRP");
                 Object start = getStartRP.invoke(map);
                 Object end = getEndRP.invoke(map);
                 hasPoint |= this.crosstie$accumulateRailPos(start, holder);
@@ -199,9 +199,9 @@ public abstract class RTMRailPartsRenderSafeMixin {
             return false;
         }
         try {
-            Field xField = railPos.getClass().getField("blockX");
-            Field yField = railPos.getClass().getField("blockY");
-            Field zField = railPos.getClass().getField("blockZ");
+            Field xField = this.crosstie$findField(railPos.getClass(), "blockX");
+            Field yField = this.crosstie$findField(railPos.getClass(), "blockY");
+            Field zField = this.crosstie$findField(railPos.getClass(), "blockZ");
             int x = xField.getInt(railPos);
             int y = yField.getInt(railPos);
             int z = zField.getInt(railPos);
@@ -215,6 +215,36 @@ public abstract class RTMRailPartsRenderSafeMixin {
         } catch (ReflectiveOperationException ignored) {
             return false;
         }
+    }
+
+    @Unique
+    private Method crosstie$findMethod(Class<?> owner, String name) throws NoSuchMethodException {
+        Class<?> cursor = owner;
+        while (cursor != null) {
+            try {
+                Method method = cursor.getDeclaredMethod(name);
+                method.setAccessible(true);
+                return method;
+            } catch (NoSuchMethodException ignored) {
+                cursor = cursor.getSuperclass();
+            }
+        }
+        throw new NoSuchMethodException(name);
+    }
+
+    @Unique
+    private Field crosstie$findField(Class<?> owner, String name) throws NoSuchFieldException {
+        Class<?> cursor = owner;
+        while (cursor != null) {
+            try {
+                Field field = cursor.getDeclaredField(name);
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException ignored) {
+                cursor = cursor.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(name);
     }
 
     @Unique
