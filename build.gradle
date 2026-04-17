@@ -66,7 +66,7 @@ configurations.configureEach {
     resolutionStrategy {
         // Security baseline for transitive legacy dependencies.
         force 'com.google.code.gson:gson:2.10.1'
-        force 'org.apache.commons:commons-compress:1.26.2'
+        force 'org.apache.commons:commons-compress:1.28.0'
         force 'commons-io:commons-io:2.14.0'
 
         // These upgrades can affect legacy 1.7.10 runtime behavior, so they are opt-in.
@@ -87,7 +87,7 @@ dependencies {
         implementation('com.google.code.gson:gson:2.10.1') {
             because 'Fixes vulnerable Gson versions before 2.8.9 and aligns all transitive Gson artifacts.'
         }
-        implementation('org.apache.commons:commons-compress:1.26.2') {
+        implementation('org.apache.commons:commons-compress:1.28.0') {
             because 'Fixes multiple archive parsing DoS issues present in older commons-compress releases.'
         }
         implementation('commons-io:commons-io:2.14.0') {
