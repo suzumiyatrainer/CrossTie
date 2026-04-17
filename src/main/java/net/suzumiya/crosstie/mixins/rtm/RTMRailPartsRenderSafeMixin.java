@@ -2,6 +2,8 @@ package net.suzumiya.crosstie.mixins.rtm;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
@@ -36,6 +38,18 @@ public abstract class RTMRailPartsRenderSafeMixin {
     private static final int CROSSTIE_GL_CLIENT_ALL_ATTRIB_BITS = 0xFFFFFFFF;
     @Unique
     private static final int CROSSTIE_AABB_CULL_MARGIN_CHUNKS = 2;
+    @Unique
+    private static final Map<String, Method> CROSSTIE_METHOD_CACHE = new ConcurrentHashMap<String, Method>();
+    @Unique
+    private static final Map<String, Field> CROSSTIE_FIELD_CACHE = new ConcurrentHashMap<String, Field>();
+    @Unique
+    private static final Map<String, Method> CROSSTIE_RENDER_METHOD_CACHE = new ConcurrentHashMap<String, Method>();
+    @Unique
+    private static volatile Field CROSSTIE_RAIL_INDEX_FIELD;
+    @Unique
+    private static volatile boolean CROSSTIE_RAIL_INDEX_FIELD_RESOLVED;
+    @Unique
+    private static volatile Class<?> CROSSTIE_RAIL_CORE_CLASS;
 
     @Inject(method = "renderRail(Ljp/ngt/rtm/rail/TileEntityLargeRailCore;IDDDF)V", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$renderRailSafely(@Coerce Object tileEntity, int index, double x, double y, double z,
@@ -219,11 +233,18 @@ public abstract class RTMRailPartsRenderSafeMixin {
 
     @Unique
     private Method crosstie$findMethod(Class<?> owner, String name) throws NoSuchMethodException {
+        String cacheKey = owner.getName() + "#" + name;
+        Method cached = CROSSTIE_METHOD_CACHE.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
         Class<?> cursor = owner;
         while (cursor != null) {
             try {
                 Method method = cursor.getDeclaredMethod(name);
                 method.setAccessible(true);
+                CROSSTIE_METHOD_CACHE.put(cacheKey, method);
                 return method;
             } catch (NoSuchMethodException ignored) {
                 cursor = cursor.getSuperclass();
@@ -234,11 +255,18 @@ public abstract class RTMRailPartsRenderSafeMixin {
 
     @Unique
     private Field crosstie$findField(Class<?> owner, String name) throws NoSuchFieldException {
+        String cacheKey = owner.getName() + "#" + name;
+        Field cached = CROSSTIE_FIELD_CACHE.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
         Class<?> cursor = owner;
         while (cursor != null) {
             try {
                 Field field = cursor.getDeclaredField(name);
                 field.setAccessible(true);
+                CROSSTIE_FIELD_CACHE.put(cacheKey, field);
                 return field;
             } catch (NoSuchFieldException ignored) {
                 cursor = cursor.getSuperclass();
@@ -249,32 +277,53 @@ public abstract class RTMRailPartsRenderSafeMixin {
 
     @Unique
     private void crosstie$setCurrentRailIndex(int index) {
-        for (String fieldName : CROSSTIE_RAIL_INDEX_FIELD_CANDIDATES) {
-            try {
-                Field currentRailIndex = this.getClass().getDeclaredField(fieldName);
-                if (currentRailIndex.getType() != int.class) {
-                    continue;
-                }
-                currentRailIndex.setAccessible(true);
-                currentRailIndex.setInt(this, index);
-                return;
-            } catch (ReflectiveOperationException ignored) {
-                // Ignore and continue with fallback candidates.
-            }
+        Field railIndexField = this.crosstie$getRailIndexField();
+        if (railIndexField == null) {
+            return;
         }
 
-        // KaizPatchX variants may not expose a writable index field.
-        // Rendering can continue without hard-failing.
+        try {
+            railIndexField.setInt(this, index);
+        } catch (ReflectiveOperationException ignored) {
+            // Rendering can continue without hard-failing.
+        }
+    }
+
+    @Unique
+    private Field crosstie$getRailIndexField() {
+        if (CROSSTIE_RAIL_INDEX_FIELD_RESOLVED) {
+            return CROSSTIE_RAIL_INDEX_FIELD;
+        }
+
+        synchronized (RTMRailPartsRenderSafeMixin.class) {
+            if (CROSSTIE_RAIL_INDEX_FIELD_RESOLVED) {
+                return CROSSTIE_RAIL_INDEX_FIELD;
+            }
+
+            for (String fieldName : CROSSTIE_RAIL_INDEX_FIELD_CANDIDATES) {
+                try {
+                    Field currentRailIndex = this.getClass().getDeclaredField(fieldName);
+                    if (currentRailIndex.getType() != int.class) {
+                        continue;
+                    }
+                    currentRailIndex.setAccessible(true);
+                    CROSSTIE_RAIL_INDEX_FIELD = currentRailIndex;
+                    break;
+                } catch (ReflectiveOperationException ignored) {
+                    // Ignore and continue with fallback candidates.
+                }
+            }
+
+            CROSSTIE_RAIL_INDEX_FIELD_RESOLVED = true;
+            return CROSSTIE_RAIL_INDEX_FIELD;
+        }
     }
 
     @Unique
     private void crosstie$invokeRailRenderer(String methodName, TileEntity tileEntity, double x, double y, double z,
             float par8) {
         try {
-            Class<?> targetClass = Class.forName(TARGET_CLASS_NAME);
-            Method method = this.getClass().getDeclaredMethod(methodName, targetClass, double.class, double.class,
-                    double.class, float.class);
-            method.setAccessible(true);
+            Method method = this.crosstie$getRailRendererMethod(methodName);
             method.invoke(this, tileEntity, x, y, z, par8);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Unable to invoke " + methodName, e);
@@ -282,15 +331,42 @@ public abstract class RTMRailPartsRenderSafeMixin {
     }
 
     @Unique
+    private Method crosstie$getRailRendererMethod(String methodName) throws ReflectiveOperationException {
+        Method cached = CROSSTIE_RENDER_METHOD_CACHE.get(methodName);
+        if (cached != null) {
+            return cached;
+        }
+
+        Class<?> targetClass = this.crosstie$getRailCoreClass();
+        Method method = this.getClass().getDeclaredMethod(methodName, targetClass, double.class, double.class,
+                double.class, float.class);
+        method.setAccessible(true);
+        CROSSTIE_RENDER_METHOD_CACHE.put(methodName, method);
+        return method;
+    }
+
+    @Unique
+    private Class<?> crosstie$getRailCoreClass() throws ClassNotFoundException {
+        Class<?> cached = CROSSTIE_RAIL_CORE_CLASS;
+        if (cached != null) {
+            return cached;
+        }
+
+        Class<?> loaded = Class.forName(TARGET_CLASS_NAME);
+        CROSSTIE_RAIL_CORE_CLASS = loaded;
+        return loaded;
+    }
+
+    @Unique
     private String crosstie$getRailModel(TileEntity tileEntity) {
         try {
-            Method getProperty = tileEntity.getClass().getMethod("getProperty");
+            Method getProperty = this.crosstie$findMethod(tileEntity.getClass(), "getProperty");
             Object property = getProperty.invoke(tileEntity);
             if (property == null) {
                 return null;
             }
 
-            Field railModelField = property.getClass().getField("railModel");
+            Field railModelField = this.crosstie$findField(property.getClass(), "railModel");
             Object railModel = railModelField.get(property);
             return railModel instanceof String ? (String) railModel : null;
         } catch (ReflectiveOperationException ignored) {

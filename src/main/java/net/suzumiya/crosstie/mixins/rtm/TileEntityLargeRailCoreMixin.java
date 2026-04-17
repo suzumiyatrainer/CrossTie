@@ -4,6 +4,8 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
@@ -23,6 +25,10 @@ public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
 
     @Unique
     private static final double CROSSTIE_FORCE_RENDER_DISTANCE_BLOCKS = CROSSTIE_FORCE_RENDER_CHUNKS * 16.0D;
+    @Unique
+    private static final Map<String, Method> CROSSTIE_METHOD_CACHE = new ConcurrentHashMap<String, Method>();
+    @Unique
+    private static final Map<String, Field> CROSSTIE_FIELD_CACHE = new ConcurrentHashMap<String, Field>();
 
     @Override
     @SideOnly(Side.CLIENT)
@@ -144,11 +150,18 @@ public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
 
     @Unique
     private Method crosstie$findMethod(Class<?> owner, String name) throws NoSuchMethodException {
+        String cacheKey = owner.getName() + "#" + name;
+        Method cached = CROSSTIE_METHOD_CACHE.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
         Class<?> cursor = owner;
         while (cursor != null) {
             try {
                 Method method = cursor.getDeclaredMethod(name);
                 method.setAccessible(true);
+                CROSSTIE_METHOD_CACHE.put(cacheKey, method);
                 return method;
             } catch (NoSuchMethodException ignored) {
                 cursor = cursor.getSuperclass();
@@ -159,11 +172,18 @@ public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
 
     @Unique
     private Field crosstie$findField(Class<?> owner, String name) throws NoSuchFieldException {
+        String cacheKey = owner.getName() + "#" + name;
+        Field cached = CROSSTIE_FIELD_CACHE.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
         Class<?> cursor = owner;
         while (cursor != null) {
             try {
                 Field field = cursor.getDeclaredField(name);
                 field.setAccessible(true);
+                CROSSTIE_FIELD_CACHE.put(cacheKey, field);
                 return field;
             } catch (NoSuchFieldException ignored) {
                 cursor = cursor.getSuperclass();

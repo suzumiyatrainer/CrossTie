@@ -2,6 +2,8 @@ package net.suzumiya.crosstie.mixins.rtm;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
 import net.suzumiya.crosstie.CrossTie;
@@ -19,6 +21,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(targets = "jp.ngt.rtm.render.RailPartsRenderer", remap = false)
 public abstract class RTMRailPartsRenderMixin {
+
+    private static final Map<String, Method> CROSSTIE_METHOD_CACHE = new ConcurrentHashMap<String, Method>();
+
+    private static final Map<String, Field> CROSSTIE_FIELD_CACHE = new ConcurrentHashMap<String, Field>();
 
     /**
      * hi03ExpressRailway のときだけ、描画コンテキストを有効にする。
@@ -76,17 +82,59 @@ public abstract class RTMRailPartsRenderMixin {
 
     private String crosstie$getRailModel(TileEntity tileEntity) {
         try {
-            Method getProperty = tileEntity.getClass().getMethod("getProperty");
+            Method getProperty = crosstie$findMethod(tileEntity.getClass(), "getProperty");
             Object property = getProperty.invoke(tileEntity);
             if (property == null) {
                 return null;
             }
 
-            Field railModelField = property.getClass().getField("railModel");
+            Field railModelField = crosstie$findField(property.getClass(), "railModel");
             Object railModel = railModelField.get(property);
             return railModel instanceof String ? (String) railModel : null;
         } catch (ReflectiveOperationException ignored) {
             return null;
         }
+    }
+
+    private Method crosstie$findMethod(Class<?> owner, String name) throws NoSuchMethodException {
+        String cacheKey = owner.getName() + "#" + name;
+        Method cached = CROSSTIE_METHOD_CACHE.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        Class<?> cursor = owner;
+        while (cursor != null) {
+            try {
+                Method method = cursor.getDeclaredMethod(name);
+                method.setAccessible(true);
+                CROSSTIE_METHOD_CACHE.put(cacheKey, method);
+                return method;
+            } catch (NoSuchMethodException ignored) {
+                cursor = cursor.getSuperclass();
+            }
+        }
+        throw new NoSuchMethodException(name);
+    }
+
+    private Field crosstie$findField(Class<?> owner, String name) throws NoSuchFieldException {
+        String cacheKey = owner.getName() + "#" + name;
+        Field cached = CROSSTIE_FIELD_CACHE.get(cacheKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        Class<?> cursor = owner;
+        while (cursor != null) {
+            try {
+                Field field = cursor.getDeclaredField(name);
+                field.setAccessible(true);
+                CROSSTIE_FIELD_CACHE.put(cacheKey, field);
+                return field;
+            } catch (NoSuchFieldException ignored) {
+                cursor = cursor.getSuperclass();
+            }
+        }
+        throw new NoSuchFieldException(name);
     }
 }
