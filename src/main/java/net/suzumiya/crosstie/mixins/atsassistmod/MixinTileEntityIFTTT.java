@@ -1,6 +1,5 @@
 package net.suzumiya.crosstie.mixins.atsassistmod;
 
-import jp.ngt.rtm.entity.train.EntityTrainBase;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.World;
 import net.suzumiya.crosstie.util.TrainSpatialTracker;
@@ -18,7 +17,7 @@ public abstract class MixinTileEntityIFTTT {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getEntitiesWithinAABB(Ljava/lang/Class;Lnet/minecraft/util/AxisAlignedBB;)Ljava/util/List;")
     )
     private List<?> crosstie$redirectGetEntitiesWithinAABB(World world, Class<?> clazz, AxisAlignedBB aabb) {
-        if (clazz == EntityTrainBase.class) {
+        if (clazz != null && "jp.ngt.rtm.entity.train.EntityTrainBase".equals(clazz.getName())) {
             return TrainSpatialTracker.getTrainsWithinAABB(world, aabb);
         }
         return world.getEntitiesWithinAABB(clazz, aabb);

@@ -1,11 +1,10 @@
 package net.suzumiya.crosstie.mixins.ngtlib;
 
-import jp.ngt.ngtlib.block.NGTObject;
-import jp.ngt.ngtlib.world.IBlockAccessNGT;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -24,7 +23,7 @@ public class NGTRendererStateMixin {
     private static final ThreadLocal<Boolean> CROSSTIE_CULL_ENABLED = new ThreadLocal<Boolean>();
 
     @Inject(method = "renderNGTObject(Ljp/ngt/ngtlib/world/IBlockAccessNGT;Ljp/ngt/ngtlib/block/NGTObject;ZII)V", at = @At("HEAD"), remap = false)
-    private static void crosstie$stabilizeRenderStateHead(IBlockAccessNGT blockAccess, NGTObject ngto, boolean changeLighting, int mode, int pass, CallbackInfo ci) {
+    private static void crosstie$stabilizeRenderStateHead(@Coerce Object blockAccess, @Coerce Object ngto, boolean changeLighting, int mode, int pass, CallbackInfo ci) {
         CROSSTIE_FRONT_FACE.set(Integer.valueOf(GL11.glGetInteger(GL11.GL_FRONT_FACE)));
         CROSSTIE_CULL_ENABLED.set(Boolean.valueOf(GL11.glIsEnabled(GL11.GL_CULL_FACE)));
 
@@ -33,7 +32,7 @@ public class NGTRendererStateMixin {
     }
 
     @Inject(method = "renderNGTObject(Ljp/ngt/ngtlib/world/IBlockAccessNGT;Ljp/ngt/ngtlib/block/NGTObject;ZII)V", at = @At("RETURN"), remap = false)
-    private static void crosstie$stabilizeRenderStateReturn(IBlockAccessNGT blockAccess, NGTObject ngto, boolean changeLighting, int mode, int pass, CallbackInfo ci) {
+    private static void crosstie$stabilizeRenderStateReturn(@Coerce Object blockAccess, @Coerce Object ngto, boolean changeLighting, int mode, int pass, CallbackInfo ci) {
         Integer frontFace = CROSSTIE_FRONT_FACE.get();
         Boolean cullEnabled = CROSSTIE_CULL_ENABLED.get();
 
