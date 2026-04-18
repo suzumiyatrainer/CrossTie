@@ -100,7 +100,7 @@ dependencies {
 
     // Annotation processor for Mixins
     annotationProcessor('org.ow2.asm:asm-debug-all:5.0.3')
-    annotationProcessor('com.google.guava:guava:32.0.0-jre')
+    annotationProcessor('com.google.guava:guava:33.6.0-jre')
     annotationProcessor('com.google.code.gson:gson:2.10.1')
 
     // ASM for compilation
