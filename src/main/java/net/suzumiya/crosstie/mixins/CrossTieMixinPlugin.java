@@ -17,6 +17,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             "net.suzumiya.crosstie.mixins.ngtlib.ScriptUtilMixin",
             "net.suzumiya.crosstie.mixins.ngtlib.GLHelperMixin",
             "net.suzumiya.crosstie.mixins.angelica.RenderGlobalInitMixin",
+            "net.suzumiya.crosstie.mixins.angelica.AngelicaGLStateManagerDrawArraysMixin",
             "net.suzumiya.crosstie.mixins.intelliinput.RedirectWindowProcMixin",
             "net.suzumiya.crosstie.mixins.rtm.RenderVehicleBaseMixin",
             "net.suzumiya.crosstie.mixins.rtm.RTMMiscRenderMixin",
@@ -25,6 +26,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             "net.suzumiya.crosstie.mixins.rtm.TileEntityLargeRailCoreMixin",
             "net.suzumiya.crosstie.mixins.rtm.TileEntitySignalMixin",
             "net.suzumiya.crosstie.mixins.ngtlib.NGTOModelMixin",
+            "net.suzumiya.crosstie.mixins.ngtlib.NGTRendererLegacyContextMixin",
+            "net.suzumiya.crosstie.mixins.ngtlib.NGTRendererStateMixin",
             "net.suzumiya.crosstie.mixins.ngtlib.PolygonRendererMixin",
             "net.suzumiya.crosstie.mixins.angelica.AngelicaDisplayListManagerMixin")));
 
@@ -54,6 +57,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         if ("net.suzumiya.crosstie.mixins.angelica.AngelicaDisplayListManagerMixin".equals(mixinClassName)
+                || "net.suzumiya.crosstie.mixins.angelica.AngelicaGLStateManagerDrawArraysMixin".equals(mixinClassName)
                 || "net.suzumiya.crosstie.mixins.angelica.RenderGlobalInitMixin".equals(mixinClassName)) {
             return isClient && hasAngelica;
         }

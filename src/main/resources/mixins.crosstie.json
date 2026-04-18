@@ -17,6 +17,7 @@
   ],
   "client": [
     "angelica.RenderGlobalInitMixin",
+    "angelica.AngelicaGLStateManagerDrawArraysMixin",
     "intelliinput.RedirectWindowProcMixin",
     "rtm.RenderVehicleBaseMixin",
     "rtm.RTMMiscRenderMixin",
@@ -26,6 +27,8 @@
     "rtm.TileEntitySignalMixin",
     "ngtlib.GLHelperMixin",
     "ngtlib.NGTOModelMixin",
+    "ngtlib.NGTRendererLegacyContextMixin",
+    "ngtlib.NGTRendererStateMixin",
     "ngtlib.PolygonRendererMixin",
     "angelica.AngelicaDisplayListManagerMixin"
   ]
