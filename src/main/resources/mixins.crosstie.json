@@ -25,6 +25,7 @@
     "rtm.TileEntityLargeRailCoreMixin",
     "rtm.TileEntitySignalMixin",
     "ngtlib.GLHelperMixin",
+    "ngtlib.NGTOModelMixin",
     "ngtlib.PolygonRendererMixin",
     "angelica.AngelicaDisplayListManagerMixin"
   ]
