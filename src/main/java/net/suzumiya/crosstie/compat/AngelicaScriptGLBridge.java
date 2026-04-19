@@ -1,14 +1,17 @@
 package net.suzumiya.crosstie.compat;
 
-import java.lang.reflect.Method;
+import net.suzumiya.crosstie.config.CrossTieConfig;
+import net.suzumiya.crosstie.util.AngelicaDirectBufferCache;
+import net.suzumiya.crosstie.util.AngelicaRenderGuard;
 import org.lwjgl.opengl.GL11;
 
+import java.lang.reflect.Method;
+import java.nio.FloatBuffer;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * スクリプト側から呼ばれる GL11 の仲介クラス。
- *
- * RTM のスクリプトは GL11 を直接呼ぶため、Angelica 環境では古い行列系 API が
- * 使えずに落ちることがあります。ここで既知の呼び出しを Angelica 側へ振り分け、
- * 使えない場合は LWJGL の GL11 にフォールバックします。
+ * Script GL bridge for Angelica with fast-path state caching and safe fallback.
  */
 public final class AngelicaScriptGLBridge {
 
@@ -38,12 +41,19 @@ public final class AngelicaScriptGLBridge {
     private static final Method M_GL_DEPTH_MASK;
     private static final Method M_GL_SHADE_MODEL;
 
+    private static final ThreadLocal<StateCache> STATE_CACHE = new ThreadLocal<StateCache>() {
+        @Override
+        protected StateCache initialValue() {
+            return new StateCache();
+        }
+    };
+
     static {
         Class<?> glStateManager = null;
         try {
             glStateManager = Class.forName(GL_STATE_MANAGER_CLASS, false, AngelicaScriptGLBridge.class.getClassLoader());
         } catch (ClassNotFoundException ignored) {
-            // Angelica が無い場合
+            // Angelica not present.
         }
         ANGELICA_GL_STATE_MANAGER = glStateManager;
 
@@ -86,6 +96,9 @@ public final class AngelicaScriptGLBridge {
     }
 
     private static boolean invokeAngelica(Method method, Object... args) {
+        if (shouldForceLegacy()) {
+            return false;
+        }
         if (method == null) {
             return false;
         }
@@ -93,6 +106,9 @@ public final class AngelicaScriptGLBridge {
             method.invoke(null, args);
             return true;
         } catch (ReflectiveOperationException ignored) {
+            if (CrossTieConfig.enableAngelicaFallbackGuard) {
+                AngelicaRenderGuard.triggerFallback();
+            }
             return false;
         }
     }
@@ -101,11 +117,42 @@ public final class AngelicaScriptGLBridge {
         try {
             call.run();
         } catch (IllegalStateException ignored) {
-            // 旧固定機能の入口が無くても描画を止めない
+            if (CrossTieConfig.enableAngelicaFallbackGuard) {
+                AngelicaRenderGuard.triggerFallback();
+            }
+        }
+    }
+
+    private static boolean shouldForceLegacy() {
+        return CrossTieConfig.enableAngelicaFallbackGuard && AngelicaRenderGuard.isFallbackActive();
+    }
+
+    private static boolean canUseAngelicaFastPath() {
+        return CrossTieConfig.enableAngelicaFastPath && !shouldForceLegacy();
+    }
+
+    private static void stageFloats(float... values) {
+        if (!CrossTieConfig.enableAngelicaFastPath) {
+            return;
+        }
+        FloatBuffer buffer = AngelicaDirectBufferCache.copy(values);
+        // Keep a direct-buffer copy hot in native memory for downstream Angelica upload paths.
+        if (buffer.remaining() < 0) {
+            AngelicaRenderGuard.triggerFallback();
         }
     }
 
     public static void glPushMatrix() {
+        if (shouldForceLegacy()) {
+            callLegacy(new Runnable() {
+                @Override
+                public void run() {
+                    GL11.glPushMatrix();
+                }
+            });
+            return;
+        }
+
         if (!invokeAngelica(M_GL_PUSH_MATRIX)) {
             callLegacy(new Runnable() {
                 @Override
@@ -117,6 +164,16 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glPopMatrix() {
+        if (shouldForceLegacy()) {
+            callLegacy(new Runnable() {
+                @Override
+                public void run() {
+                    GL11.glPopMatrix();
+                }
+            });
+            return;
+        }
+
         if (!invokeAngelica(M_GL_POP_MATRIX)) {
             callLegacy(new Runnable() {
                 @Override
@@ -128,7 +185,13 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glTranslatef(final float x, final float y, final float z) {
-        if (!invokeAngelica(M_GL_TRANSLATEF, x, y, z)) {
+        if (AngelicaRenderGuard.hasInvalidFloat(x)
+                || AngelicaRenderGuard.hasInvalidFloat(y)
+                || AngelicaRenderGuard.hasInvalidFloat(z)) {
+            AngelicaRenderGuard.triggerFallback();
+        }
+        stageFloats(x, y, z);
+        if (!invokeAngelica(M_GL_TRANSLATEF, x, y, z) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -139,7 +202,14 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glRotatef(final float angle, final float x, final float y, final float z) {
-        if (!invokeAngelica(M_GL_ROTATEF, angle, x, y, z)) {
+        if (AngelicaRenderGuard.hasInvalidFloat(angle)
+                || AngelicaRenderGuard.hasInvalidFloat(x)
+                || AngelicaRenderGuard.hasInvalidFloat(y)
+                || AngelicaRenderGuard.hasInvalidFloat(z)) {
+            AngelicaRenderGuard.triggerFallback();
+        }
+        stageFloats(angle, x, y, z);
+        if (!invokeAngelica(M_GL_ROTATEF, angle, x, y, z) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -150,7 +220,13 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glScalef(final float x, final float y, final float z) {
-        if (!invokeAngelica(M_GL_SCALEF, x, y, z)) {
+        if (AngelicaRenderGuard.hasInvalidFloat(x)
+                || AngelicaRenderGuard.hasInvalidFloat(y)
+                || AngelicaRenderGuard.hasInvalidFloat(z)) {
+            AngelicaRenderGuard.triggerFallback();
+        }
+        stageFloats(x, y, z);
+        if (!invokeAngelica(M_GL_SCALEF, x, y, z) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -161,7 +237,13 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glTranslated(final double x, final double y, final double z) {
-        if (!invokeAngelica(M_GL_TRANSLATED, x, y, z)) {
+        if (AngelicaRenderGuard.hasInvalidDouble(x)
+                || AngelicaRenderGuard.hasInvalidDouble(y)
+                || AngelicaRenderGuard.hasInvalidDouble(z)) {
+            AngelicaRenderGuard.triggerFallback();
+        }
+        stageFloats((float) x, (float) y, (float) z);
+        if (!invokeAngelica(M_GL_TRANSLATED, x, y, z) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -172,7 +254,14 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glRotated(final double angle, final double x, final double y, final double z) {
-        if (!invokeAngelica(M_GL_ROTATED, angle, x, y, z)) {
+        if (AngelicaRenderGuard.hasInvalidDouble(angle)
+                || AngelicaRenderGuard.hasInvalidDouble(x)
+                || AngelicaRenderGuard.hasInvalidDouble(y)
+                || AngelicaRenderGuard.hasInvalidDouble(z)) {
+            AngelicaRenderGuard.triggerFallback();
+        }
+        stageFloats((float) angle, (float) x, (float) y, (float) z);
+        if (!invokeAngelica(M_GL_ROTATED, angle, x, y, z) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -183,7 +272,13 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glScaled(final double x, final double y, final double z) {
-        if (!invokeAngelica(M_GL_SCALED, x, y, z)) {
+        if (AngelicaRenderGuard.hasInvalidDouble(x)
+                || AngelicaRenderGuard.hasInvalidDouble(y)
+                || AngelicaRenderGuard.hasInvalidDouble(z)) {
+            AngelicaRenderGuard.triggerFallback();
+        }
+        stageFloats((float) x, (float) y, (float) z);
+        if (!invokeAngelica(M_GL_SCALED, x, y, z) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -194,7 +289,13 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glMatrixMode(final int mode) {
-        if (!invokeAngelica(M_GL_MATRIX_MODE, mode)) {
+        StateCache cache = STATE_CACHE.get();
+        if (canUseAngelicaFastPath() && cache.matrixMode == mode) {
+            return;
+        }
+        cache.matrixMode = mode;
+
+        if (!invokeAngelica(M_GL_MATRIX_MODE, mode) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -205,7 +306,7 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glLoadIdentity() {
-        if (!invokeAngelica(M_GL_LOAD_IDENTITY)) {
+        if (!invokeAngelica(M_GL_LOAD_IDENTITY) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -216,7 +317,7 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glBegin(final int mode) {
-        if (!invokeAngelica(M_GL_BEGIN, mode)) {
+        if (!invokeAngelica(M_GL_BEGIN, mode) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -227,7 +328,7 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glEnd() {
-        if (!invokeAngelica(M_GL_END)) {
+        if (!invokeAngelica(M_GL_END) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -238,7 +339,14 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glVertex3f(final float x, final float y, final float z) {
-        if (!invokeAngelica(M_GL_VERTEX_3F, x, y, z)) {
+        if (AngelicaRenderGuard.hasInvalidFloat(x)
+                || AngelicaRenderGuard.hasInvalidFloat(y)
+                || AngelicaRenderGuard.hasInvalidFloat(z)) {
+            AngelicaRenderGuard.triggerFallback();
+            return;
+        }
+        stageFloats(x, y, z);
+        if (!invokeAngelica(M_GL_VERTEX_3F, x, y, z) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -249,7 +357,7 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glTexCoord2f(final float u, final float v) {
-        if (!invokeAngelica(M_GL_TEX_COORD_2F, u, v)) {
+        if (!invokeAngelica(M_GL_TEX_COORD_2F, u, v) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -260,7 +368,7 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glNormal3f(final float x, final float y, final float z) {
-        if (!invokeAngelica(M_GL_NORMAL_3F, x, y, z)) {
+        if (!invokeAngelica(M_GL_NORMAL_3F, x, y, z) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -271,7 +379,7 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glColor4f(final float r, final float g, final float b, final float a) {
-        if (!invokeAngelica(M_GL_COLOR_4F, r, g, b, a)) {
+        if (!invokeAngelica(M_GL_COLOR_4F, r, g, b, a) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -282,7 +390,13 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glEnable(final int cap) {
-        if (!invokeAngelica(M_GL_ENABLE, cap)) {
+        StateCache cache = STATE_CACHE.get();
+        if (canUseAngelicaFastPath() && cache.isEnabled(cap)) {
+            return;
+        }
+        cache.setEnabled(cap, true);
+
+        if (!invokeAngelica(M_GL_ENABLE, cap) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -293,7 +407,13 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glDisable(final int cap) {
-        if (!invokeAngelica(M_GL_DISABLE, cap)) {
+        StateCache cache = STATE_CACHE.get();
+        if (canUseAngelicaFastPath() && cache.isDisabled(cap)) {
+            return;
+        }
+        cache.setEnabled(cap, false);
+
+        if (!invokeAngelica(M_GL_DISABLE, cap) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -304,7 +424,14 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glBlendFunc(final int srcFactor, final int dstFactor) {
-        if (!invokeAngelica(M_GL_BLEND_FUNC, srcFactor, dstFactor)) {
+        StateCache cache = STATE_CACHE.get();
+        if (canUseAngelicaFastPath() && cache.blendSrc == srcFactor && cache.blendDst == dstFactor) {
+            return;
+        }
+        cache.blendSrc = srcFactor;
+        cache.blendDst = dstFactor;
+
+        if (!invokeAngelica(M_GL_BLEND_FUNC, srcFactor, dstFactor) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -315,7 +442,15 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glAlphaFunc(final int func, final float ref) {
-        if (!invokeAngelica(M_GL_ALPHA_FUNC, func, ref)) {
+        StateCache cache = STATE_CACHE.get();
+        int refBits = Float.floatToIntBits(ref);
+        if (canUseAngelicaFastPath() && cache.alphaFunc == func && cache.alphaRefBits == refBits) {
+            return;
+        }
+        cache.alphaFunc = func;
+        cache.alphaRefBits = refBits;
+
+        if (!invokeAngelica(M_GL_ALPHA_FUNC, func, ref) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -326,7 +461,13 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glDepthMask(final boolean flag) {
-        if (!invokeAngelica(M_GL_DEPTH_MASK, flag)) {
+        StateCache cache = STATE_CACHE.get();
+        if (canUseAngelicaFastPath() && cache.depthMask != null && cache.depthMask.booleanValue() == flag) {
+            return;
+        }
+        cache.depthMask = Boolean.valueOf(flag);
+
+        if (!invokeAngelica(M_GL_DEPTH_MASK, flag) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
@@ -337,13 +478,44 @@ public final class AngelicaScriptGLBridge {
     }
 
     public static void glShadeModel(final int mode) {
-        if (!invokeAngelica(M_GL_SHADE_MODEL, mode)) {
+        StateCache cache = STATE_CACHE.get();
+        if (canUseAngelicaFastPath() && cache.shadeModel == mode) {
+            return;
+        }
+        cache.shadeModel = mode;
+
+        if (!invokeAngelica(M_GL_SHADE_MODEL, mode) || shouldForceLegacy()) {
             callLegacy(new Runnable() {
                 @Override
                 public void run() {
                     GL11.glShadeModel(mode);
                 }
             });
+        }
+    }
+
+    private static final class StateCache {
+        private final Map<Integer, Boolean> capEnableMap = new HashMap<Integer, Boolean>();
+        private int matrixMode = Integer.MIN_VALUE;
+        private int blendSrc = Integer.MIN_VALUE;
+        private int blendDst = Integer.MIN_VALUE;
+        private int alphaFunc = Integer.MIN_VALUE;
+        private int alphaRefBits = Integer.MIN_VALUE;
+        private Boolean depthMask;
+        private int shadeModel = Integer.MIN_VALUE;
+
+        private boolean isEnabled(int cap) {
+            Boolean state = capEnableMap.get(Integer.valueOf(cap));
+            return state != null && state.booleanValue();
+        }
+
+        private boolean isDisabled(int cap) {
+            Boolean state = capEnableMap.get(Integer.valueOf(cap));
+            return state != null && !state.booleanValue();
+        }
+
+        private void setEnabled(int cap, boolean enabled) {
+            capEnableMap.put(Integer.valueOf(cap), Boolean.valueOf(enabled));
         }
     }
 }

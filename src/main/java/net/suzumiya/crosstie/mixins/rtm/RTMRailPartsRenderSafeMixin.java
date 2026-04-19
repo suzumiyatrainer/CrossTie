@@ -14,7 +14,9 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
+import net.suzumiya.crosstie.util.AngelicaRenderGuard;
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
+import net.suzumiya.crosstie.util.RailAabbResolver;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.spongepowered.asm.mixin.Mixin;
@@ -71,6 +73,18 @@ public abstract class RTMRailPartsRenderSafeMixin {
     @Inject(method = "renderRail(Ljp/ngt/rtm/rail/TileEntityLargeRailCore;IDDDF)V", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$renderRailSafely(@Coerce Object tileEntity, int index, double x, double y, double z,
             float par8, CallbackInfo ci) {
+        if (CrossTieConfig.enableAngelicaFallbackGuard && AngelicaRenderGuard.isFallbackActive()) {
+            return;
+        }
+
+        if (CrossTieConfig.enableAngelicaFallbackGuard
+                && (AngelicaRenderGuard.hasInvalidDouble(x)
+                || AngelicaRenderGuard.hasInvalidDouble(y)
+                || AngelicaRenderGuard.hasInvalidDouble(z))) {
+            AngelicaRenderGuard.triggerFallback();
+            return;
+        }
+
         TileEntity railTile = (TileEntity) tileEntity;
         if (this.crosstie$shouldCullRail(railTile)) {
             ci.cancel();
@@ -78,6 +92,7 @@ public abstract class RTMRailPartsRenderSafeMixin {
         }
 
         boolean glStateCaptured = false;
+        boolean renderedSuccessfully = false;
         try {
             glStateCaptured = this.crosstie$captureGLState();
             this.crosstie$setCurrentRailIndex(index);
@@ -87,8 +102,11 @@ public abstract class RTMRailPartsRenderSafeMixin {
 
             this.crosstie$invokeRailRenderer("renderRailStatic", railTile, x, y, z, par8);
             this.crosstie$invokeRailRenderer("renderRailDynamic", railTile, x, y, z, par8);
+            renderedSuccessfully = true;
         } catch (Exception e) {
-            throw new RuntimeException("On init script", e);
+            if (CrossTieConfig.enableAngelicaFallbackGuard) {
+                AngelicaRenderGuard.triggerFallback();
+            }
         } finally {
             if (Hi03ExpressRailwayContext.isUsingLegacyDisplayList()) {
                 try {
@@ -101,7 +119,9 @@ public abstract class RTMRailPartsRenderSafeMixin {
             this.crosstie$restoreGLState(glStateCaptured);
         }
 
-        ci.cancel();
+        if (renderedSuccessfully) {
+            ci.cancel();
+        }
     }
 
     private boolean crosstie$isHi03Rail(TileEntity tileEntity) {
@@ -134,7 +154,7 @@ public abstract class RTMRailPartsRenderSafeMixin {
         double py = mc.renderViewEntity.posY;
         double pz = mc.renderViewEntity.posZ;
 
-        AxisAlignedBB railAabb = this.crosstie$getEffectiveRailAabb(tileEntity);
+        AxisAlignedBB railAabb = RailAabbResolver.getEffectiveRailAabb(tileEntity, tileEntity.getRenderBoundingBox());
         if (railAabb == null) {
             // Unknown rail bounds must not fall back to tile origin distance.
             return false;
@@ -142,7 +162,7 @@ public abstract class RTMRailPartsRenderSafeMixin {
 
         double aabbCullDist = (renderChunks + CROSSTIE_AABB_CULL_MARGIN_CHUNKS) * 16.0D;
         double aabbCullDistSq = aabbCullDist * aabbCullDist;
-        return this.crosstie$distanceSqToAabb(px, py, pz, railAabb) > aabbCullDistSq;
+        return RailAabbResolver.distanceSqToAabb(px, py, pz, railAabb) > aabbCullDistSq;
     }
 
     @Unique

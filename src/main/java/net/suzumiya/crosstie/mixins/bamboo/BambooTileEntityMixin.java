@@ -1,17 +1,15 @@
 package net.suzumiya.crosstie.mixins.bamboo;
 
-import net.suzumiya.crosstie.CrossTie;
+import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
+import net.suzumiya.crosstie.CrossTie;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Bamboo Mod の TileEntity 更新を距離で抑制する。
- *
- * クライアント側は描画範囲外の更新を止め、サーバー側は更新頻度を落として負荷を下げる。
- */
 @Mixin(targets = {
         "ruby.bamboo.tileentity.TileEntityCampfire",
         "ruby.bamboo.tileentity.TileEntityAndon",
@@ -24,44 +22,66 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 }, remap = false)
 public abstract class BambooTileEntityMixin extends TileEntity {
 
+    @Unique
+    private int crosstie$updatePhase = Integer.MIN_VALUE;
+
     @Inject(method = { "updateEntity", "func_145845_h" }, at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$cullUpdate(CallbackInfo ci) {
-        if (this.worldObj.isRemote) {
-            int renderChunks = CrossTie.proxy.getClientRenderDistance();
-            if (renderChunks <= 0)
+        final World world = this.worldObj;
+        if (world == null) {
+            return;
+        }
+
+        if (world.isRemote) {
+            final int renderChunks = CrossTie.proxy.getClientRenderDistance();
+            if (renderChunks <= 0) {
                 return;
+            }
 
-            // クライアント側は描画距離 + 2 チャンクで間引く
-            double cullLimit = renderChunks * 16.0;
-            double limitSq = cullLimit * cullLimit;
-
-            net.minecraft.entity.Entity player = CrossTie.proxy.getClientPlayer();
-            if (player != null && this.getDistanceFrom(player.posX, player.posY, player.posZ) > limitSq) {
+            final double cullLimit = renderChunks * 16.0D;
+            final double limitSq = cullLimit * cullLimit;
+            final Entity player = CrossTie.proxy.getClientPlayer();
+            if (player != null && this.crosstie$distanceSqTo(player.posX, player.posY, player.posZ) > limitSq) {
                 ci.cancel();
             }
-        } else {
-            // サーバー側は更新を半分に抑え、必要時だけ近くのプレイヤーを確認する
-            if ((this.worldObj.getTotalWorldTime() + this.hashCode()) % 20 == 0) {
-                boolean isPlayerNear = false;
-                double limitSq = 64.0 * 64.0;
-                for (Object obj : this.worldObj.playerEntities) {
-                    if (obj instanceof net.minecraft.entity.Entity) {
-                        net.minecraft.entity.Entity p = (net.minecraft.entity.Entity) obj;
-                        if (this.getDistanceFrom(p.posX, p.posY, p.posZ) < limitSq) {
-                            isPlayerNear = true;
-                            break;
-                        }
+            return;
+        }
+
+        if (this.crosstie$updatePhase == Integer.MIN_VALUE) {
+            this.crosstie$updatePhase = this.hashCode() & 19;
+        }
+
+        final long worldTime = world.getTotalWorldTime();
+        if ((worldTime + this.crosstie$updatePhase) % 20L == 0L) {
+            final double nearLimitSq = 64.0D * 64.0D;
+            final java.util.List players = world.playerEntities;
+            boolean isPlayerNear = false;
+            for (int i = 0, size = players.size(); i < size; i++) {
+                final Object obj = players.get(i);
+                if (obj instanceof Entity) {
+                    final Entity p = (Entity) obj;
+                    if (this.crosstie$distanceSqTo(p.posX, p.posY, p.posZ) < nearLimitSq) {
+                        isPlayerNear = true;
+                        break;
                     }
                 }
-
-                if (!isPlayerNear) {
-                    ci.cancel();
-                }
-            } else {
-                if (this.worldObj.getTotalWorldTime() % 2 != 0) {
-                    ci.cancel();
-                }
             }
+            if (!isPlayerNear) {
+                ci.cancel();
+            }
+            return;
         }
+
+        if ((worldTime & 1L) != 0L) {
+            ci.cancel();
+        }
+    }
+
+    @Unique
+    private double crosstie$distanceSqTo(double x, double y, double z) {
+        final double dx = this.xCoord + 0.5D - x;
+        final double dy = this.yCoord + 0.5D - y;
+        final double dz = this.zCoord + 0.5D - z;
+        return dx * dx + dy * dy + dz * dz;
     }
 }

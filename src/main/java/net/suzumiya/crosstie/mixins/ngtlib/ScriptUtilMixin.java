@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.script.ScriptEngine;
@@ -21,6 +23,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  */
 @Mixin(targets = "jp.ngt.ngtlib.io.ScriptUtil", remap = false)
 public abstract class ScriptUtilMixin {
+    @Unique
+    private static final int REWRITE_CACHE_MAX = 128;
+    @Unique
+    private static final ConcurrentMap<String, String> REWRITE_CACHE = new ConcurrentHashMap<String, String>();
 
     @Unique
     private static final String BRIDGE_VAR = "__crosstie_gl11_bridge";
@@ -70,7 +76,13 @@ public abstract class ScriptUtilMixin {
             return null;
         }
 
+        String cached = REWRITE_CACHE.get(script);
+        if (cached != null) {
+            return cached;
+        }
+
         if (!script.contains("GL11.gl") && !script.contains("org.lwjgl.opengl.GL11.gl")) {
+            crosstie$cacheRewrite(script, script);
             return script;
         }
 
@@ -91,13 +103,22 @@ public abstract class ScriptUtilMixin {
         matcher.appendTail(rewritten);
 
         if (!changed) {
+            crosstie$cacheRewrite(script, script);
             return script;
         }
 
-        if (rewritten.indexOf(BRIDGE_VAR + " = Java.type") >= 0) {
-            return rewritten.toString();
-        }
+        String result = rewritten.indexOf(BRIDGE_VAR + " = Java.type") >= 0
+                ? rewritten.toString()
+                : BRIDGE_INIT + rewritten.toString();
+        crosstie$cacheRewrite(script, result);
+        return result;
+    }
 
-        return BRIDGE_INIT + rewritten.toString();
+    @Unique
+    private static void crosstie$cacheRewrite(String key, String value) {
+        if (REWRITE_CACHE.size() >= REWRITE_CACHE_MAX) {
+            REWRITE_CACHE.clear();
+        }
+        REWRITE_CACHE.put(key, value);
     }
 }

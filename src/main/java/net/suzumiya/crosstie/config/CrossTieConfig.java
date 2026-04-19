@@ -1,17 +1,21 @@
 package net.suzumiya.crosstie.config;
 
-import net.minecraftforge.common.config.Configuration;
 import cpw.mods.fml.common.FMLLog;
+import net.minecraftforge.common.config.Configuration;
+
 import java.io.File;
 
 public class CrossTieConfig {
     public static Configuration config;
 
-    // FPS 最適化
+    // FPS
     public static boolean enableRenderCulling = true;
-    public static boolean fixAngelicaRailCulling = false; // 既定値は false
+    public static boolean fixAngelicaRailCulling = false;
+    public static boolean enableAngelicaFastPath = true;
+    public static boolean enableAngelicaIfTTTCache = true;
+    public static boolean enableAngelicaFallbackGuard = true;
 
-    // TPS 最適化
+    // TPS
     public static boolean enableTileEntityUpdates = true;
 
     public static void init(File configFile) {
@@ -23,17 +27,23 @@ public class CrossTieConfig {
         try {
             config.load();
 
-            // FPS 設定項目
             enableRenderCulling = config.getBoolean("enableRenderCulling", "fps", true,
-                    "RTM の車両と機械に対する描画カリングを有効にします。");
+                    "Enable render culling for RTM entities and tiles.");
 
             fixAngelicaRailCulling = config.getBoolean("fixAngelicaRailCulling", "fps", false,
-                    "レールのバウンディングボックスを広げて、Angelica / Sodium で起きるレールカリング問題を修正します。"
-                            + "有効にすると FPS が少し下がる場合があります。");
+                    "Expand rail bounding boxes to mitigate Angelica/Sodium rail culling issues.");
 
-            // TPS 設定項目
+            enableAngelicaFastPath = config.getBoolean("enableAngelicaFastPath", "fps", true,
+                    "Use Angelica fast-path state cache and direct-buffer staging for corrected render data.");
+
+            enableAngelicaIfTTTCache = config.getBoolean("enableAngelicaIfTTTCache", "fps", true,
+                    "Consume ATSAssist IFTTT post-update snapshots as render-only immutable cache.");
+
+            enableAngelicaFallbackGuard = config.getBoolean("enableAngelicaFallbackGuard", "fps", true,
+                    "Temporarily disable Angelica optimizations and fallback when render anomalies are detected.");
+
             enableTileEntityUpdates = config.getBoolean("enableTileEntityUpdates", "tps", true,
-                    "TileEntity のサーバー側更新最適化を有効にします。");
+                    "Enable tile entity update optimization.");
 
         } catch (Exception e) {
             FMLLog.getLogger().error("[CrossTie] Failed to load configuration", e);

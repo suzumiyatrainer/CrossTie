@@ -3,21 +3,29 @@ package net.suzumiya.crosstie.mixins.rtm;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.suzumiya.crosstie.config.CrossTieConfig;
+import net.suzumiya.crosstie.util.AngelicaRenderGuard;
+import net.suzumiya.crosstie.util.AngelicaShaderFlagBridge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * RTM の車両描画を距離で間引く mixin。
- */
 @Mixin(targets = "jp.ngt.rtm.entity.vehicle.RenderVehicleBase", remap = false)
 public abstract class RenderVehicleBaseMixin {
 
-    /**
-     * 車両本体の描画を、プレイヤーから遠い場合は止める。
-     */
+    @Inject(method = "doRender", at = @At("HEAD"), remap = false)
+    private void crosstie$applyTrainShaderFixFlags(Entity entity, double x, double y, double z, float yaw,
+            float partialTicks, CallbackInfo ci) {
+        if (CrossTieConfig.enableAngelicaFallbackGuard && (AngelicaRenderGuard.hasInvalidDouble(x)
+                || AngelicaRenderGuard.hasInvalidDouble(y)
+                || AngelicaRenderGuard.hasInvalidDouble(z))) {
+            AngelicaRenderGuard.triggerFallback();
+            return;
+        }
+        AngelicaShaderFlagBridge.applyFlags(true, false, AngelicaRenderGuard.isFallbackActive());
+    }
+
     @Inject(method = "doRender", at = @At("HEAD"), cancellable = true)
     private void crosstie$cullDistantVehicles(Entity entity, double x, double y, double z, float yaw,
             float partialTicks, CallbackInfo ci) {
@@ -29,14 +37,8 @@ public abstract class RenderVehicleBaseMixin {
         if (mc.renderViewEntity == null)
             return;
 
-        // 描画距離（チャンク単位）
         int renderDistChunks = mc.gameSettings.renderDistanceChunks;
-
-        // カリング距離（ブロック単位）
-        // 描画距離 + 2 チャンクを基準にする
         double cullDist = (renderDistChunks + 2) * 16.0;
-
-        // 距離の二乗で比較する（平方根を避けるため）
         double distSq = entity.getDistanceSqToEntity(mc.renderViewEntity);
 
         if (distSq > cullDist * cullDist) {
@@ -44,9 +46,12 @@ public abstract class RenderVehicleBaseMixin {
         }
     }
 
-    /**
-     * ライトエフェクトの描画を、描画距離の外では止める。
-     */
+    @Inject(method = "doRender", at = @At("RETURN"), remap = false)
+    private void crosstie$clearTrainShaderFixFlags(Entity entity, double x, double y, double z, float yaw,
+            float partialTicks, CallbackInfo ci) {
+        AngelicaShaderFlagBridge.applyFlags(false, false, AngelicaRenderGuard.isFallbackActive());
+    }
+
     @Inject(method = "renderLightEffect(Ljp/ngt/rtm/entity/vehicle/EntityVehicleBase;Ljp/ngt/rtm/modelpack/modelset/ModelSetVehicleBaseClient;)V", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$cullLightEffects(@Coerce Object vehicle, @Coerce Object modelset,
             CallbackInfo ci) {
@@ -59,7 +64,6 @@ public abstract class RenderVehicleBaseMixin {
             return;
 
         int renderChunks = mc.gameSettings.renderDistanceChunks;
-        // 最低 4 チャンクを確保し、描画距離 - 4 チャンクまで表示する
         int effectChunks = Math.max(4, renderChunks - 4);
         double effectDist = effectChunks * 16.0;
 
@@ -68,9 +72,6 @@ public abstract class RenderVehicleBaseMixin {
         }
     }
 
-    /**
-     * ロールサインの描画を、描画距離の外では止める。
-     */
     @Inject(method = "renderRollsign(Ljp/ngt/rtm/entity/vehicle/EntityVehicleBase;Ljp/ngt/rtm/modelpack/modelset/ModelSetVehicleBaseClient;)V", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$cullRollsigns(@Coerce Object vehicle, @Coerce Object modelset,
             CallbackInfo ci) {
@@ -83,7 +84,6 @@ public abstract class RenderVehicleBaseMixin {
             return;
 
         int renderChunks = mc.gameSettings.renderDistanceChunks;
-        // 描画距離 + 1 チャンクまで表示する
         double signDist = (renderChunks + 1) * 16.0;
 
         if (((Entity) vehicle).getDistanceSqToEntity(mc.renderViewEntity) > signDist * signDist) {

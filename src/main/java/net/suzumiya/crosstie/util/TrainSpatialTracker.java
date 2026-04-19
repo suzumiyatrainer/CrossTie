@@ -5,11 +5,11 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Highly optimized spatial index for tracking EntityTrainBase positions.
@@ -17,96 +17,106 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class TrainSpatialTracker {
     // DimensionID -> ChunkHash -> Sets of Trains
-    private static final Map<Integer, Map<Long, Set<Entity>>> SPATIAL_GRID = new ConcurrentHashMap<>();
-    
-    // Train -> Its previously registered ChunkHashes
-    private static final Map<Entity, Set<Long>> TRAIN_CACHED_CHUNKS = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Integer, ConcurrentMap<Long, Set<Entity>>> SPATIAL_GRID =
+            new ConcurrentHashMap<Integer, ConcurrentMap<Long, Set<Entity>>>();
+    // Train -> last chunk span occupied by the train AABB
+    private static final Map<Entity, ChunkSpan> TRAIN_CHUNK_SPANS = new ConcurrentHashMap<Entity, ChunkSpan>();
+    private static final int DEFAULT_CELL_SET_CAPACITY = 4;
 
     private static long getChunkHash(int x, int z) {
-        return (long) x & 4294967295L | ((long) z & 4294967295L) << 32;
+        return ((long) x & 4294967295L) | (((long) z & 4294967295L) << 32);
     }
 
     public static void updateTrain(Entity train) {
         if (train.worldObj == null || train.worldObj.isRemote) return;
-        
+
         if (train.isDead) {
             removeTrain(train);
             return;
         }
 
         int dim = train.worldObj.provider.dimensionId;
-        Map<Long, Set<Entity>> dimGrid = SPATIAL_GRID.computeIfAbsent(dim, k -> new ConcurrentHashMap<>());
-        
+        ConcurrentMap<Long, Set<Entity>> dimGrid = SPATIAL_GRID.get(Integer.valueOf(dim));
+        if (dimGrid == null) {
+            dimGrid = new ConcurrentHashMap<Long, Set<Entity>>();
+            ConcurrentMap<Long, Set<Entity>> previous = SPATIAL_GRID.putIfAbsent(Integer.valueOf(dim), dimGrid);
+            if (previous != null) {
+                dimGrid = previous;
+            }
+        }
+
         AxisAlignedBB bb = train.boundingBox;
         if (bb == null) return;
-        
+
         int minX = (int) Math.floor(bb.minX) >> 4;
         int maxX = (int) Math.floor(bb.maxX) >> 4;
         int minZ = (int) Math.floor(bb.minZ) >> 4;
         int maxZ = (int) Math.floor(bb.maxZ) >> 4;
 
-        Set<Long> currentChunks = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                currentChunks.add(getChunkHash(x, z));
-            }
-        }
-        
-        Set<Long> previousChunks = TRAIN_CACHED_CHUNKS.get(train);
-        
-        // If chunks haven't changed, no need to update the grid
-        if (previousChunks != null && previousChunks.equals(currentChunks)) {
+        ChunkSpan previous = TRAIN_CHUNK_SPANS.get(train);
+        if (previous != null && previous.matches(minX, maxX, minZ, maxZ)) {
             return;
         }
-        
-        // Remove from old chunks
-        if (previousChunks != null) {
-            for (Long hash : previousChunks) {
-                if (!currentChunks.contains(hash)) {
-                    Set<Entity> cell = dimGrid.get(hash);
-                    if (cell != null) cell.remove(train);
+
+        if (previous != null) {
+            for (int x = previous.minX; x <= previous.maxX; x++) {
+                for (int z = previous.minZ; z <= previous.maxZ; z++) {
+                    if (x < minX || x > maxX || z < minZ || z > maxZ) {
+                        removeTrainFromCell(dimGrid, getChunkHash(x, z), train);
+                    }
                 }
             }
         }
-        
-        // Add to new chunks
-        for (Long hash : currentChunks) {
-            if (previousChunks == null || !previousChunks.contains(hash)) {
-                dimGrid.computeIfAbsent(hash, k -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(train);
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                if (previous == null || x < previous.minX || x > previous.maxX || z < previous.minZ || z > previous.maxZ) {
+                    addTrainToCell(dimGrid, getChunkHash(x, z), train);
+                }
             }
         }
-        
-        TRAIN_CACHED_CHUNKS.put(train, currentChunks);
+
+        if (previous == null) {
+            TRAIN_CHUNK_SPANS.put(train, new ChunkSpan(minX, maxX, minZ, maxZ));
+        } else {
+            previous.set(minX, maxX, minZ, maxZ);
+        }
     }
-    
+
     public static void removeTrain(Entity train) {
-        Set<Long> previousChunks = TRAIN_CACHED_CHUNKS.remove(train);
-        if (previousChunks != null && train.worldObj != null) {
+        ChunkSpan previous = TRAIN_CHUNK_SPANS.remove(train);
+        if (previous != null && train.worldObj != null) {
             int dim = train.worldObj.provider.dimensionId;
-            Map<Long, Set<Entity>> dimGrid = SPATIAL_GRID.get(dim);
+            ConcurrentMap<Long, Set<Entity>> dimGrid = SPATIAL_GRID.get(Integer.valueOf(dim));
             if (dimGrid != null) {
-                for (Long hash : previousChunks) {
-                    Set<Entity> cell = dimGrid.get(hash);
-                    if (cell != null) cell.remove(train);
+                for (int x = previous.minX; x <= previous.maxX; x++) {
+                    for (int z = previous.minZ; z <= previous.maxZ; z++) {
+                        removeTrainFromCell(dimGrid, getChunkHash(x, z), train);
+                    }
                 }
             }
         }
     }
 
     public static List<Entity> getTrainsWithinAABB(World world, AxisAlignedBB aabb) {
-        List<Entity> result = new ArrayList<>();
-        if (world == null || world.isRemote || aabb == null) return result;
+        List<Entity> result = new ArrayList<Entity>();
+        Set<Entity> visited = java.util.Collections.newSetFromMap(new ConcurrentHashMap<Entity, Boolean>());
+        fillTrainsWithinAABB(world, aabb, result, visited);
+        return result;
+    }
+
+    public static void fillTrainsWithinAABB(World world, AxisAlignedBB aabb, List<Entity> out, Set<Entity> visited) {
+        out.clear();
+        visited.clear();
+        if (world == null || world.isRemote || aabb == null) return;
         
-        Map<Long, Set<Entity>> dimGrid = SPATIAL_GRID.get(world.provider.dimensionId);
-        if (dimGrid == null) return result;
+        ConcurrentMap<Long, Set<Entity>> dimGrid = SPATIAL_GRID.get(Integer.valueOf(world.provider.dimensionId));
+        if (dimGrid == null) return;
         
         int minX = (int) Math.floor(aabb.minX) >> 4;
         int maxX = (int) Math.floor(aabb.maxX) >> 4;
         int minZ = (int) Math.floor(aabb.minZ) >> 4;
         int maxZ = (int) Math.floor(aabb.maxZ) >> 4;
-        
-        // Keep track of visited trains to prevent duplicates if they span multiple chunks
-        Set<Entity> visited = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
@@ -115,13 +125,55 @@ public class TrainSpatialTracker {
                     for (Entity train : cell) {
                         if (train.isDead) continue;
                         if (visited.add(train) && train.boundingBox != null && train.boundingBox.intersectsWith(aabb)) {
-                            result.add(train);
+                            out.add(train);
                         }
                     }
                 }
             }
         }
-        
-        return result;
+    }
+
+    private static void addTrainToCell(ConcurrentMap<Long, Set<Entity>> dimGrid, long chunkHash, Entity train) {
+        Long key = Long.valueOf(chunkHash);
+        Set<Entity> cell = dimGrid.get(key);
+        if (cell == null) {
+            Set<Entity> created = java.util.Collections.newSetFromMap(new ConcurrentHashMap<Entity, Boolean>(DEFAULT_CELL_SET_CAPACITY));
+            Set<Entity> previous = dimGrid.putIfAbsent(key, created);
+            cell = previous != null ? previous : created;
+        }
+        cell.add(train);
+    }
+
+    private static void removeTrainFromCell(ConcurrentMap<Long, Set<Entity>> dimGrid, long chunkHash, Entity train) {
+        Long key = Long.valueOf(chunkHash);
+        Set<Entity> cell = dimGrid.get(key);
+        if (cell != null) {
+            cell.remove(train);
+            if (cell.isEmpty()) {
+                dimGrid.remove(key, cell);
+            }
+        }
+    }
+
+    private static final class ChunkSpan {
+        private int minX;
+        private int maxX;
+        private int minZ;
+        private int maxZ;
+
+        private ChunkSpan(int minX, int maxX, int minZ, int maxZ) {
+            this.set(minX, maxX, minZ, maxZ);
+        }
+
+        private boolean matches(int minX, int maxX, int minZ, int maxZ) {
+            return this.minX == minX && this.maxX == maxX && this.minZ == minZ && this.maxZ == maxZ;
+        }
+
+        private void set(int minX, int maxX, int minZ, int maxZ) {
+            this.minX = minX;
+            this.maxX = maxX;
+            this.minZ = minZ;
+            this.maxZ = maxZ;
+        }
     }
 }

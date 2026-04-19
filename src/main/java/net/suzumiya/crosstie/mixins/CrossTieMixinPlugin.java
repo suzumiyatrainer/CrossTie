@@ -17,16 +17,17 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             "net.suzumiya.crosstie.mixins.ngtlib.ScriptUtilMixin",
             "net.suzumiya.crosstie.mixins.ngtlib.GLHelperMixin",
             "net.suzumiya.crosstie.mixins.angelica.RenderGlobalInitMixin",
+            "net.suzumiya.crosstie.mixins.angelica.RenderGlobalFrameTickMixin",
             "net.suzumiya.crosstie.mixins.angelica.AngelicaGLStateManagerDrawArraysMixin",
             "net.suzumiya.crosstie.mixins.intelliinput.RedirectWindowProcMixin",
             "net.suzumiya.crosstie.mixins.rtm.RenderVehicleBaseMixin",
             "net.suzumiya.crosstie.mixins.rtm.RTMMiscRenderMixin",
             "net.suzumiya.crosstie.mixins.rtm.RTMRailPartsRenderSafeMixin",
+            "net.suzumiya.crosstie.mixins.rtm.RenderSignalMixin",
             "net.suzumiya.crosstie.mixins.rtm.RTMWirePartsRenderMixin",
+            "net.suzumiya.crosstie.mixins.mcte.RenderMiniatureContextGuardMixin",
             "net.suzumiya.crosstie.mixins.rtm.TileEntityLargeRailCoreMixin",
             "net.suzumiya.crosstie.mixins.rtm.TileEntitySignalMixin",
-            "net.suzumiya.crosstie.mixins.ngtlib.NGTOModelMixin",
-            "net.suzumiya.crosstie.mixins.ngtlib.NGTRendererLegacyContextMixin",
             "net.suzumiya.crosstie.mixins.ngtlib.NGTRendererStateMixin",
             "net.suzumiya.crosstie.mixins.ngtlib.PolygonRendererMixin",
             "net.suzumiya.crosstie.mixins.angelica.AngelicaDisplayListManagerMixin")));
@@ -36,6 +37,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     private boolean hasIntelliInput;
     private boolean hasRtm;
     private boolean hasBamboo;
+    private boolean hasATSAssist;
+    private boolean hasMcte;
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -47,6 +50,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         hasRtm = getClass().getClassLoader().getResource("jp/ngt/rtm/RTMCore.class") != null
                 || getClass().getClassLoader().getResource("jp/ngt/ngtlib/io/ScriptUtil.class") != null;
         hasBamboo = getClass().getClassLoader().getResource("ruby/bamboo/BambooCore.class") != null;
+        hasATSAssist = getClass().getClassLoader()
+                .getResource("jp/kaiz/atsassistmod/block/tileentity/TileEntityIFTTT.class") != null;
+        hasMcte = getClass().getClassLoader().getResource("jp/ngt/mcte/block/RenderMiniature.class") != null;
     }
 
     @Override
@@ -58,7 +64,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         if ("net.suzumiya.crosstie.mixins.angelica.AngelicaDisplayListManagerMixin".equals(mixinClassName)
                 || "net.suzumiya.crosstie.mixins.angelica.AngelicaGLStateManagerDrawArraysMixin".equals(mixinClassName)
-                || "net.suzumiya.crosstie.mixins.angelica.RenderGlobalInitMixin".equals(mixinClassName)) {
+                || "net.suzumiya.crosstie.mixins.angelica.RenderGlobalInitMixin".equals(mixinClassName)
+                || "net.suzumiya.crosstie.mixins.angelica.RenderGlobalFrameTickMixin".equals(mixinClassName)) {
             return isClient && hasAngelica;
         }
         if ("net.suzumiya.crosstie.mixins.intelliinput.RedirectWindowProcMixin".equals(mixinClassName)) {
@@ -72,9 +79,14 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.ngtlib.")) {
             return hasRtm;
         }
-
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.bamboo.")) {
             return hasBamboo;
+        }
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.mcte.")) {
+            return isClient && hasMcte;
+        }
+        if ("net.suzumiya.crosstie.mixins.atsassistmod.MixinTileEntityIFTTT".equals(mixinClassName)) {
+            return hasATSAssist;
         }
 
         if (!isClient && CLIENT_ONLY_MIXINS.contains(mixinClassName)) {

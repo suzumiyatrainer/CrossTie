@@ -2,6 +2,7 @@ package net.suzumiya.crosstie.mixins.rtm;
 
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
+import net.suzumiya.crosstie.util.WireRenderOptimizer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,6 +24,11 @@ public abstract class RTMWirePartsRenderMixin {
     private void crosstie$cullWireParts(@Coerce Object tileEntity, @Coerce Object connection, @Coerce Object target,
             float par8, @Coerce Object pass, CallbackInfo ci) {
         if (!CrossTieConfig.enableRenderCulling) {
+            return;
+        }
+
+        if (WireRenderOptimizer.shouldSkipWire((TileEntity) tileEntity, target)) {
+            ci.cancel();
             return;
         }
 

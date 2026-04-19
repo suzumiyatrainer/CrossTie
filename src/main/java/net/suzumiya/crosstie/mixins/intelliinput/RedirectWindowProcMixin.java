@@ -23,9 +23,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class RedirectWindowProcMixin {
 
     private static final AtomicBoolean LOGGED_ONCE = new AtomicBoolean(false);
+    private static volatile Method SEND_NULL_KEYDOWN_METHOD;
     private static volatile Method CALL_WINDOW_PROC_INT_METHOD;
     private static volatile Method CALL_WINDOW_PROC_PTR_METHOD;
     private static volatile Method DEF_WINDOW_PROC_METHOD;
+    private static volatile Constructor<?> LRESULT_CTOR;
+    private static volatile Object ZERO_LRESULT;
 
     @Redirect(
             method = "CommitIMEComposition",
@@ -37,11 +40,10 @@ public abstract class RedirectWindowProcMixin {
             return;
         }
         try {
-            Class<?> intelliInputClass =
-                    Class.forName("com.tsoft_web.IntelliInput.IntelliInput", false,
-                            RedirectWindowProcMixin.class.getClassLoader());
-            Method method = intelliInputClass.getDeclaredMethod("sendNullKeydown");
-            method.setAccessible(true);
+            Method method = crosstie$findSendNullKeydownMethod();
+            if (method == null) {
+                return;
+            }
             method.invoke(null);
         } catch (Throwable t) {
             crosstie$logOnce("CrossTie: IntelliInput sendNullKeydown() fallback failed.", t);
@@ -156,6 +158,24 @@ public abstract class RedirectWindowProcMixin {
         return null;
     }
 
+    private static Method crosstie$findSendNullKeydownMethod() {
+        Method cached = SEND_NULL_KEYDOWN_METHOD;
+        if (cached != null) {
+            return cached;
+        }
+        try {
+            Class<?> intelliInputClass =
+                    Class.forName("com.tsoft_web.IntelliInput.IntelliInput", false,
+                            RedirectWindowProcMixin.class.getClassLoader());
+            Method method = intelliInputClass.getDeclaredMethod("sendNullKeydown");
+            method.setAccessible(true);
+            SEND_NULL_KEYDOWN_METHOD = method;
+            return method;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
     private static Method crosstie$findDefWindowProc(Class<?> ownerClass) {
         if (DEF_WINDOW_PROC_METHOD != null) {
             return DEF_WINDOW_PROC_METHOD;
@@ -175,11 +195,21 @@ public abstract class RedirectWindowProcMixin {
     }
 
     private static Object crosstie$makeZeroLResult() {
+        Object cached = ZERO_LRESULT;
+        if (cached != null) {
+            return cached;
+        }
         try {
-            ClassLoader loader = RedirectWindowProcMixin.class.getClassLoader();
-            Class<?> lResultClass = Class.forName("com.sun.jna.platform.win32.WinDef$LRESULT", false, loader);
-            Constructor<?> ctor = lResultClass.getConstructor(long.class);
-            return ctor.newInstance(Long.valueOf(0L));
+            Constructor<?> ctor = LRESULT_CTOR;
+            if (ctor == null) {
+                ClassLoader loader = RedirectWindowProcMixin.class.getClassLoader();
+                Class<?> lResultClass = Class.forName("com.sun.jna.platform.win32.WinDef$LRESULT", false, loader);
+                ctor = lResultClass.getConstructor(long.class);
+                LRESULT_CTOR = ctor;
+            }
+            Object zero = ctor.newInstance(Long.valueOf(0L));
+            ZERO_LRESULT = zero;
+            return zero;
         } catch (Throwable t) {
             crosstie$logOnce("CrossTie: could not create WinDef$LRESULT(0).", t);
             return null;

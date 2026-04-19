@@ -1,6 +1,8 @@
 package net.suzumiya.crosstie.mixins.angelica;
 
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
+import net.suzumiya.crosstie.util.AngelicaRenderGuard;
+import net.suzumiya.crosstie.config.CrossTieConfig;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,6 +24,10 @@ public class AngelicaDisplayListManagerMixin {
      */
     @Inject(method = "glNewList", at = @At("HEAD"), cancellable = true, remap = false)
     private static void crosstie$bypassNewListForHi03(int list, int mode, CallbackInfo ci) {
+        if (CrossTieConfig.enableAngelicaFallbackGuard && AngelicaRenderGuard.isFallbackActive()) {
+            return;
+        }
+
         if (!Hi03ExpressRailwayContext.isActive() && Hi03ExpressRailwayContext.isUsingLegacyDisplayList()) {
             Hi03ExpressRailwayContext.setUsingLegacyDisplayList(false);
         }
@@ -39,6 +45,10 @@ public class AngelicaDisplayListManagerMixin {
      */
     @Inject(method = "glEndList", at = @At("HEAD"), cancellable = true, remap = false)
     private static void crosstie$bypassEndListForHi03(CallbackInfo ci) {
+        if (CrossTieConfig.enableAngelicaFallbackGuard && AngelicaRenderGuard.isFallbackActive()) {
+            return;
+        }
+
         if (Hi03ExpressRailwayContext.isUsingLegacyDisplayList() && Hi03ExpressRailwayContext.isActive()) {
             // Angelica を経由せず、直接 OpenGL の glEndList を呼ぶ
             GL11.glEndList();
@@ -56,6 +66,10 @@ public class AngelicaDisplayListManagerMixin {
      */
     @Inject(method = "isRecording", at = @At("HEAD"), cancellable = true, remap = false)
     private static void crosstie$bypassRecordingForHi03(CallbackInfoReturnable<Boolean> cir) {
+        if (CrossTieConfig.enableAngelicaFallbackGuard && AngelicaRenderGuard.isFallbackActive()) {
+            return;
+        }
+
         if (Hi03ExpressRailwayContext.isUsingLegacyDisplayList() && Hi03ExpressRailwayContext.isActive()) {
             cir.setReturnValue(false);
         } else if (Hi03ExpressRailwayContext.isUsingLegacyDisplayList()) {

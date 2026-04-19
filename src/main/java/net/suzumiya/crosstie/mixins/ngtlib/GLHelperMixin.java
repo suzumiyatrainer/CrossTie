@@ -19,30 +19,38 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class GLHelperMixin {
 
     @Unique
-    private static final ThreadLocal<Boolean> CROSSTIE_HIDDEN_COMPILE = ThreadLocal.withInitial(() -> false);
+    private static final ThreadLocal<int[]> CROSSTIE_HIDDEN_COMPILE =
+            new ThreadLocal<int[]>() {
+                @Override
+                protected int[] initialValue() {
+                    return new int[] { 0 };
+                }
+            };
 
     @Redirect(method = "startCompile", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glNewList(II)V"), remap = false)
     private static void crosstie$compileAndExecuteForHi03(int list, int mode) {
+        int[] hidden = CROSSTIE_HIDDEN_COMPILE.get();
         if (Hi03ExpressRailwayContext.isActive()) {
             GL11.glColorMask(false, false, false, false);
             GL11.glDepthMask(false);
-            CROSSTIE_HIDDEN_COMPILE.set(true);
+            hidden[0] = 1;
             GL11.glNewList(list, GL11.GL_COMPILE_AND_EXECUTE);
             return;
         }
 
-        CROSSTIE_HIDDEN_COMPILE.remove();
+        hidden[0] = 0;
         GL11.glNewList(list, mode);
     }
 
     @Inject(method = "endCompile", at = @At("RETURN"), remap = false)
     private static void crosstie$restoreAfterHi03Compile(CallbackInfo ci) {
-        if (!CROSSTIE_HIDDEN_COMPILE.get()) {
+        int[] hidden = CROSSTIE_HIDDEN_COMPILE.get();
+        if (hidden[0] == 0) {
             return;
         }
 
         GL11.glDepthMask(true);
         GL11.glColorMask(true, true, true, true);
-        CROSSTIE_HIDDEN_COMPILE.remove();
+        hidden[0] = 0;
     }
 }

@@ -1,6 +1,8 @@
 package net.suzumiya.crosstie.mixins.angelica;
 
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
+import net.suzumiya.crosstie.util.AngelicaRenderGuard;
+import net.suzumiya.crosstie.config.CrossTieConfig;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,6 +18,10 @@ public class AngelicaGLStateManagerDrawArraysMixin {
 
     @Inject(method = "glDrawArrays", at = @At("HEAD"), cancellable = true, remap = false)
     private static void crosstie$useRawGlDrawArrays(int mode, int first, int count, CallbackInfo ci) {
+        if (CrossTieConfig.enableAngelicaFallbackGuard && AngelicaRenderGuard.isFallbackActive()) {
+            return;
+        }
+
         if (!Hi03ExpressRailwayContext.isActive()) {
             return;
         }

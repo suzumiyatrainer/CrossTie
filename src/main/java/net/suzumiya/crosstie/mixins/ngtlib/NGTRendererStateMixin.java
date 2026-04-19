@@ -18,14 +18,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class NGTRendererStateMixin {
 
     @Unique
-    private static final ThreadLocal<Integer> CROSSTIE_FRONT_FACE = new ThreadLocal<Integer>();
-    @Unique
-    private static final ThreadLocal<Boolean> CROSSTIE_CULL_ENABLED = new ThreadLocal<Boolean>();
+    private static final ThreadLocal<int[]> CROSSTIE_STATE =
+            new ThreadLocal<int[]>() {
+                @Override
+                protected int[] initialValue() {
+                    // [0] = front face enum, [1] = cull enabled flag
+                    return new int[2];
+                }
+            };
 
     @Inject(method = "renderNGTObject(Ljp/ngt/ngtlib/world/IBlockAccessNGT;Ljp/ngt/ngtlib/block/NGTObject;ZII)V", at = @At("HEAD"), remap = false)
     private static void crosstie$stabilizeRenderStateHead(@Coerce Object blockAccess, @Coerce Object ngto, boolean changeLighting, int mode, int pass, CallbackInfo ci) {
-        CROSSTIE_FRONT_FACE.set(Integer.valueOf(GL11.glGetInteger(GL11.GL_FRONT_FACE)));
-        CROSSTIE_CULL_ENABLED.set(Boolean.valueOf(GL11.glIsEnabled(GL11.GL_CULL_FACE)));
+        int[] state = CROSSTIE_STATE.get();
+        state[0] = GL11.glGetInteger(GL11.GL_FRONT_FACE);
+        state[1] = GL11.glIsEnabled(GL11.GL_CULL_FACE) ? 1 : 0;
 
         GL11.glFrontFace(GL11.GL_CCW);
         GL11.glDisable(GL11.GL_CULL_FACE);
@@ -33,20 +39,12 @@ public class NGTRendererStateMixin {
 
     @Inject(method = "renderNGTObject(Ljp/ngt/ngtlib/world/IBlockAccessNGT;Ljp/ngt/ngtlib/block/NGTObject;ZII)V", at = @At("RETURN"), remap = false)
     private static void crosstie$stabilizeRenderStateReturn(@Coerce Object blockAccess, @Coerce Object ngto, boolean changeLighting, int mode, int pass, CallbackInfo ci) {
-        Integer frontFace = CROSSTIE_FRONT_FACE.get();
-        Boolean cullEnabled = CROSSTIE_CULL_ENABLED.get();
-
-        if (frontFace != null) {
-            GL11.glFrontFace(frontFace.intValue());
-        }
-
-        if (Boolean.TRUE.equals(cullEnabled)) {
+        int[] state = CROSSTIE_STATE.get();
+        GL11.glFrontFace(state[0]);
+        if (state[1] != 0) {
             GL11.glEnable(GL11.GL_CULL_FACE);
         } else {
             GL11.glDisable(GL11.GL_CULL_FACE);
         }
-
-        CROSSTIE_FRONT_FACE.remove();
-        CROSSTIE_CULL_ENABLED.remove();
     }
 }
