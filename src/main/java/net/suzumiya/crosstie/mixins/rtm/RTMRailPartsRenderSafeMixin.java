@@ -135,13 +135,14 @@ public abstract class RTMRailPartsRenderSafeMixin {
         double pz = mc.renderViewEntity.posZ;
 
         AxisAlignedBB railAabb = this.crosstie$getEffectiveRailAabb(tileEntity);
-        if (railAabb != null) {
-            double aabbCullDist = (renderChunks + CROSSTIE_AABB_CULL_MARGIN_CHUNKS) * 16.0D;
-            double aabbCullDistSq = aabbCullDist * aabbCullDist;
-            return this.crosstie$distanceSqToAabb(px, py, pz, railAabb) > aabbCullDistSq;
+        if (railAabb == null) {
+            // Unknown rail bounds must not fall back to tile origin distance.
+            return false;
         }
 
-        return tileEntity.getDistanceFrom(px, py, pz) > cullDistSq;
+        double aabbCullDist = (renderChunks + CROSSTIE_AABB_CULL_MARGIN_CHUNKS) * 16.0D;
+        double aabbCullDistSq = aabbCullDist * aabbCullDist;
+        return this.crosstie$distanceSqToAabb(px, py, pz, railAabb) > aabbCullDistSq;
     }
 
     @Unique

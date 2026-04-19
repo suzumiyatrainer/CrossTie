@@ -73,6 +73,8 @@ public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
 
         AxisAlignedBB railAabb = this.crosstie$getEffectiveRailAabb(cir.getReturnValue());
         if (railAabb == null) {
+            // Keep rail visible when bounds introspection fails for branch rail variants.
+            cir.setReturnValue(INFINITE_EXTENT_AABB);
             return;
         }
 
