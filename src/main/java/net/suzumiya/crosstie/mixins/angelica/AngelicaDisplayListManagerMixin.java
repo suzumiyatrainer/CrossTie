@@ -1,8 +1,9 @@
 package net.suzumiya.crosstie.mixins.angelica;
 
-import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
-import net.suzumiya.crosstie.util.AngelicaRenderGuard;
 import net.suzumiya.crosstie.config.CrossTieConfig;
+import net.suzumiya.crosstie.util.AngelicaRenderGuard;
+import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
+import net.suzumiya.crosstie.util.McteMiniatureRenderContext;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -11,69 +12,81 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Angelica の DisplayListManager に対する hi03ExpressRailway 用の分岐を追加する。
- *
- * hi03ExpressRailway の描画中は、Angelica のディスプレイリスト処理をバイパスして
- * 直接 OpenGL の古い経路を使います。これで VBO 変換によるジオメトリ崩れを防ぎます。
+ * Bypass Angelica's display-list recorder for render paths that still depend on native legacy lists.
  */
 @Mixin(targets = "com.gtnewhorizons.angelica.glsm.DisplayListManager", remap = false)
 public class AngelicaDisplayListManagerMixin {
 
-    /**
-     * hi03ExpressRailway の描画中は、Angelica 経由ではなく直接 OpenGL の glNewList を呼ぶ。
-     */
-    @Inject(method = "glNewList", at = @At("HEAD"), cancellable = true, remap = false)
-    private static void crosstie$bypassNewListForHi03(int list, int mode, CallbackInfo ci) {
-        if (CrossTieConfig.enableAngelicaFallbackGuard && AngelicaRenderGuard.isFallbackActive()) {
-            return;
-        }
-
+    private static void crosstie$clearStaleLegacyFlags() {
         if (!Hi03ExpressRailwayContext.isActive() && Hi03ExpressRailwayContext.isUsingLegacyDisplayList()) {
             Hi03ExpressRailwayContext.setUsingLegacyDisplayList(false);
         }
+        if (!McteMiniatureRenderContext.isActive() && McteMiniatureRenderContext.isUsingLegacyDisplayList()) {
+            McteMiniatureRenderContext.setUsingLegacyDisplayList(false);
+        }
+    }
 
+    private static boolean crosstie$shouldBypassDisplayListManager() {
+        return Hi03ExpressRailwayContext.isActive() || McteMiniatureRenderContext.isActive();
+    }
+
+    private static void crosstie$setUsingLegacyDisplayList(boolean using) {
         if (Hi03ExpressRailwayContext.isActive()) {
-            // Angelica を経由せず、直接 OpenGL のディスプレイリストを使う
-            GL11.glNewList(list, mode);
-            Hi03ExpressRailwayContext.setUsingLegacyDisplayList(true);
-            ci.cancel();
+            Hi03ExpressRailwayContext.setUsingLegacyDisplayList(using);
+        }
+        if (McteMiniatureRenderContext.isActive()) {
+            McteMiniatureRenderContext.setUsingLegacyDisplayList(using);
         }
     }
 
-    /**
-     * hi03ExpressRailway の描画中は、OpenGL の glEndList を直接呼ぶ。
-     */
+    private static boolean crosstie$isUsingLegacyDisplayListInActiveContext() {
+        return (Hi03ExpressRailwayContext.isActive() && Hi03ExpressRailwayContext.isUsingLegacyDisplayList())
+                || (McteMiniatureRenderContext.isActive() && McteMiniatureRenderContext.isUsingLegacyDisplayList());
+    }
+
+    @Inject(method = "glNewList", at = @At("HEAD"), cancellable = true, remap = false)
+    private static void crosstie$bypassNewListForLegacyContexts(int list, int mode, CallbackInfo ci) {
+        if (CrossTieConfig.enableAngelicaFallbackGuard && AngelicaRenderGuard.isFallbackActive()) {
+            return;
+        }
+
+        crosstie$clearStaleLegacyFlags();
+        if (!crosstie$shouldBypassDisplayListManager()) {
+            return;
+        }
+
+        GL11.glNewList(list, mode);
+        crosstie$setUsingLegacyDisplayList(true);
+        ci.cancel();
+    }
+
     @Inject(method = "glEndList", at = @At("HEAD"), cancellable = true, remap = false)
-    private static void crosstie$bypassEndListForHi03(CallbackInfo ci) {
+    private static void crosstie$bypassEndListForLegacyContexts(CallbackInfo ci) {
         if (CrossTieConfig.enableAngelicaFallbackGuard && AngelicaRenderGuard.isFallbackActive()) {
             return;
         }
 
-        if (Hi03ExpressRailwayContext.isUsingLegacyDisplayList() && Hi03ExpressRailwayContext.isActive()) {
-            // Angelica を経由せず、直接 OpenGL の glEndList を呼ぶ
+        if (crosstie$isUsingLegacyDisplayListInActiveContext()) {
             GL11.glEndList();
-            Hi03ExpressRailwayContext.setUsingLegacyDisplayList(false);
+            crosstie$setUsingLegacyDisplayList(false);
             ci.cancel();
-        } else if (Hi03ExpressRailwayContext.isUsingLegacyDisplayList()) {
-            Hi03ExpressRailwayContext.setUsingLegacyDisplayList(false);
+            return;
         }
+
+        crosstie$clearStaleLegacyFlags();
     }
 
-    /**
-     * hi03ExpressRailway の描画中は isRecording() を false にする。
-     *
-     * これにより glBegin / glEnd 系の処理が ImmediateModeRecorder に横取りされなくなる。
-     */
     @Inject(method = "isRecording", at = @At("HEAD"), cancellable = true, remap = false)
-    private static void crosstie$bypassRecordingForHi03(CallbackInfoReturnable<Boolean> cir) {
+    private static void crosstie$bypassRecordingForLegacyContexts(CallbackInfoReturnable<Boolean> cir) {
         if (CrossTieConfig.enableAngelicaFallbackGuard && AngelicaRenderGuard.isFallbackActive()) {
             return;
         }
 
-        if (Hi03ExpressRailwayContext.isUsingLegacyDisplayList() && Hi03ExpressRailwayContext.isActive()) {
+        if (crosstie$isUsingLegacyDisplayListInActiveContext()) {
             cir.setReturnValue(false);
-        } else if (Hi03ExpressRailwayContext.isUsingLegacyDisplayList()) {
-            Hi03ExpressRailwayContext.setUsingLegacyDisplayList(false);
+            return;
         }
+
+        crosstie$clearStaleLegacyFlags();
     }
 }

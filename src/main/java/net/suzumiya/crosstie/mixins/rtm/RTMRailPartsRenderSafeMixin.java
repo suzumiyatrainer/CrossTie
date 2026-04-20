@@ -44,7 +44,7 @@ public abstract class RTMRailPartsRenderSafeMixin {
     @Unique
     private static final int CROSSTIE_GL_CLIENT_ALL_ATTRIB_BITS = 0xFFFFFFFF;
     @Unique
-    private static final int CROSSTIE_AABB_CULL_MARGIN_CHUNKS = 2;
+    private static final int CROSSTIE_AABB_CULL_MARGIN_CHUNKS = 3;
     @Unique
     private static final String[] CROSSTIE_START_RP_ACCESSORS = { "getStartRP", "startRP", "getStartRailPos",
             "getStartRailPosition" };
@@ -148,8 +148,6 @@ public abstract class RTMRailPartsRenderSafeMixin {
             renderChunks = 4;
         }
 
-        double cullDist = renderChunks * 16.0D;
-        double cullDistSq = cullDist * cullDist;
         double px = mc.renderViewEntity.posX;
         double py = mc.renderViewEntity.posY;
         double pz = mc.renderViewEntity.posZ;

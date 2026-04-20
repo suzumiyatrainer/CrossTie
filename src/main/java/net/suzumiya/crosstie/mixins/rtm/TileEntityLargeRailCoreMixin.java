@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(targets = "jp.ngt.rtm.rail.TileEntityLargeRailCore", remap = false)
 public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
 
-    private static final int CROSSTIE_FORCE_RENDER_CHUNKS = 2;
+    private static final int CROSSTIE_FORCE_RENDER_CHUNKS = 3;
 
     private static final double CROSSTIE_FORCE_RENDER_DISTANCE_BLOCKS = CROSSTIE_FORCE_RENDER_CHUNKS * 16.0D;
 

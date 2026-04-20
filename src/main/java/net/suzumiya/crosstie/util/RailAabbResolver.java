@@ -5,6 +5,7 @@ import net.minecraft.util.AxisAlignedBB;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,7 +29,24 @@ public final class RailAabbResolver {
     private RailAabbResolver() {
     }
 
+    public static boolean hasMultipleRailMaps(Object railHolder) {
+        if (railHolder == null) {
+            return false;
+        }
+
+        try {
+            Method getAllRailMaps = findMethod(railHolder.getClass(), "getAllRailMaps");
+            return countRailMaps(getAllRailMaps.invoke(railHolder)) > 1;
+        } catch (ReflectiveOperationException ignored) {
+            return false;
+        }
+    }
+
     public static AxisAlignedBB getEffectiveRailAabb(Object railHolder, AxisAlignedBB baseAabb) {
+        if (!hasMultipleRailMaps(railHolder)) {
+            return baseAabb;
+        }
+
         AxisAlignedBB mapAabb = buildRailMapAabb(railHolder);
         if (baseAabb == null) {
             return mapAabb;
@@ -115,6 +133,29 @@ public final class RailAabbResolver {
         }
 
         return false;
+    }
+
+    private static int countRailMaps(Object mapsObj) {
+        if (mapsObj == null) {
+            return 0;
+        }
+        if (mapsObj instanceof Collection<?>) {
+            return ((Collection<?>) mapsObj).size();
+        }
+        if (mapsObj instanceof Iterable<?>) {
+            int count = 0;
+            for (Object ignored : (Iterable<?>) mapsObj) {
+                count++;
+                if (count > 1) {
+                    break;
+                }
+            }
+            return count;
+        }
+        if (mapsObj.getClass().isArray()) {
+            return Array.getLength(mapsObj);
+        }
+        return 0;
     }
 
     private static boolean accumulateFromMap(Object map, int[] holder) {

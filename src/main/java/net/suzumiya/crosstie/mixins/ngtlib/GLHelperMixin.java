@@ -1,6 +1,7 @@
 package net.suzumiya.crosstie.mixins.ngtlib;
 
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
+import net.suzumiya.crosstie.util.McteMiniatureRenderContext;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
