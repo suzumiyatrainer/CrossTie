@@ -86,7 +86,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             return isClient && hasMcte;
         }
         if ("net.suzumiya.crosstie.mixins.atsassistmod.MixinTileEntityIFTTT".equals(mixinClassName)) {
-            return hasATSAssist;
+            // Temporarily disabled to avoid potential behavioral issues with signal detection.
+            return false;
         }
 
         if (!isClient && CLIENT_ONLY_MIXINS.contains(mixinClassName)) {

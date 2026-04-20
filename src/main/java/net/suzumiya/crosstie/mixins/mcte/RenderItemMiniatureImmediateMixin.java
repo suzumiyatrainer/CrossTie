@@ -1,8 +1,7 @@
 package net.suzumiya.crosstie.mixins.mcte;
 
-import jp.ngt.ngtlib.renderer.NGTRenderer;
-import jp.ngt.ngtlib.util.NGTUtilClient;
-import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -12,18 +11,23 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
- * Implements "True Immediate Mode" for {@code RenderItemMiniature.renderBlocks()}.
+ * Implements "True Immediate Mode" for RenderItemMiniature.renderBlocks() without hard-coded dependencies.
  *
- * <p>Similar to the block renderer, the item renderer's display list logic is
- * bypassed to ensure visual correctness under Angelica. Because
- * {@code RenderProp} is a private inner class, we use reflection to access the
- * necessary fields for the immediate draw call.
+ * <p>This version uses reflection to access MCTE/NGTLib classes, keeping the project
+ * buildable even in CI environments without the required JARs in the libs folder.
  */
 @Mixin(targets = "jp.ngt.mcte.item.RenderItemMiniature", remap = false)
 public abstract class RenderItemMiniatureImmediateMixin {
 
+    @Unique
+    private static Method crosstie$renderNGTObjectMethod;
+    @Unique
+    private static Method crosstie$getMinecraftMethod;
+    @Unique
+    private static Field crosstie$locationBlocksTextureField;
     @Unique
     private static Field crosstie$ngtoField;
     @Unique
@@ -34,8 +38,20 @@ public abstract class RenderItemMiniatureImmediateMixin {
     @Inject(method = "renderBlocks", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$renderItemBlocksImmediately(@Coerce Object prop, float par3, int pass, CallbackInfo ci) {
         try {
-            // Lazy initialization of reflection fields
-            if (crosstie$ngtoField == null) {
+            // Lazy initialization of reflection handles
+            if (crosstie$renderNGTObjectMethod == null) {
+                Class<?> ngtRendererClass = Class.forName("jp.ngt.ngtlib.renderer.NGTRenderer");
+                Class<?> iBlockAccessClass = Class.forName("jp.ngt.ngtlib.world.IBlockAccessNGT");
+                Class<?> ngtObjectClass = Class.forName("jp.ngt.ngtlib.block.NGTObject");
+                crosstie$renderNGTObjectMethod = ngtRendererClass.getMethod("renderNGTObject", iBlockAccessClass,
+                        ngtObjectClass, boolean.class, int.class, int.class);
+
+                Class<?> ngtUtilClientClass = Class.forName("jp.ngt.ngtlib.util.NGTUtilClient");
+                crosstie$getMinecraftMethod = ngtUtilClientClass.getMethod("getMinecraft");
+
+                Class<?> textureMapClass = Class.forName("net.minecraft.client.renderer.texture.TextureMap");
+                crosstie$locationBlocksTextureField = textureMapClass.getField("locationBlocksTexture");
+
                 Class<?> propClass = prop.getClass();
                 crosstie$ngtoField = propClass.getField("ngto");
                 crosstie$worldField = propClass.getField("world");
@@ -45,19 +61,19 @@ public abstract class RenderItemMiniatureImmediateMixin {
             Object ngto = crosstie$ngtoField.get(prop);
             Object world = crosstie$worldField.get(prop);
             int mode = crosstie$modeField.getInt(prop);
+            Minecraft mc = (Minecraft) crosstie$getMinecraftMethod.invoke(null);
 
             // --- SET UP STATE ---
-            NGTUtilClient.getMinecraft().getTextureManager().bindTexture(TextureMap.locationBlocksTexture);
+            ResourceLocation blocksTex = (ResourceLocation) crosstie$locationBlocksTextureField.get(null);
+            mc.getTextureManager().bindTexture(blocksTex);
 
-            boolean smoothing = NGTUtilClient.getMinecraft().gameSettings.ambientOcclusion != 0;
+            boolean smoothing = mc.gameSettings.ambientOcclusion != 0;
             if (smoothing) {
                 GL11.glShadeModel(GL11.GL_SMOOTH);
             }
 
             // --- EXECUTE IMMEDIATE DRAW ---
-            // Bypasses Angelica's incompatible display-list recording for items.
-            NGTRenderer.renderNGTObject((jp.ngt.ngtlib.world.IBlockAccessNGT) world, (jp.ngt.ngtlib.block.NGTObject) ngto,
-                    true, mode, pass);
+            crosstie$renderNGTObjectMethod.invoke(null, world, ngto, true, mode, pass);
 
             // --- CLEAN UP STATE ---
             if (smoothing) {
@@ -68,8 +84,7 @@ public abstract class RenderItemMiniatureImmediateMixin {
             ci.cancel();
 
         } catch (Exception e) {
-            // Fallback to original logic if reflection fails (should not happen)
-            e.printStackTrace();
+            // Silently skip if anything fails in reflection
         }
     }
 }
