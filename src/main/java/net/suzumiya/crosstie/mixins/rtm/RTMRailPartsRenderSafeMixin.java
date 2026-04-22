@@ -15,6 +15,7 @@ import net.minecraft.util.AxisAlignedBB;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
 import net.suzumiya.crosstie.util.AngelicaRenderGuard;
+import net.suzumiya.crosstie.util.EntityPositionHelper;
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
 import net.suzumiya.crosstie.util.RailAabbResolver;
 import org.lwjgl.opengl.GL11;
@@ -91,14 +92,16 @@ public abstract class RTMRailPartsRenderSafeMixin {
             return;
         }
 
+        if (!this.crosstie$isHi03Rail(railTile)) {
+            return;
+        }
+
         boolean glStateCaptured = false;
         boolean renderedSuccessfully = false;
         try {
             glStateCaptured = this.crosstie$captureGLState();
             this.crosstie$setCurrentRailIndex(index);
-            if (this.crosstie$isHi03Rail(railTile)) {
-                Hi03ExpressRailwayContext.enter();
-            }
+            Hi03ExpressRailwayContext.enter();
 
             this.crosstie$invokeRailRenderer("renderRailStatic", railTile, x, y, z, par8);
             this.crosstie$invokeRailRenderer("renderRailDynamic", railTile, x, y, z, par8);
@@ -142,15 +145,15 @@ public abstract class RTMRailPartsRenderSafeMixin {
         if (mc.renderViewEntity == null) {
             return false;
         }
+        double[] viewerPos = new double[3];
+        if (!EntityPositionHelper.tryGetPosition(mc.renderViewEntity, viewerPos)) {
+            return false;
+        }
 
         int renderChunks = CrossTie.proxy.getClientRenderDistance();
         if (renderChunks < 4) {
             renderChunks = 4;
         }
-
-        double px = mc.renderViewEntity.posX;
-        double py = mc.renderViewEntity.posY;
-        double pz = mc.renderViewEntity.posZ;
 
         AxisAlignedBB railAabb = RailAabbResolver.getEffectiveRailAabb(tileEntity, tileEntity.getRenderBoundingBox());
         if (railAabb == null) {
@@ -160,7 +163,7 @@ public abstract class RTMRailPartsRenderSafeMixin {
 
         double aabbCullDist = (renderChunks + CROSSTIE_AABB_CULL_MARGIN_CHUNKS) * 16.0D;
         double aabbCullDistSq = aabbCullDist * aabbCullDist;
-        return RailAabbResolver.distanceSqToAabb(px, py, pz, railAabb) > aabbCullDistSq;
+        return RailAabbResolver.distanceSqToAabb(viewerPos[0], viewerPos[1], viewerPos[2], railAabb) > aabbCullDistSq;
     }
 
     @Unique

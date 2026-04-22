@@ -4,6 +4,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.suzumiya.crosstie.CrossTie;
+import net.suzumiya.crosstie.util.EntityPositionHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -41,7 +42,9 @@ public abstract class BambooTileEntityMixin extends TileEntity {
             final double cullLimit = renderChunks * 16.0D;
             final double limitSq = cullLimit * cullLimit;
             final Entity player = CrossTie.proxy.getClientPlayer();
-            if (player != null && this.crosstie$distanceSqTo(player.posX, player.posY, player.posZ) > limitSq) {
+            double[] playerPos = new double[3];
+            if (player != null && EntityPositionHelper.tryGetPosition(player, playerPos)
+                    && this.crosstie$distanceSqTo(playerPos[0], playerPos[1], playerPos[2]) > limitSq) {
                 ci.cancel();
             }
             return;
@@ -60,7 +63,9 @@ public abstract class BambooTileEntityMixin extends TileEntity {
                 final Object obj = players.get(i);
                 if (obj instanceof Entity) {
                     final Entity p = (Entity) obj;
-                    if (this.crosstie$distanceSqTo(p.posX, p.posY, p.posZ) < nearLimitSq) {
+                    double[] playerPos = new double[3];
+                    if (EntityPositionHelper.tryGetPosition(p, playerPos)
+                            && this.crosstie$distanceSqTo(playerPos[0], playerPos[1], playerPos[2]) < nearLimitSq) {
                         isPlayerNear = true;
                         break;
                     }

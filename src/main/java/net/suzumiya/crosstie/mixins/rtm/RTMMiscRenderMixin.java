@@ -5,6 +5,7 @@ import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
 import net.minecraft.tileentity.TileEntity;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
+import net.suzumiya.crosstie.util.EntityPositionHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -40,6 +41,9 @@ public abstract class RTMMiscRenderMixin extends TileEntitySpecialRenderer {
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.renderViewEntity == null)
             return;
+        double[] viewerPos = new double[3];
+        if (!EntityPositionHelper.tryGetPosition(mc.renderViewEntity, viewerPos))
+            return;
 
         int renderChunks = CrossTie.proxy.getClientRenderDistance();
         if (renderChunks < 4)
@@ -48,8 +52,7 @@ public abstract class RTMMiscRenderMixin extends TileEntitySpecialRenderer {
         double cullDist = renderChunks * 16.0;
 
         // TileEntity の距離判定は二乗距離
-        if (tileEntity.getDistanceFrom(mc.renderViewEntity.posX, mc.renderViewEntity.posY,
-                mc.renderViewEntity.posZ) > cullDist * cullDist) {
+        if (tileEntity.getDistanceFrom(viewerPos[0], viewerPos[1], viewerPos[2]) > cullDist * cullDist) {
             ci.cancel();
         }
     }

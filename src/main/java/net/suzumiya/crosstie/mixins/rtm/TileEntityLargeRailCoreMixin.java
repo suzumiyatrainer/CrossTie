@@ -7,6 +7,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
+import net.suzumiya.crosstie.util.EntityPositionHelper;
 import net.suzumiya.crosstie.util.RailAabbResolver;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -43,6 +44,10 @@ public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
         if (mc == null || mc.renderViewEntity == null) {
             return;
         }
+        double[] viewerPos = new double[3];
+        if (!EntityPositionHelper.tryGetPosition(mc.renderViewEntity, viewerPos)) {
+            return;
+        }
 
         AxisAlignedBB railAabb = RailAabbResolver.getEffectiveRailAabb(this, cir.getReturnValue());
         if (railAabb == null) {
@@ -51,11 +56,8 @@ public abstract class TileEntityLargeRailCoreMixin extends TileEntity {
             return;
         }
 
-        double px = mc.renderViewEntity.posX;
-        double py = mc.renderViewEntity.posY;
-        double pz = mc.renderViewEntity.posZ;
         double forceRenderDistanceSq = CROSSTIE_FORCE_RENDER_DISTANCE_BLOCKS * CROSSTIE_FORCE_RENDER_DISTANCE_BLOCKS;
-        if (RailAabbResolver.distanceSqToAabb(px, py, pz, railAabb) <= forceRenderDistanceSq) {
+        if (RailAabbResolver.distanceSqToAabb(viewerPos[0], viewerPos[1], viewerPos[2], railAabb) <= forceRenderDistanceSq) {
             cir.setReturnValue(INFINITE_EXTENT_AABB);
         }
     }

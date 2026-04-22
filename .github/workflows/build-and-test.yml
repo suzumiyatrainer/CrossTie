@@ -5,6 +5,7 @@ on:
     branches: [ master, main ]
   pull_request:
     branches: [ master, main ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,13 +13,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     env:
       GRADLE_USER_HOME: ${{ github.workspace }}/.gradle-user-home
-      # 【補足】ORG_GRADLE_PROJECT_privateMavenUrl に修正すると build.gradle と完全一致します
-      ORG_GRADLE_PROJECT_privateMavenUrl: ${{ secrets.PRIVATE_MAVEN_URL }}
-      ORG_GRADLE_PROJECT_privateMavenUser: ${{ secrets.PRIVATE_MAVEN_USER }}
-      ORG_GRADLE_PROJECT_privateMavenPassword: ${{ secrets.PRIVATE_MAVEN_PASSWORD }}
-    
+
     steps:
     - uses: actions/checkout@v4
 
@@ -29,9 +27,62 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Detect dependency source
+      id: deps
+      shell: bash
+      env:
+        PRIVATE_MAVEN_URL: ${{ secrets.PRIVATE_MAVEN_URL }}
+        PRIVATE_MAVEN_USER: ${{ secrets.PRIVATE_MAVEN_USER }}
+        PRIVATE_MAVEN_PASSWORD: ${{ secrets.PRIVATE_MAVEN_PASSWORD }}
+      run: |
+        set -euo pipefail
+
+        has_private_maven=false
+        has_local_libs=false
+        can_build=false
+        reason=""
+
+        if [[ -n "${PRIVATE_MAVEN_URL}" && -n "${PRIVATE_MAVEN_USER}" && -n "${PRIVATE_MAVEN_PASSWORD}" ]]; then
+          has_private_maven=true
+        fi
+
+        if [[ -f libs.zip && ! -d libs ]]; then
+          unzip -q libs.zip -d .
+        fi
+
+        if [[ -d libs ]] && find libs -maxdepth 1 -type f \( -name '*.jar' -o -name '*.zip' \) | grep -q .; then
+          has_local_libs=true
+        fi
+
+        if [[ "${has_private_maven}" == true || "${has_local_libs}" == true ]]; then
+          can_build=true
+        else
+          reason="No private Maven credentials were provided and no local fallback jars are available."
+        fi
+
+        echo "has_private_maven=${has_private_maven}" >> "${GITHUB_OUTPUT}"
+        echo "has_local_libs=${has_local_libs}" >> "${GITHUB_OUTPUT}"
+        echo "can_build=${can_build}" >> "${GITHUB_OUTPUT}"
+        echo "reason=${reason}" >> "${GITHUB_OUTPUT}"
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Explain skipped build for external pull requests
+      if: steps.deps.outputs.can_build != 'true' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+      run: |
+        echo "::notice::Skipping Gradle build for external pull requests because private Maven secrets are unavailable and no local fallback jars are committed."
+
+    - name: Fail when dependency sources are unavailable
+      if: steps.deps.outputs.can_build != 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+      run: |
+        echo "::error::${{ steps.deps.outputs.reason }}"
+        exit 1
+
     - name: Build with Gradle
-      # Gradle 8.5 + Java 17 の組み合わせで安全にビルドするためのフラグ
-      run: bash ./gradlew build --no-daemon --no-configuration-cache
+      if: steps.deps.outputs.can_build == 'true'
+      env:
+        ORG_GRADLE_PROJECT_privateMavenUrl: ${{ secrets.PRIVATE_MAVEN_URL }}
+        ORG_GRADLE_PROJECT_privateMavenUser: ${{ secrets.PRIVATE_MAVEN_USER }}
+        ORG_GRADLE_PROJECT_privateMavenPassword: ${{ secrets.PRIVATE_MAVEN_PASSWORD }}
+      run: ./gradlew build --no-daemon --no-configuration-cache

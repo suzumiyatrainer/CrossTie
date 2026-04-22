@@ -19,13 +19,16 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             "net.suzumiya.crosstie.mixins.angelica.RenderGlobalInitMixin",
             "net.suzumiya.crosstie.mixins.angelica.RenderGlobalFrameTickMixin",
             "net.suzumiya.crosstie.mixins.angelica.AngelicaGLStateManagerDrawArraysMixin",
+            "net.suzumiya.crosstie.mixins.angelica.ThreadedAngelicaChunkBuilderMeshingTaskMixin",
             "net.suzumiya.crosstie.mixins.intelliinput.RedirectWindowProcMixin",
             "net.suzumiya.crosstie.mixins.rtm.RenderVehicleBaseMixin",
             "net.suzumiya.crosstie.mixins.rtm.RTMMiscRenderMixin",
             "net.suzumiya.crosstie.mixins.rtm.RTMRailPartsRenderSafeMixin",
-            "net.suzumiya.crosstie.mixins.rtm.RenderSignalMixin",
+            "net.suzumiya.crosstie.mixins.rtm.RenderSignalElectricMixin",
+            "net.suzumiya.crosstie.mixins.rtm.RenderSignalLegacyMixin",
             "net.suzumiya.crosstie.mixins.rtm.RTMWirePartsRenderMixin",
             "net.suzumiya.crosstie.mixins.mcte.RenderMiniatureContextGuardMixin",
+            "net.suzumiya.crosstie.mixins.mcte.RenderItemMiniatureContextGuardMixin",
             "net.suzumiya.crosstie.mixins.rtm.TileEntityLargeRailCoreMixin",
             "net.suzumiya.crosstie.mixins.rtm.TileEntitySignalMixin",
             "net.suzumiya.crosstie.mixins.ngtlib.NGTRendererStateMixin",
@@ -39,6 +42,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     private boolean hasBamboo;
     private boolean hasATSAssist;
     private boolean hasMcte;
+    private boolean hasElectricRenderSignal;
+    private boolean hasLegacyRenderSignal;
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -53,6 +58,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         hasATSAssist = getClass().getClassLoader()
                 .getResource("jp/kaiz/atsassistmod/block/tileentity/TileEntityIFTTT.class") != null;
         hasMcte = getClass().getClassLoader().getResource("jp/ngt/mcte/block/RenderMiniature.class") != null;
+        hasElectricRenderSignal = getClass().getClassLoader().getResource("jp/ngt/rtm/electric/RenderSignal.class") != null;
+        hasLegacyRenderSignal = getClass().getClassLoader().getResource("jp/ngt/rtm/render/RenderSignal.class") != null;
     }
 
     @Override
@@ -65,11 +72,18 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         if ("net.suzumiya.crosstie.mixins.angelica.AngelicaDisplayListManagerMixin".equals(mixinClassName)
                 || "net.suzumiya.crosstie.mixins.angelica.AngelicaGLStateManagerDrawArraysMixin".equals(mixinClassName)
                 || "net.suzumiya.crosstie.mixins.angelica.RenderGlobalInitMixin".equals(mixinClassName)
-                || "net.suzumiya.crosstie.mixins.angelica.RenderGlobalFrameTickMixin".equals(mixinClassName)) {
+                || "net.suzumiya.crosstie.mixins.angelica.RenderGlobalFrameTickMixin".equals(mixinClassName)
+                || "net.suzumiya.crosstie.mixins.angelica.ThreadedAngelicaChunkBuilderMeshingTaskMixin".equals(mixinClassName)) {
             return isClient && hasAngelica;
         }
         if ("net.suzumiya.crosstie.mixins.intelliinput.RedirectWindowProcMixin".equals(mixinClassName)) {
             return isClient && hasIntelliInput;
+        }
+        if ("net.suzumiya.crosstie.mixins.rtm.RenderSignalElectricMixin".equals(mixinClassName)) {
+            return isClient && hasElectricRenderSignal;
+        }
+        if ("net.suzumiya.crosstie.mixins.rtm.RenderSignalLegacyMixin".equals(mixinClassName)) {
+            return isClient && hasLegacyRenderSignal;
         }
 
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.rtm.")) {

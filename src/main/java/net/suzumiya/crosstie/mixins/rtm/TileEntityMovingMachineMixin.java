@@ -3,6 +3,7 @@ package net.suzumiya.crosstie.mixins.rtm;
 import net.minecraft.tileentity.TileEntity;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
+import net.suzumiya.crosstie.util.EntityPositionHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -32,7 +33,9 @@ public abstract class TileEntityMovingMachineMixin extends TileEntity {
             double limitSq = cullLimit * cullLimit;
 
             net.minecraft.entity.Entity player = CrossTie.proxy.getClientPlayer();
-            if (player != null && this.getDistanceFrom(player.posX, player.posY, player.posZ) > limitSq) {
+            double[] playerPos = new double[3];
+            if (player != null && EntityPositionHelper.tryGetPosition(player, playerPos)
+                    && this.getDistanceFrom(playerPos[0], playerPos[1], playerPos[2]) > limitSq) {
                 ci.cancel();
             }
         } else {
@@ -44,7 +47,9 @@ public abstract class TileEntityMovingMachineMixin extends TileEntity {
                 for (Object obj : this.worldObj.playerEntities) {
                     if (obj instanceof net.minecraft.entity.Entity) {
                         net.minecraft.entity.Entity p = (net.minecraft.entity.Entity) obj;
-                        if (this.getDistanceFrom(p.posX, p.posY, p.posZ) < limitSq) {
+                        double[] playerPos = new double[3];
+                        if (EntityPositionHelper.tryGetPosition(p, playerPos)
+                                && this.getDistanceFrom(playerPos[0], playerPos[1], playerPos[2]) < limitSq) {
                             isPlayerNear = true;
                             break;
                         }
