@@ -27,44 +27,10 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: Detect dependency source
-      id: deps
-      shell: bash
-      env:
-        PRIVATE_MAVEN_URL: ${{ secrets.PRIVATE_MAVEN_URL }}
-        PRIVATE_MAVEN_USER: ${{ secrets.PRIVATE_MAVEN_USER }}
-        PRIVATE_MAVEN_PASSWORD: ${{ secrets.PRIVATE_MAVEN_PASSWORD }}
-      run: |
-        set -euo pipefail
-
-        has_private_maven=false
-        can_build=false
-        reason=""
-
-        if [[ -n "${PRIVATE_MAVEN_URL}" && -n "${PRIVATE_MAVEN_USER}" && -n "${PRIVATE_MAVEN_PASSWORD}" ]]; then
-          has_private_maven=true
-        fi
-
-        if [[ "${has_private_maven}" == true ]]; then
-          can_build=true
-        else
-          reason="No private Maven credentials were provided. This repository intentionally does not commit redistributable-prohibited dependency jars."
-        fi
-
-        echo "has_private_maven=${has_private_maven}" >> "${GITHUB_OUTPUT}"
-        echo "can_build=${can_build}" >> "${GITHUB_OUTPUT}"
-        echo "reason=${reason}" >> "${GITHUB_OUTPUT}"
-
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Explain skipped build
-      if: steps.deps.outputs.can_build != 'true'
-      run: |
-        echo "::notice::Skipping Gradle build. ${{ steps.deps.outputs.reason }}"
-
     - name: Build with Gradle
-      if: steps.deps.outputs.can_build == 'true'
       env:
         ORG_GRADLE_PROJECT_privateMavenUrl: ${{ secrets.PRIVATE_MAVEN_URL }}
         ORG_GRADLE_PROJECT_privateMavenUser: ${{ secrets.PRIVATE_MAVEN_USER }}
