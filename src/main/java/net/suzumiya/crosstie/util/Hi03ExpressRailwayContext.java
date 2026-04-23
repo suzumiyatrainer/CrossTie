@@ -9,9 +9,13 @@ package net.suzumiya.crosstie.util;
  */
 public class Hi03ExpressRailwayContext {
 
-    private static final ThreadLocal<Boolean> ACTIVE = ThreadLocal.withInitial(() -> false);
-    private static final ThreadLocal<Boolean> SKIPPING_DISPLAY_LIST = ThreadLocal.withInitial(() -> false);
-    private static final ThreadLocal<Boolean> USING_LEGACY_DISPLAY_LIST = ThreadLocal.withInitial(() -> false);
+    private static final int FLAG_ACTIVE = 1;
+    private static final int FLAG_SKIPPING_DISPLAY_LIST = 1 << 1;
+    private static final int FLAG_USING_LEGACY_DISPLAY_LIST = 1 << 2;
+    private static final ThreadLocal<State> STATE = ThreadLocal.withInitial(State::new);
+
+    private Hi03ExpressRailwayContext() {
+    }
 
     /**
      * コンテキストが有効かを返す。
@@ -19,25 +23,21 @@ public class Hi03ExpressRailwayContext {
      * @return hi03ExpressRailway の描画中なら true
      */
     public static boolean isActive() {
-        return ACTIVE.get();
+        return hasFlag(FLAG_ACTIVE);
     }
 
     /**
      * hi03ExpressRailway の描画コンテキストに入る。
      */
     public static void enter() {
-        ACTIVE.set(true);
-        SKIPPING_DISPLAY_LIST.set(false);
-        USING_LEGACY_DISPLAY_LIST.set(false);
+        STATE.get().flags = FLAG_ACTIVE;
     }
 
     /**
      * hi03ExpressRailway の描画コンテキストを抜ける。
      */
     public static void exit() {
-        ACTIVE.set(false);
-        SKIPPING_DISPLAY_LIST.set(false);
-        USING_LEGACY_DISPLAY_LIST.set(false);
+        reset();
     }
 
     /**
@@ -46,7 +46,7 @@ public class Hi03ExpressRailwayContext {
      * @return スキップ中なら true
      */
     public static boolean isSkippingDisplayList() {
-        return SKIPPING_DISPLAY_LIST.get();
+        return hasFlag(FLAG_SKIPPING_DISPLAY_LIST);
     }
 
     /**
@@ -55,7 +55,7 @@ public class Hi03ExpressRailwayContext {
      * @param skipping スキップするなら true
      */
     public static void setSkippingDisplayList(boolean skipping) {
-        SKIPPING_DISPLAY_LIST.set(skipping);
+        setFlag(FLAG_SKIPPING_DISPLAY_LIST, skipping);
     }
 
     /**
@@ -64,7 +64,7 @@ public class Hi03ExpressRailwayContext {
      * @return 旧経路を使っているなら true
      */
     public static boolean isUsingLegacyDisplayList() {
-        return USING_LEGACY_DISPLAY_LIST.get();
+        return hasFlag(FLAG_USING_LEGACY_DISPLAY_LIST);
     }
 
     /**
@@ -73,15 +73,30 @@ public class Hi03ExpressRailwayContext {
      * @param using 旧経路を使うなら true
      */
     public static void setUsingLegacyDisplayList(boolean using) {
-        USING_LEGACY_DISPLAY_LIST.set(using);
+        setFlag(FLAG_USING_LEGACY_DISPLAY_LIST, using);
     }
 
     /**
      * コンテキストをリセットする。エラー回復時にも使う。
      */
     public static void reset() {
-        ACTIVE.remove();
-        SKIPPING_DISPLAY_LIST.remove();
-        USING_LEGACY_DISPLAY_LIST.remove();
+        STATE.get().flags = 0;
+    }
+
+    private static boolean hasFlag(int flag) {
+        return (STATE.get().flags & flag) != 0;
+    }
+
+    private static void setFlag(int flag, boolean enabled) {
+        State state = STATE.get();
+        if (enabled) {
+            state.flags |= flag;
+            return;
+        }
+        state.flags &= ~flag;
+    }
+
+    private static final class State {
+        private int flags;
     }
 }

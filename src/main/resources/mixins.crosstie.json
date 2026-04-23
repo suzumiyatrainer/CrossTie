@@ -39,6 +39,7 @@
     "ngtlib.GLHelperMixin",
     "ngtlib.NGTOModelMixin",
     "ngtlib.NGTZModelPartsMixin",
+    "ngtlib.NGTUtilClientShaderDetectionMixin",
     "ngtlib.NGTRendererStateMixin",
     "ngtlib.PolygonRendererMixin",
     "angelica.AngelicaDisplayListManagerMixin"

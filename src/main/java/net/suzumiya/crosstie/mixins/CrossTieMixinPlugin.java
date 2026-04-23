@@ -31,6 +31,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             "net.suzumiya.crosstie.mixins.mcte.RenderItemMiniatureContextGuardMixin",
             "net.suzumiya.crosstie.mixins.rtm.TileEntityLargeRailCoreMixin",
             "net.suzumiya.crosstie.mixins.rtm.TileEntitySignalMixin",
+            "net.suzumiya.crosstie.mixins.ngtlib.NGTUtilClientShaderDetectionMixin",
             "net.suzumiya.crosstie.mixins.ngtlib.NGTRendererStateMixin",
             "net.suzumiya.crosstie.mixins.ngtlib.PolygonRendererMixin",
             "net.suzumiya.crosstie.mixins.angelica.AngelicaDisplayListManagerMixin")));
