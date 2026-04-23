@@ -36,7 +36,7 @@ public abstract class ScriptUtilMixin {
     private static final String BRIDGE_INIT = "var " + BRIDGE_VAR + " = Java.type(\"" + BRIDGE_CLASS + "\");\n";
     @Unique
     private static final Pattern GL11_METHOD_PATTERN = Pattern.compile(
-            "(?<![A-Za-z0-9_$.])(?:org\\.lwjgl(?:x)?\\.opengl\\.)?GL11\\.(gl[A-Za-z0-9_]+)\\s*\\(");
+            "(?<![A-Za-z0-9_$.])(?:Packages\\.)?(?:org\\.lwjgl(?:x)?\\.opengl\\.)?GL11\\.(gl[A-Za-z0-9_]+)\\s*\\(");
     @Unique
     private static final Set<String> REWRITABLE_METHODS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
             "glPushMatrix",
@@ -83,7 +83,9 @@ public abstract class ScriptUtilMixin {
 
         if (!script.contains("GL11.gl")
                 && !script.contains("org.lwjgl.opengl.GL11.gl")
-                && !script.contains("org.lwjglx.opengl.GL11.gl")) {
+                && !script.contains("org.lwjglx.opengl.GL11.gl")
+                && !script.contains("Packages.org.lwjgl.opengl.GL11.gl")
+                && !script.contains("Packages.org.lwjglx.opengl.GL11.gl")) {
             crosstie$cacheRewrite(script, script);
             return script;
         }
