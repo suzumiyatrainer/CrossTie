@@ -1,5 +1,6 @@
 package net.suzumiya.crosstie.mixins.ngtlib;
 
+import net.suzumiya.crosstie.util.AngelicaCompatPolicy;
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
 import net.suzumiya.crosstie.util.McteMiniatureRenderContext;
 import org.lwjgl.opengl.GL11;
@@ -39,7 +40,7 @@ public class GLHelperMixin {
     private static void crosstie$interceptGlNewList(int list, int mode) {
         int[] flags = CROSSTIE_COMPILE_FLAGS.get();
 
-        if (Hi03ExpressRailwayContext.isActive()) {
+        if (Hi03ExpressRailwayContext.isActive() && AngelicaCompatPolicy.shouldUseHi03LegacyDisplayLists()) {
             // hi03: hidden compile-and-execute (draw geometry but mask color+depth writes)
             GL11.glColorMask(false, false, false, false);
             GL11.glDepthMask(false);

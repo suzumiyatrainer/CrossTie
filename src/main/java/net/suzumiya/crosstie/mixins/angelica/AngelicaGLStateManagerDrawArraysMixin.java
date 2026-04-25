@@ -1,6 +1,7 @@
 package net.suzumiya.crosstie.mixins.angelica;
 
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
+import net.suzumiya.crosstie.util.AngelicaCompatPolicy;
 import net.suzumiya.crosstie.util.AngelicaRenderGuard;
 import net.suzumiya.crosstie.config.CrossTieConfig;
 import org.lwjgl.opengl.GL11;
@@ -22,7 +23,7 @@ public class AngelicaGLStateManagerDrawArraysMixin {
             return;
         }
 
-        if (!Hi03ExpressRailwayContext.isActive()) {
+        if (!Hi03ExpressRailwayContext.isActive() || !AngelicaCompatPolicy.shouldUseHi03LegacyBypass()) {
             return;
         }
 

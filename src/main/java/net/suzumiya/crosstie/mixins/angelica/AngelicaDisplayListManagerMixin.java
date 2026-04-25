@@ -1,6 +1,7 @@
 package net.suzumiya.crosstie.mixins.angelica;
 
 import net.suzumiya.crosstie.config.CrossTieConfig;
+import net.suzumiya.crosstie.util.AngelicaCompatPolicy;
 import net.suzumiya.crosstie.util.AngelicaRenderGuard;
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
 import net.suzumiya.crosstie.util.McteMiniatureRenderContext;
@@ -32,12 +33,15 @@ public class AngelicaDisplayListManagerMixin {
 
     /** アクティブなコンテキストのうち、バイパスが必要かどうか */
     private static boolean crosstie$shouldBypass() {
-        return Hi03ExpressRailwayContext.isActive() || McteMiniatureRenderContext.isActive();
+        return (Hi03ExpressRailwayContext.isActive() && AngelicaCompatPolicy.shouldUseHi03LegacyDisplayLists())
+                || McteMiniatureRenderContext.isActive();
     }
 
     /** アクティブなコンテキストでレガシー display list を使用中かどうか */
     private static boolean crosstie$isUsingLegacy() {
-        return (Hi03ExpressRailwayContext.isActive() && Hi03ExpressRailwayContext.isUsingLegacyDisplayList())
+        return (Hi03ExpressRailwayContext.isActive()
+                && AngelicaCompatPolicy.shouldUseHi03LegacyDisplayLists()
+                && Hi03ExpressRailwayContext.isUsingLegacyDisplayList())
                 || (McteMiniatureRenderContext.isActive() && McteMiniatureRenderContext.isUsingLegacyDisplayList());
     }
 

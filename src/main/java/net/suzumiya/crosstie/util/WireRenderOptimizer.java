@@ -117,9 +117,13 @@ public final class WireRenderOptimizer {
         double ty = tile.yCoord + 0.5D;
         double tz = tile.zCoord + 0.5D;
 
-        double ex = readVecCoord(targetVec3, 0, tx);
-        double ey = readVecCoord(targetVec3, 1, ty);
-        double ez = readVecCoord(targetVec3, 2, tz);
+        // RenderElectricalWiring passes a relative vector from this tile's wire anchor.
+        double dx = readVecCoord(targetVec3, 0, 0.0D);
+        double dy = readVecCoord(targetVec3, 1, 0.0D);
+        double dz = readVecCoord(targetVec3, 2, 0.0D);
+        double ex = tx + dx;
+        double ey = ty + dy;
+        double ez = tz + dz;
 
         double dTileSq = distSq(ctx.viewerX, ctx.viewerY, ctx.viewerZ, tx, ty, tz);
         double dEndSq = distSq(ctx.viewerX, ctx.viewerY, ctx.viewerZ, ex, ey, ez);

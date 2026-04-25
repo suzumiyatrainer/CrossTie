@@ -9,6 +9,7 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.config.CrossTieConfig;
+import net.suzumiya.crosstie.util.AngelicaCompatPolicy;
 import net.suzumiya.crosstie.util.AngelicaRenderGuard;
 import net.suzumiya.crosstie.util.EntityPositionHelper;
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
@@ -76,6 +77,10 @@ public abstract class RTMRailPartsRenderSafeMixin {
         }
 
         if (!this.crosstie$isHi03Rail(railTile)) {
+            return;
+        }
+
+        if (!AngelicaCompatPolicy.shouldUseHi03LegacyDisplayLists()) {
             return;
         }
 

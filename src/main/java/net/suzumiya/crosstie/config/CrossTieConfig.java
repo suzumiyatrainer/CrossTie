@@ -1,6 +1,7 @@
 package net.suzumiya.crosstie.config;
 
 import cpw.mods.fml.common.FMLLog;
+import cpw.mods.fml.common.Loader;
 import net.minecraftforge.common.config.Configuration;
 
 import java.io.File;
@@ -14,6 +15,8 @@ public class CrossTieConfig {
     public static boolean enableAngelicaFastPath = true;
     public static boolean enableAngelicaIfTTTCache = true;
     public static boolean enableAngelicaFallbackGuard = true;
+    public static boolean enableHi03LegacyAngelicaDisplayLists = true;
+    public static boolean enableHi03LegacyAngelicaBypass = false;
 
     // TPS
     public static boolean enableTileEntityUpdates = true;
@@ -41,6 +44,14 @@ public class CrossTieConfig {
 
             enableAngelicaFallbackGuard = config.getBoolean("enableAngelicaFallbackGuard", "fps", true,
                     "Temporarily disable Angelica optimizations and fallback when render anomalies are detected.");
+
+            enableHi03LegacyAngelicaDisplayLists = config.getBoolean("enableHi03LegacyAngelicaDisplayLists", "fps",
+                    Loader.isModLoaded("angelica"),
+                    "Use native legacy display lists for hi03 rail script caches under Angelica. This improves hi03 rail performance without re-enabling the full raw-OpenGL bypass.");
+
+            enableHi03LegacyAngelicaBypass = config.getBoolean("enableHi03LegacyAngelicaBypass", "fps",
+                    !Loader.isModLoaded("angelica"),
+                    "Keep CrossTie's legacy OpenGL hi03 rail bypass active under Angelica. Disable this when Angelica freezes or crashes around hi03 rail rendering.");
 
             enableTileEntityUpdates = config.getBoolean("enableTileEntityUpdates", "tps", true,
                     "Enable tile entity update optimization.");

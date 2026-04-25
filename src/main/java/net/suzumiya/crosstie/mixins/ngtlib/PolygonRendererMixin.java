@@ -1,5 +1,6 @@
 package net.suzumiya.crosstie.mixins.ngtlib;
 
+import net.suzumiya.crosstie.util.AngelicaCompatPolicy;
 import net.suzumiya.crosstie.util.Hi03ExpressRailwayContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,7 +22,7 @@ public abstract class PolygonRendererMixin {
      */
     @Inject(method = "startDrawing", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$bypassAngelicaStartDrawing(int mode, CallbackInfo ci) {
-        if (Hi03ExpressRailwayContext.isActive()) {
+        if (Hi03ExpressRailwayContext.isActive() && AngelicaCompatPolicy.shouldUseHi03LegacyBypass()) {
             // Angelica を経由せず、直接 LWJGL の GL11 を呼ぶ
             org.lwjgl.opengl.GL11.glBegin(mode);
             ci.cancel();
@@ -33,7 +34,7 @@ public abstract class PolygonRendererMixin {
      */
     @Inject(method = "draw", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$bypassAngelicaDraw(CallbackInfoReturnable<Integer> cir) {
-        if (Hi03ExpressRailwayContext.isActive()) {
+        if (Hi03ExpressRailwayContext.isActive() && AngelicaCompatPolicy.shouldUseHi03LegacyBypass()) {
             // Angelica を経由せず、直接 LWJGL の GL11 を呼ぶ
             org.lwjgl.opengl.GL11.glEnd();
             cir.setReturnValue(0);
@@ -45,7 +46,7 @@ public abstract class PolygonRendererMixin {
      */
     @Inject(method = "addVertexWithUV", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$bypassAngelicaVertex(float x, float y, float z, float u, float v, CallbackInfo ci) {
-        if (Hi03ExpressRailwayContext.isActive()) {
+        if (Hi03ExpressRailwayContext.isActive() && AngelicaCompatPolicy.shouldUseHi03LegacyBypass()) {
             org.lwjgl.opengl.GL11.glTexCoord2f(u, v);
             org.lwjgl.opengl.GL11.glVertex3f(x, y, z);
             ci.cancel();
@@ -57,7 +58,7 @@ public abstract class PolygonRendererMixin {
      */
     @Inject(method = "setNormal", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$bypassAngelicaNormal(float x, float y, float z, CallbackInfo ci) {
-        if (Hi03ExpressRailwayContext.isActive()) {
+        if (Hi03ExpressRailwayContext.isActive() && AngelicaCompatPolicy.shouldUseHi03LegacyBypass()) {
             org.lwjgl.opengl.GL11.glNormal3f(x, y, z);
             ci.cancel();
         }

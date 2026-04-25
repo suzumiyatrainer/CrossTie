@@ -5,6 +5,7 @@ import net.suzumiya.crosstie.config.CrossTieConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
 import net.suzumiya.crosstie.util.EntityPositionHelper;
+import net.suzumiya.crosstie.util.WireRenderOptimizer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
@@ -24,6 +25,11 @@ public abstract class RTMWirePartsRenderMixin {
     private void crosstie$cullWireParts(@Coerce Object tileEntity, @Coerce Object connection, @Coerce Object target,
             float par8, @Coerce Object pass, CallbackInfo ci) {
         if (!CrossTieConfig.enableRenderCulling) {
+            return;
+        }
+
+        if (WireRenderOptimizer.shouldSkipWire((TileEntity) tileEntity, target)) {
+            ci.cancel();
             return;
         }
 
