@@ -99,13 +99,13 @@ dependencies {
     implementation('com.github.LegacyModdingMC.UniMixins:unimixins-all-1.7.10:0.2.1')
 
     // Annotation processor for Mixins
-    annotationProcessor('org.ow2.asm:asm-debug-all:5.2')
+    annotationProcessor('org.ow2.asm:asm-debug-all:9.9.1')
     annotationProcessor('com.google.guava:guava:33.6.0-jre')
     annotationProcessor('com.google.code.gson:gson:2.14.0')
 
     // ASM for compilation
-    compileOnly('org.ow2.asm:asm-all:5.2') // Try asm-all instead of debug-all
-    compileOnly('org.ow2.asm:asm-commons:5.2') // Explicitly add commons just in case
+    compileOnly('org.ow2.asm:asm-all:9.9.1') // Try asm-all instead of debug-all
+    compileOnly('org.ow2.asm:asm-commons:9.9.1') // Explicitly add commons just in case
 
     if (usePrivateMaven) {
         // Development/runtime dependencies resolved from the private Maven.
