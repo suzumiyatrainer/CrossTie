@@ -8,8 +8,12 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "ngtlib.ScriptUtilMixin",
+    "ngtlib.ScriptFunctionCacheMixin",
     "atsassistmod.MixinTileEntityIFTTT",
     "bamboo.BambooTileEntityMixin",
+    "signalcontrollermod.TileEntitySignalControllerMixin",
+    "webctc.RailCacheDataMixin",
+    "webctc.RailGroupUtilsMixin",
     "rtm.EntityTrainBaseMixin",
     "rtm.EntityBogieMixin",
     "rtm.EntityFloorMixin",

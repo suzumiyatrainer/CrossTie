@@ -42,6 +42,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     private boolean hasRtm;
     private boolean hasBamboo;
     private boolean hasATSAssist;
+    private boolean hasSignalController;
+    private boolean hasWebCTC;
     private boolean hasMcte;
     private boolean hasElectricRenderSignal;
     private boolean hasLegacyRenderSignal;
@@ -58,6 +60,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         hasBamboo = getClass().getClassLoader().getResource("ruby/bamboo/BambooCore.class") != null;
         hasATSAssist = getClass().getClassLoader()
                 .getResource("jp/kaiz/atsassistmod/block/tileentity/TileEntityIFTTT.class") != null;
+        hasSignalController = getClass().getClassLoader()
+                .getResource("jp/masa/signalcontrollermod/block/tileentity/TileEntitySignalController.class") != null;
+        hasWebCTC = getClass().getClassLoader().getResource("org/webctc/WebCTCCore.class") != null;
         hasMcte = getClass().getClassLoader().getResource("jp/ngt/mcte/block/RenderMiniature.class") != null;
         hasElectricRenderSignal = getClass().getClassLoader().getResource("jp/ngt/rtm/electric/RenderSignal.class") != null;
         hasLegacyRenderSignal = getClass().getClassLoader().getResource("jp/ngt/rtm/render/RenderSignal.class") != null;
@@ -97,12 +102,17 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.bamboo.")) {
             return hasBamboo;
         }
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.signalcontrollermod.")) {
+            return hasSignalController;
+        }
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.webctc.")) {
+            return hasWebCTC;
+        }
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.mcte.")) {
             return isClient && hasMcte;
         }
         if ("net.suzumiya.crosstie.mixins.atsassistmod.MixinTileEntityIFTTT".equals(mixinClassName)) {
-            // Temporarily disabled to avoid potential behavioral issues with signal detection.
-            return false;
+            return hasATSAssist && hasRtm;
         }
 
         if (!isClient && CLIENT_ONLY_MIXINS.contains(mixinClassName)) {

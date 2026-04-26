@@ -17,9 +17,15 @@ public class CrossTieConfig {
     public static boolean enableAngelicaFallbackGuard = true;
     public static boolean enableHi03LegacyAngelicaDisplayLists = true;
     public static boolean enableHi03LegacyAngelicaBypass = false;
+    public static boolean enableScriptRenderFunctionCache = true;
 
     // TPS
     public static boolean enableTileEntityUpdates = true;
+    public static boolean enableTrainSpatialTracker = true;
+    public static boolean enableSignalReflectionCache = true;
+    public static boolean enableWebCTCReflectionCache = true;
+    public static boolean enableWebCTCChunkLoadRateLimit = true;
+    public static int webCTCChunkLoadsPerTick = 2;
 
     public static void init(File configFile) {
         config = new Configuration(configFile);
@@ -53,8 +59,26 @@ public class CrossTieConfig {
                     !Loader.isModLoaded("angelica"),
                     "Keep CrossTie's legacy OpenGL hi03 rail bypass active under Angelica. Disable this when Angelica freezes or crashes around hi03 rail rendering.");
 
+            enableScriptRenderFunctionCache = config.getBoolean("enableScriptRenderFunctionCache", "fps", true,
+                    "Cache RTM/Nashorn Invocable script render lookups while preserving the original script API.");
+
             enableTileEntityUpdates = config.getBoolean("enableTileEntityUpdates", "tps", true,
                     "Enable tile entity update optimization.");
+
+            enableTrainSpatialTracker = config.getBoolean("enableTrainSpatialTracker", "tps", true,
+                    "Maintain a server-side train spatial index used by ATSAssist IFTTT detection Mixins.");
+
+            enableSignalReflectionCache = config.getBoolean("enableSignalReflectionCache", "tps", true,
+                    "Cache RTM TileEntitySignal signalLevel reflection for SignalControllerMod.");
+
+            enableWebCTCReflectionCache = config.getBoolean("enableWebCTCReflectionCache", "tps", true,
+                    "Cache RTM TileEntitySignal reflection used by WebCTC rail group state calculation.");
+
+            enableWebCTCChunkLoadRateLimit = config.getBoolean("enableWebCTCChunkLoadRateLimit", "tps", true,
+                    "Rate-limit WebCTC's forced rail chunk loads to reduce server tick spikes.");
+
+            webCTCChunkLoadsPerTick = config.getInt("webCTCChunkLoadsPerTick", "tps", 2, 0, 64,
+                    "Maximum WebCTC forced rail chunk loads allowed per server tick. 0 disables forced loads.");
 
         } catch (Exception e) {
             FMLLog.getLogger().error("[CrossTie] Failed to load configuration", e);
