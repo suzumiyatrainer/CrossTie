@@ -65,9 +65,9 @@ repositories {
 configurations.configureEach {
     resolutionStrategy {
         // Security baseline for transitive legacy dependencies.
-        force 'com.google.code.gson:gson:2.13.2'
+        force 'com.google.code.gson:gson:2.14.0'
         force 'org.apache.commons:commons-compress:1.28.0'
-        force 'commons-io:commons-io:2.21.0'
+        force 'commons-io:commons-io:2.22.0'
 
         // These upgrades can affect legacy 1.7.10 runtime behavior, so they are opt-in.
         if (forceSafeNetty) {
@@ -84,13 +84,13 @@ configurations.configureEach {
 
 dependencies {
     constraints {
-        implementation('com.google.code.gson:gson:2.13.2') {
+        implementation('com.google.code.gson:gson:2.14.0') {
             because 'Fixes vulnerable Gson versions before 2.8.9 and aligns all transitive Gson artifacts.'
         }
         implementation('org.apache.commons:commons-compress:1.28.0') {
             because 'Fixes multiple archive parsing DoS issues present in older commons-compress releases.'
         }
-        implementation('commons-io:commons-io:2.21.0') {
+        implementation('commons-io:commons-io:2.22.0') {
             because 'Fixes XmlStreamReader uncontrolled resource consumption issue (CVE in versions < 2.14.0).'
         }
     }
@@ -101,7 +101,7 @@ dependencies {
     // Annotation processor for Mixins
     annotationProcessor('org.ow2.asm:asm-debug-all:5.2')
     annotationProcessor('com.google.guava:guava:33.6.0-jre')
-    annotationProcessor('com.google.code.gson:gson:2.13.2')
+    annotationProcessor('com.google.code.gson:gson:2.14.0')
 
     // ASM for compilation
     compileOnly('org.ow2.asm:asm-all:5.2') // Try asm-all instead of debug-all
