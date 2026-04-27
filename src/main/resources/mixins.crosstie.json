@@ -8,6 +8,7 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [],
   "client": [
-    "macros.MacroInputHandlerMixin"
+    "macros.MacroInputHandlerMixin",
+    "macros.MacroModCoreMixin"
   ]
 }

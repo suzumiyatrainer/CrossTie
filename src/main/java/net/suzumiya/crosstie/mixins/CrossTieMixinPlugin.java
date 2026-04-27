@@ -26,7 +26,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if ("net.suzumiya.crosstie.mixins.macros.MacroInputHandlerMixin".equals(mixinClassName)) {
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.macros.")) {
             return isClient && hasMacroMod;
         }
 
