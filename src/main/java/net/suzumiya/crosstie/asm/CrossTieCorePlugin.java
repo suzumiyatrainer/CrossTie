@@ -8,7 +8,7 @@ import java.util.Map;
 public class CrossTieCorePlugin implements IFMLLoadingPlugin {
     @Override
     public String[] getASMTransformerClass() {
-        return null;
+        return new String[] { "net.suzumiya.crosstie.asm.CrossTieClassTransformer" };
     }
 
     @Override

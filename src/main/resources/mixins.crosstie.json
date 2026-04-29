@@ -6,7 +6,10 @@
   "refmap": "mixins.crosstie.refmap.json",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [],
+  "mixins": [
+    "gtnhlib.ObjectPoolerThreadSafeMixin",
+    "gtnhlib.MixinBlockPaneFix"
+  ],
   "client": [
     "macros.MacroInputHandlerMixin",
     "macros.MacroModCoreMixin"

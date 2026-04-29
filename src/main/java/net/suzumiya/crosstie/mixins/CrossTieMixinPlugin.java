@@ -12,11 +12,13 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isClient;
     private boolean hasMacroMod;
+    private boolean hasGtnhLib;
 
     @Override
     public void onLoad(String mixinPackage) {
         isClient = FMLLaunchHandler.side() == Side.CLIENT;
         hasMacroMod = getClass().getClassLoader().getResource("net/eq2online/macros/input/InputHandler.class") != null;
+        hasGtnhLib = getClass().getClassLoader().getResource("com/gtnewhorizon/gtnhlib/util/ObjectPooler.class") != null;
     }
 
     @Override
@@ -28,6 +30,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.macros.")) {
             return isClient && hasMacroMod;
+        }
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.gtnhlib.")) {
+            return hasGtnhLib;
+        }
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.minecraft.")) {
+            return isClient && hasGtnhLib;
         }
 
         return true;
