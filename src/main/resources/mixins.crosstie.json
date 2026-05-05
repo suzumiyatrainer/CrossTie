@@ -12,6 +12,7 @@
     "kaizpatch.ScriptUtilInvocableCacheMixin",
     "kaizpatch.AngelicaScriptTransformCacheMixin",
     "kaizpatch.McteWorldSetBlockDiffMixin",
+    "kaizpatch.RailMapCustomCacheMixin",
     "signal.SignalControllerReflectionCacheMixin",
     "signal.SignalControllerTileEntityCacheMixin",
     "signal.SignalControllerSearchCacheMixin",

@@ -20,6 +20,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     private boolean hasNgtScriptUtil;
     private boolean hasMcte;
     private boolean hasKaizAngelicaCompat;
+    private boolean hasRailMapCustom;
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -36,6 +37,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         hasMcte = getClass().getClassLoader().getResource("jp/ngt/mcte/world/MCTEWorld.class") != null;
         hasKaizAngelicaCompat = getClass().getClassLoader()
                 .getResource("jp/kaiz/kaizpatch/compat/AngelicaCompat.class") != null;
+        hasRailMapCustom = getClass().getClassLoader().getResource("jp/ngt/rtm/rail/util/RailMapCustom.class") != null;
     }
 
     @Override
@@ -60,6 +62,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             }
             if (mixinClassName.endsWith(".AngelicaScriptTransformCacheMixin")) {
                 return isClient && hasKaizAngelicaCompat;
+            }
+            if (mixinClassName.endsWith(".RailMapCustomCacheMixin")) {
+                return hasRailMapCustom;
             }
             return hasNgtScriptUtil;
         }
