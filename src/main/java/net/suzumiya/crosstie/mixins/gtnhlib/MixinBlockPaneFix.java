@@ -14,7 +14,7 @@ public abstract class MixinBlockPaneFix {
      * GTNHLibが実行時に追加する nhlib$isModeled メソッドに介入します。
      * 鉄格子や板ガラスの場合、強制的に false を返すことでGTNHLibのレンダリングを無効化します。
      */
-    @Inject(method = "nhlib$isModeled", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "nhlib$isModeled", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private void crosstie$fixPaneModeling(CallbackInfoReturnable<Boolean> cir) {
         if ((Object) this instanceof BlockPane) {
             cir.setReturnValue(false);

@@ -9,9 +9,6 @@
   "mixins": [
     "gtnhlib.ObjectPoolerThreadSafeMixin",
     "gtnhlib.MixinBlockPaneFix",
-    "kaizpatch.ScriptUtilInvocableCacheMixin",
-    "kaizpatch.AngelicaScriptTransformCacheMixin",
-    "kaizpatch.McteWorldSetBlockDiffMixin",
     "signal.SignalControllerReflectionCacheMixin",
     "signal.SignalControllerTileEntityCacheMixin",
     "signal.SignalControllerSearchCacheMixin",

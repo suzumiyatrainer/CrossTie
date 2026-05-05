@@ -7,15 +7,16 @@ import java.util.function.Supplier;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(targets = "com.gtnewhorizon.gtnhlib.util.ObjectPooler", remap = false)
 public abstract class ObjectPoolerThreadSafeMixin<T> {
 
     @Overwrite
     public synchronized T getInstance() {
-        List<T> availableInstances = getAvailableInstances();
+        List<T> availableInstances = crosstie$getAvailableInstances();
         if (availableInstances.isEmpty()) {
-            return getInstanceSupplier().get();
+            return crosstie$getInstanceSupplier().get();
         }
         return availableInstances.remove(availableInstances.size() - 1);
     }
@@ -25,7 +26,7 @@ public abstract class ObjectPoolerThreadSafeMixin<T> {
         if (instance == null) {
             return;
         }
-        getAvailableInstances().add(instance);
+        crosstie$getAvailableInstances().add(instance);
     }
 
     @Overwrite
@@ -38,27 +39,13 @@ public abstract class ObjectPoolerThreadSafeMixin<T> {
 
     @Overwrite
     public synchronized void releaseInstances(T[] instances) {
-        getAvailableInstances().addAll(Arrays.asList(instances));
+        crosstie$getAvailableInstances().addAll(Arrays.asList(instances));
         Arrays.fill(instances, null);
     }
 
-    @SuppressWarnings("unchecked")
-    private List<T> getAvailableInstances() {
-        return (List<T>) getFieldValue("availableInstances");
-    }
+    @Accessor(value = "availableInstances", remap = false)
+    protected abstract List<T> crosstie$getAvailableInstances();
 
-    @SuppressWarnings("unchecked")
-    private Supplier<T> getInstanceSupplier() {
-        return (Supplier<T>) getFieldValue("instanceSupplier");
-    }
-
-    private Object getFieldValue(String fieldName) {
-        try {
-            java.lang.reflect.Field field = this.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            return field.get(this);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Unable to access GTNHLib ObjectPooler field " + fieldName, e);
-        }
-    }
+    @Accessor(value = "instanceSupplier", remap = false)
+    protected abstract Supplier<T> crosstie$getInstanceSupplier();
 }
