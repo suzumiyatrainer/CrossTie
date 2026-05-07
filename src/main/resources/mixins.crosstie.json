@@ -7,6 +7,7 @@
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "angelica.AngelicaRenderGlobalDisplayListCrashMixin",
     "gtnhlib.ObjectPoolerThreadSafeMixin",
     "gtnhlib.MixinBlockPaneFix",
     "kaizpatch.ScriptUtilInvocableCacheMixin",
@@ -29,6 +30,8 @@
     "rtm.EntityTrainBaseSpeedSyncMixin"
   ],
   "client": [
+    "kaizpatch.RenderMiniatureDynamicLightMixin",
+    "kaizpatch.RenderItemMiniatureDynamicLightMixin",
     "macros.MacroInputHandlerMixin",
     "macros.MacroModCoreMixin"
   ]

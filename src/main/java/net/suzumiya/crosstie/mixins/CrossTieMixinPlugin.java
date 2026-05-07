@@ -21,6 +21,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     private boolean hasMcte;
     private boolean hasKaizAngelicaCompat;
     private boolean hasRailMapCustom;
+    private boolean hasAngelicaGlsm;
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -38,6 +39,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         hasKaizAngelicaCompat = getClass().getClassLoader()
                 .getResource("jp/kaiz/kaizpatch/compat/AngelicaCompat.class") != null;
         hasRailMapCustom = getClass().getClassLoader().getResource("jp/ngt/rtm/rail/util/RailMapCustom.class") != null;
+        hasAngelicaGlsm = getClass().getClassLoader()
+                .getResource("com/gtnewhorizons/angelica/glsm/GLStateManager.class") != null;
     }
 
     @Override
@@ -60,6 +63,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             if (mixinClassName.endsWith(".McteWorldSetBlockDiffMixin")) {
                 return hasMcte;
             }
+            if (mixinClassName.endsWith(".RenderMiniatureDynamicLightMixin")
+                    || mixinClassName.endsWith(".RenderItemMiniatureDynamicLightMixin")) {
+                return isClient && hasMcte;
+            }
             if (mixinClassName.endsWith(".AngelicaScriptTransformCacheMixin")) {
                 return isClient && hasKaizAngelicaCompat;
             }
@@ -67,6 +74,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 return hasRailMapCustom;
             }
             return hasNgtScriptUtil;
+        }
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.angelica.")) {
+            return isClient && hasAngelicaGlsm;
         }
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.signal.")) {
             return hasSignalController;
