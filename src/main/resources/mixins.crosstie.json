@@ -22,16 +22,20 @@
     "webctc.RailCacheLoadChunkGuardMixin",
     "webctc.WebCtcWsSendMonitorMixin",
     "webctc.WebCtcRailGroupWsMonitorMixin",
+    "webctc.WebCtcHighSpeedTrackingMixin",
     "ats.AtsBlockUpdateCoalescingMixin",
     "ats.IFTTTSetBlockDiffMixin",
     "ats.GroundUnitSetBlockDiffMixin",
     "ats.GroundUnitInitSetBlockDiffMixin",
     "ats.KaizWorldUtilsSetBlockDiffMixin",
-    "rtm.EntityTrainBaseSpeedSyncMixin"
+    "rtm.EntityTrainBaseSpeedSyncMixin",
+    "rtm.EntityTrainBaseOptimizationMixin"
   ],
   "client": [
     "kaizpatch.RenderMiniatureDynamicLightMixin",
     "kaizpatch.RenderItemMiniatureDynamicLightMixin",
+    "rtm.RenderElectricalWiringConnectionCacheMixin",
+    "rtm.BlockLinePoleConnectionCacheMixin",
     "macros.MacroInputHandlerMixin",
     "macros.MacroModCoreMixin"
   ]

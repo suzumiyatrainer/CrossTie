@@ -23,14 +23,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(targets = "jp.masa.signalcontrollermod.block.tileentity.TileEntitySignalController", remap = false)
 public abstract class SignalControllerSearchCacheMixin {
 
-    @Shadow
-    public int xCoord;
-
-    @Shadow
-    public int yCoord;
-
-    @Shadow
-    public int zCoord;
+    @Unique
+    private TileEntity crosstie$asTile() {
+        return (TileEntity) (Object) this;
+    }
 
     @Unique
     private static final long CACHE_LIFETIME_TICKS = 40L;
@@ -57,7 +53,8 @@ public abstract class SignalControllerSearchCacheMixin {
             return;
         }
 
-        long key = crosstie$packSearchKey(this.xCoord, this.yCoord, this.zCoord);
+        TileEntity tile = this.crosstie$asTile();
+        long key = crosstie$packSearchKey(tile.xCoord, tile.yCoord, tile.zCoord);
         WeakReference<TileEntity> ref = this.crosstie$searchCache.get(key);
         if (ref == null) {
             return;
@@ -85,9 +82,10 @@ public abstract class SignalControllerSearchCacheMixin {
             return;
         }
 
-        TileEntity tileEntity = world.getTileEntity(this.xCoord, y, this.zCoord);
+        TileEntity tile = this.crosstie$asTile();
+        TileEntity tileEntity = world.getTileEntity(tile.xCoord, y, tile.zCoord);
         if (tileEntity != null && crosstie$isSignalTile(tileEntity)) {
-            long key = crosstie$packSearchKey(this.xCoord, this.yCoord, this.zCoord);
+            long key = crosstie$packSearchKey(tile.xCoord, tile.yCoord, tile.zCoord);
             this.crosstie$searchCache.put(key, new WeakReference<>(tileEntity));
         }
     }

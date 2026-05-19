@@ -26,21 +26,28 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     @Override
     public void onLoad(String mixinPackage) {
         isClient = FMLLaunchHandler.side() == Side.CLIENT;
-        hasMacroMod = getClass().getClassLoader().getResource("net/eq2online/macros/input/InputHandler.class") != null;
-        hasGtnhLib = getClass().getClassLoader().getResource("com/gtnewhorizon/gtnhlib/util/ObjectPooler.class") != null;
-        hasSignalController = getClass().getClassLoader()
-                .getResource("jp/masa/signalcontrollermod/block/tileentity/TileEntitySignalController.class") != null;
-        hasWebCtc = getClass().getClassLoader().getResource("org/webctc/railgroup/RailGroupUtilsKt.class") != null;
-        hasAts = getClass().getClassLoader()
-                .getResource("jp/kaiz/atsassistmod/block/tileentity/TileEntityCustom.class") != null;
-        hasRtm = getClass().getClassLoader().getResource("jp/ngt/rtm/entity/train/EntityTrainBase.class") != null;
-        hasNgtScriptUtil = getClass().getClassLoader().getResource("jp/ngt/ngtlib/io/ScriptUtil.class") != null;
-        hasMcte = getClass().getClassLoader().getResource("jp/ngt/mcte/world/MCTEWorld.class") != null;
-        hasKaizAngelicaCompat = getClass().getClassLoader()
-                .getResource("jp/kaiz/kaizpatch/compat/AngelicaCompat.class") != null;
-        hasRailMapCustom = getClass().getClassLoader().getResource("jp/ngt/rtm/rail/util/RailMapCustom.class") != null;
-        hasAngelicaGlsm = getClass().getClassLoader()
-                .getResource("com/gtnewhorizons/angelica/glsm/GLStateManager.class") != null;
+        
+        // 安全なクラス存在チェック
+        hasMacroMod = checkClassExists("net.eq2online.macros.input.InputHandler");
+        hasGtnhLib = checkClassExists("com.gtnewhorizon.gtnhlib.util.ObjectPooler");
+        hasSignalController = checkClassExists("jp.masa.signalcontrollermod.block.tileentity.TileEntitySignalController");
+        hasWebCtc = checkClassExists("org.webctc.railgroup.RailGroupUtilsKt");
+        hasAts = checkClassExists("jp.kaiz.atsassistmod.block.tileentity.TileEntityCustom");
+        hasRtm = checkClassExists("jp.ngt.rtm.entity.train.EntityTrainBase");
+        hasNgtScriptUtil = checkClassExists("jp.ngt.ngtlib.io.ScriptUtil");
+        hasMcte = checkClassExists("jp.ngt.mcte.world.MCTEWorld");
+        hasKaizAngelicaCompat = checkClassExists("jp.kaiz.kaizpatch.compat.AngelicaCompat");
+        hasRailMapCustom = checkClassExists("jp.ngt.rtm.rail.util.RailMapCustom");
+        hasAngelicaGlsm = checkClassExists("com.gtnewhorizons.angelica.glsm.GLStateManager");
+    }
+
+    private boolean checkClassExists(String className) {
+        try {
+            String resource = className.replace('.', '/') + ".class";
+            return getClass().getClassLoader().getResource(resource) != null;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
@@ -50,51 +57,47 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        boolean shouldApply;
+        
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.macros.")) {
-            return isClient && hasMacroMod;
-        }
-        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.gtnhlib.")) {
+            shouldApply = isClient && hasMacroMod;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.gtnhlib.")) {
             if (mixinClassName.endsWith(".MixinBlockPaneFix")) {
-                return isClient && hasGtnhLib;
+                shouldApply = isClient && hasGtnhLib;
+            } else {
+                shouldApply = hasGtnhLib;
             }
-            return hasGtnhLib;
-        }
-        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.kaizpatch.")) {
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.kaizpatch.")) {
             if (mixinClassName.endsWith(".McteWorldSetBlockDiffMixin")) {
-                return hasMcte;
-            }
-            if (mixinClassName.endsWith(".RenderMiniatureDynamicLightMixin")
+                shouldApply = hasMcte;
+            } else if (mixinClassName.endsWith(".RenderMiniatureDynamicLightMixin")
                     || mixinClassName.endsWith(".RenderItemMiniatureDynamicLightMixin")) {
-                return isClient && hasMcte;
+                shouldApply = isClient && hasMcte;
+            } else if (mixinClassName.endsWith(".AngelicaScriptTransformCacheMixin")) {
+                shouldApply = isClient && hasKaizAngelicaCompat;
+            } else if (mixinClassName.endsWith(".RailMapCustomCacheMixin")) {
+                shouldApply = hasRailMapCustom;
+            } else {
+                shouldApply = hasNgtScriptUtil;
             }
-            if (mixinClassName.endsWith(".AngelicaScriptTransformCacheMixin")) {
-                return isClient && hasKaizAngelicaCompat;
-            }
-            if (mixinClassName.endsWith(".RailMapCustomCacheMixin")) {
-                return hasRailMapCustom;
-            }
-            return hasNgtScriptUtil;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.angelica.")) {
+            shouldApply = isClient && hasAngelicaGlsm;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.signal.")) {
+            shouldApply = hasSignalController;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.webctc.")) {
+            shouldApply = hasWebCtc;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.ats.")) {
+            shouldApply = hasAts;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.rtm.")) {
+            shouldApply = hasRtm;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.minecraft.")) {
+            shouldApply = isClient && hasGtnhLib;
+        } else {
+            shouldApply = true;
         }
-        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.angelica.")) {
-            return isClient && hasAngelicaGlsm;
-        }
-        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.signal.")) {
-            return hasSignalController;
-        }
-        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.webctc.")) {
-            return hasWebCtc;
-        }
-        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.ats.")) {
-            return hasAts;
-        }
-        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.rtm.")) {
-            return hasRtm;
-        }
-        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.minecraft.")) {
-            return isClient && hasGtnhLib;
-        }
-
-        return true;
+        
+        System.out.println("[CrossTieMixin] " + mixinClassName + " -> " + (shouldApply ? "APPLY" : "SKIP"));
+        return shouldApply;
     }
 
     @Override

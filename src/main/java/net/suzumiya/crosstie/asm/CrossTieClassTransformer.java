@@ -23,6 +23,17 @@ import org.objectweb.asm.tree.VarInsnNode;
 public class CrossTieClassTransformer implements IClassTransformer {
 
 
+    /**
+     * GTNHLib 0.9.x で使用されていた {@code MixinBlock_IconWrapper} のクラス名。
+     *
+     * <p>GTNHLib 0.10.0 ではこの Mixin が廃止され、{@code BlockIconTransformer} が
+     * {@code Block} クラスに直接 ASM でフックを注入する方式に変わりました。
+     * パッチ対象の {@code nhlib$getParticleIcon} メソッドはもはや存在しないため、
+     * この定数は互換性チェック用に残しています。
+     *
+     * @deprecated GTNHLib 0.10.0 以降は不要
+     */
+    @Deprecated
     private static final String GTNHLIB_BLOCK_ICON_MIXIN =
             "com.gtnewhorizon.gtnhlib.mixins.early.models.MixinBlock_IconWrapper";
     private static final String ANGELICA_CTM_RENDER_BLOCKS_MIXIN =
@@ -38,7 +49,9 @@ public class CrossTieClassTransformer implements IClassTransformer {
             return basicClass;
         }
 
-
+        // GTNHLib 0.9.x: MixinBlock_IconWrapper へのパッチ
+        // GTNHLib 0.10.0 以降では MixinBlock_IconWrapper が廃止されたため、
+        // クラスが見つからなければ isClass が false を返すので安全にスキップされる。
         if (isClass(transformedName, name, GTNHLIB_BLOCK_ICON_MIXIN, null)) {
             return patchGtnhLibBlockIconMixin(basicClass);
         }
@@ -63,6 +76,13 @@ public class CrossTieClassTransformer implements IClassTransformer {
 
 
 
+    /**
+     * GTNHLib 0.9.x 向けパッチ: {@code MixinBlock_IconWrapper.nhlib$getParticleIcon} を
+     * {@link net.suzumiya.crosstie.compat.GtnhLibIconCompat#getParticleIcon} にリダイレクト。
+     *
+     * <p>GTNHLib 0.10.0 以降ではこのメソッドが呼ばれることはありません
+     * ({@code MixinBlock_IconWrapper} クラス自体が存在しないため)。
+     */
     private byte[] patchGtnhLibBlockIconMixin(byte[] basicClass) {
         ClassNode classNode = new ClassNode();
         new ClassReader(basicClass).accept(classNode, 0);
@@ -157,26 +177,24 @@ public class CrossTieClassTransformer implements IClassTransformer {
     }
 
     private void replaceMethodBody(MethodNode method, InsnList instructions) {
-        for (int i = 0; i < method.instructions.size(); i++) {
-            AbstractInsnNode instruction = method.instructions.get(i);
-            if (instruction instanceof LabelNode || instruction instanceof LineNumberNode) {
-                continue;
-            }
-            method.instructions.remove(instruction);
-            i--;
-        }
         method.instructions.clear();
         method.instructions.add(instructions);
         method.tryCatchBlocks.clear();
         method.localVariables.clear();
-        method.maxStack = 6;
+        // method.maxStack = 6; // 削除：COMPUTE_MAXSに任せる
     }
 
 
 
     private byte[] writeClass(ClassNode classNode) {
         ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-        classNode.accept(writer);
+        try {
+            classNode.accept(writer);
+        } catch (Exception e) {
+            System.err.println("[CrossTie] Failed to write class: " + classNode.name);
+            e.printStackTrace();
+            return null;
+        }
         return writer.toByteArray();
     }
 }

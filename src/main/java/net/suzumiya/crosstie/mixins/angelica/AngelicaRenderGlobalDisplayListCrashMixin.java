@@ -13,9 +13,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "com.gtnewhorizons.angelica.glsm.GLStateManager", remap = false)
 public abstract class AngelicaRenderGlobalDisplayListCrashMixin {
 
+    /**
+     * Opt-IN flag (default: disabled).
+     *
+     * <p>This workaround bypasses Angelica's GLStateManager for display lists created in
+     * {@code RenderGlobal.<init>}. With Angelica 2.1.21+ the ImmediateModeRecorder switched to
+     * attrib-based vertex reading; calling GL11 directly while Angelica's attrib state is live
+     * corrupts the buffer position and causes an IndexOutOfBoundsException on the next
+     * non-list draw call.</p>
+     *
+     * <p>Enable only if using an older Angelica that crashes without this workaround:
+     * {@code -Dcrosstie.enableNativeRenderGlobalDisplayLists=true}</p>
+     */
     @Unique
     private static final boolean crosstie$nativeRenderGlobalListsEnabled =
-            !Boolean.getBoolean("crosstie.disableNativeRenderGlobalDisplayLists");
+            Boolean.getBoolean("crosstie.enableNativeRenderGlobalDisplayLists");
 
     @Unique
     private static final Set<Integer> crosstie$nativeRenderGlobalLists =
