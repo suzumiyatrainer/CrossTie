@@ -1,8 +1,8 @@
 package net.suzumiya.crosstie.mixins.gtnhlib;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Supplier;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,7 +23,7 @@ public abstract class ObjectPoolerThreadSafeMixin<T> {
 
     @Overwrite
     public synchronized T getInstance() {
-        ObjectArrayList<T> pool = crosstie$getAvailableInstances();
+        List<T> pool = crosstie$getAvailableInstances();
         if (pool.isEmpty()) {
             return crosstie$getInstanceSupplier().get();
         }
@@ -40,7 +40,7 @@ public abstract class ObjectPoolerThreadSafeMixin<T> {
 
     @Overwrite
     public synchronized void releaseInstances(Collection<T> instances) {
-        ObjectArrayList<T> pool = crosstie$getAvailableInstances();
+        List<T> pool = crosstie$getAvailableInstances();
         for (T instance : instances) {
             if (instance != null) {
                 pool.add(instance);
@@ -55,13 +55,13 @@ public abstract class ObjectPoolerThreadSafeMixin<T> {
      */
     @Overwrite
     public synchronized void releaseInstances(T[] instances) {
-        ObjectArrayList<T> pool = crosstie$getAvailableInstances();
-        pool.addElements(pool.size(), instances);
+        List<T> pool = crosstie$getAvailableInstances();
+        pool.addAll(Arrays.asList(instances));
         Arrays.fill(instances, null);
     }
 
     @Accessor(value = "availableInstances", remap = false)
-    protected abstract ObjectArrayList<T> crosstie$getAvailableInstances();
+    protected abstract List<T> crosstie$getAvailableInstances();
 
     @Accessor(value = "instanceSupplier", remap = false)
     protected abstract Supplier<T> crosstie$getInstanceSupplier();

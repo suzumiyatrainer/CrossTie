@@ -12,7 +12,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isClient;
     private boolean hasMacroMod;
+    private boolean hasAngelica;
+    private boolean hasArchaicFix;
+    private boolean hasCoreTweaks;
     private boolean hasGtnhLib;
+    private boolean hasHodgepodge;
+    private boolean hasUniMixins;
     private boolean hasSignalController;
     private boolean hasWebCtc;
     private boolean hasAts;
@@ -22,14 +27,23 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     private boolean hasKaizAngelicaCompat;
     private boolean hasRailMapCustom;
     private boolean hasAngelicaGlsm;
+    private boolean enableNativeRenderGlobalDisplayLists;
 
     @Override
     public void onLoad(String mixinPackage) {
         isClient = FMLLaunchHandler.side() == Side.CLIENT;
+        enableNativeRenderGlobalDisplayLists =
+                Boolean.getBoolean("crosstie.enableNativeRenderGlobalDisplayLists");
         
         // 安全なクラス存在チェック
         hasMacroMod = checkClassExists("net.eq2online.macros.input.InputHandler");
+        hasAngelica = checkClassExists("com.gtnewhorizons.angelica.AngelicaMod");
+        hasArchaicFix = checkClassExists("org.embeddedt.archaicfix.ArchaicFix");
+        hasCoreTweaks = checkClassExists("makamys.coretweaks.CoreTweaksMod");
         hasGtnhLib = checkClassExists("com.gtnewhorizon.gtnhlib.util.ObjectPooler");
+        hasHodgepodge = checkClassExists("com.mitchej123.hodgepodge.Hodgepodge");
+        hasUniMixins = checkClassExists("io.github.legacymoddingmc.unimixins.all.AllModule")
+                || checkClassExists("com.gtnewhorizon.gtnhmixins.GTNHMixins");
         hasSignalController = checkClassExists("jp.masa.signalcontrollermod.block.tileentity.TileEntitySignalController");
         hasWebCtc = checkClassExists("org.webctc.railgroup.RailGroupUtilsKt");
         hasAts = checkClassExists("jp.kaiz.atsassistmod.block.tileentity.TileEntityCustom");
@@ -39,6 +53,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         hasKaizAngelicaCompat = checkClassExists("jp.kaiz.kaizpatch.compat.AngelicaCompat");
         hasRailMapCustom = checkClassExists("jp.ngt.rtm.rail.util.RailMapCustom");
         hasAngelicaGlsm = checkClassExists("com.gtnewhorizons.angelica.glsm.GLStateManager");
+        logDetectedCompatMods();
     }
 
     private boolean checkClassExists(String className) {
@@ -81,7 +96,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 shouldApply = hasNgtScriptUtil;
             }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.angelica.")) {
-            shouldApply = isClient && hasAngelicaGlsm;
+            if (mixinClassName.endsWith(".AngelicaRenderGlobalDisplayListCrashMixin")) {
+                shouldApply = isClient && hasAngelicaGlsm && enableNativeRenderGlobalDisplayLists;
+            } else {
+                shouldApply = isClient && hasAngelicaGlsm;
+            }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.signal.")) {
             shouldApply = hasSignalController;
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.webctc.")) {
@@ -98,6 +117,18 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         
         System.out.println("[CrossTieMixin] " + mixinClassName + " -> " + (shouldApply ? "APPLY" : "SKIP"));
         return shouldApply;
+    }
+
+    private void logDetectedCompatMods() {
+        System.out.println("[CrossTieMixin] Detected performance mods: "
+                + "Angelica=" + hasAngelica
+                + ", AngelicaGLSM=" + hasAngelicaGlsm
+                + ", ArchaicFix=" + hasArchaicFix
+                + ", CoreTweaks=" + hasCoreTweaks
+                + ", GTNHLib=" + hasGtnhLib
+                + ", Hodgepodge=" + hasHodgepodge
+                + ", UniMixins=" + hasUniMixins
+                + ", nativeRenderGlobalDisplayLists=" + enableNativeRenderGlobalDisplayLists);
     }
 
     @Override
