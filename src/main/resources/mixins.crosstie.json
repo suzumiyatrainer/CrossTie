@@ -12,6 +12,7 @@
     "gtnhlib.MixinBlockPaneFix",
     "kaizpatch.ScriptUtilInvocableCacheMixin",
     "kaizpatch.AngelicaScriptTransformCacheMixin",
+    "kaizpatch.ModelPackManagerScriptRedirectMixin",
     "kaizpatch.McteWorldSetBlockDiffMixin",
     "kaizpatch.RailMapCustomCacheMixin",
     "signal.SignalControllerReflectionCacheMixin",

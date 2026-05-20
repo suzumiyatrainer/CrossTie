@@ -4,6 +4,7 @@ import cpw.mods.fml.relauncher.FMLLaunchHandler;
 import cpw.mods.fml.relauncher.Side;
 import java.util.List;
 import java.util.Set;
+import net.minecraft.launchwrapper.Launch;
 import org.spongepowered.asm.lib.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -25,6 +26,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     private boolean hasNgtScriptUtil;
     private boolean hasMcte;
     private boolean hasKaizAngelicaCompat;
+    private boolean hasKaizPatchCompatLayer;
     private boolean hasRailMapCustom;
     private boolean hasAngelicaGlsm;
     private boolean enableNativeRenderGlobalDisplayLists;
@@ -51,6 +53,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         hasNgtScriptUtil = checkClassExists("jp.ngt.ngtlib.io.ScriptUtil");
         hasMcte = checkClassExists("jp.ngt.mcte.world.MCTEWorld");
         hasKaizAngelicaCompat = checkClassExists("jp.kaiz.kaizpatch.compat.AngelicaCompat");
+        hasKaizPatchCompatLayer = hasKaizAngelicaCompat
+                || checkClassExists("jp.kaiz.kaizpatch.fixrtm.model.CachedModelUtil");
         hasRailMapCustom = checkClassExists("jp.ngt.rtm.rail.util.RailMapCustom");
         hasAngelicaGlsm = checkClassExists("com.gtnewhorizons.angelica.glsm.GLStateManager");
         logDetectedCompatMods();
@@ -59,7 +63,16 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     private boolean checkClassExists(String className) {
         try {
             String resource = className.replace('.', '/') + ".class";
-            return getClass().getClassLoader().getResource(resource) != null;
+            if (getClass().getClassLoader().getResource(resource) != null) {
+                return true;
+            }
+
+            ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+            if (contextClassLoader != null && contextClassLoader.getResource(resource) != null) {
+                return true;
+            }
+
+            return Launch.classLoader != null && Launch.classLoader.getResource(resource) != null;
         } catch (Exception e) {
             return false;
         }
@@ -89,7 +102,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                     || mixinClassName.endsWith(".RenderItemMiniatureDynamicLightMixin")) {
                 shouldApply = isClient && hasMcte;
             } else if (mixinClassName.endsWith(".AngelicaScriptTransformCacheMixin")) {
-                shouldApply = isClient && hasKaizAngelicaCompat;
+                shouldApply = isClient && hasAngelicaGlsm && hasKaizPatchCompatLayer && hasNgtScriptUtil;
+            } else if (mixinClassName.endsWith(".ModelPackManagerScriptRedirectMixin")) {
+                shouldApply = isClient && hasAngelicaGlsm && hasRtm && hasNgtScriptUtil;
             } else if (mixinClassName.endsWith(".RailMapCustomCacheMixin")) {
                 shouldApply = hasRailMapCustom;
             } else {
@@ -128,6 +143,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 + ", GTNHLib=" + hasGtnhLib
                 + ", Hodgepodge=" + hasHodgepodge
                 + ", UniMixins=" + hasUniMixins
+                + ", KaizAngelicaCompat=" + hasKaizAngelicaCompat
+                + ", KaizPatchCompatLayer=" + hasKaizPatchCompatLayer
                 + ", nativeRenderGlobalDisplayLists=" + enableNativeRenderGlobalDisplayLists);
     }
 
