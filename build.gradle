@@ -78,9 +78,9 @@ configurations.configureEach {
             force 'io.netty:netty-all:4.2.14.Final'
         }
         if (forceSafeScala) {
-            force 'org.scala-lang:scala-library:3.8.3'
-            force 'org.scala-lang:scala-compiler:3.8.3'
-            force 'org.scala-lang:scala-reflect:3.8.3'
+            force 'org.scala-lang:scala-library:3.8.4'
+            force 'org.scala-lang:scala-compiler:3.8.4'
+            force 'org.scala-lang:scala-reflect:3.8.4'
         }
     }
 }
