@@ -1,32 +1,24 @@
 package net.suzumiya.crosstie.asm;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import net.minecraft.launchwrapper.IClassTransformer;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
-import org.objectweb.asm.tree.LabelNode;
-import org.objectweb.asm.tree.LdcInsnNode;
-import org.objectweb.asm.tree.LineNumberNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 public class CrossTieClassTransformer implements IClassTransformer {
 
-
     /**
      * GTNHLib 0.9.x で使用されていた {@code MixinBlock_IconWrapper} のクラス名。
      *
-     * <p>GTNHLib 0.10.0 ではこの Mixin が廃止され、{@code BlockIconTransformer} が
+     * <p>
+     * GTNHLib 0.10.0 ではこの Mixin が廃止され、{@code BlockIconTransformer} が
      * {@code Block} クラスに直接 ASM でフックを注入する方式に変わりました。
      * パッチ対象の {@code nhlib$getParticleIcon} メソッドはもはや存在しないため、
      * この定数は互換性チェック用に残しています。
@@ -34,32 +26,25 @@ public class CrossTieClassTransformer implements IClassTransformer {
      * @deprecated GTNHLib 0.10.0 以降は不要
      */
     @Deprecated
-    private static final String GTNHLIB_BLOCK_ICON_MIXIN =
-            "com.gtnewhorizon.gtnhlib.mixins.early.models.MixinBlock_IconWrapper";
-    private static final String ANGELICA_CTM_RENDER_BLOCKS_MIXIN =
-            "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm.MixinRenderBlocks";
-    private static final String ANGELICA_CTM_CC_RENDER_BLOCKS_MIXIN =
-            "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm_cc.MixinRenderBlocks";
-    private static final String ANGELICA_CTM_CC_RENDER_BLOCKS_NO_CC =
-            "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm_cc.MixinRenderBlocksNoCC";
-    private static final String ANGELICA_CTM_CC_RENDER_BLOCKS_NO_CTM =
-            "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm_cc.MixinRenderBlocksNoCTM";
-    private static final String MCPATCHER_GLASS_PANE_RENDERER =
-            "com.prupe.mcpatcher.ctm.GlassPaneRenderer";
+    private static final String GTNHLIB_BLOCK_ICON_MIXIN = "com.gtnewhorizon.gtnhlib.mixins.early.models.MixinBlock_IconWrapper";
+    private static final String ANGELICA_CTM_RENDER_BLOCKS_MIXIN = "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm.MixinRenderBlocks";
+    private static final String ANGELICA_CTM_CC_RENDER_BLOCKS_MIXIN = "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm_cc.MixinRenderBlocks";
+    private static final String ANGELICA_CTM_CC_RENDER_BLOCKS_NO_CC = "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm_cc.MixinRenderBlocksNoCC";
+    private static final String ANGELICA_CTM_CC_RENDER_BLOCKS_NO_CTM = "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm_cc.MixinRenderBlocksNoCTM";
+    private static final String MCPATCHER_GLASS_PANE_RENDERER = "com.prupe.mcpatcher.ctm.GlassPaneRenderer";
 
     /**
      * Hodgepodge の GuavaPooler クラス名。
      *
-     * <p>Hodgepodge の {@code NBTTagCompoundHashMapTransformer} が {@code NBTTagCompound} を
+     * <p>
+     * Hodgepodge の {@code NBTTagCompoundHashMapTransformer} が
+     * {@code NBTTagCompound} を
      * 早期変換する際に {@code StringPooler$GuavaPooler} がロードされます。
      * これにより Mixin フェーズより前にクラスがロード済みとなり、
      * {@code MixinTargetAlreadyLoadedException} が発生します。
      * そのため Mixin ではなく ASM トランスフォーマーで対処します。
      */
-    private static final String HODGEPODGE_GUAVA_POOLER =
-            "com.mitchej123.hodgepodge.util.StringPooler$GuavaPooler";
-
-
+    private static final String HODGEPODGE_GUAVA_POOLER = "com.mitchej123.hodgepodge.util.StringPooler$GuavaPooler";
 
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
@@ -101,13 +86,13 @@ public class CrossTieClassTransformer implements IClassTransformer {
                 || (internalName != null && (internalName.equals(transformedName) || internalName.equals(name)));
     }
 
-
-
     /**
      * GTNHLib 0.9.x 向けパッチ: {@code MixinBlock_IconWrapper.nhlib$getParticleIcon} を
-     * {@link net.suzumiya.crosstie.compat.GtnhLibIconCompat#getParticleIcon} にリダイレクト。
+     * {@link net.suzumiya.crosstie.compat.GtnhLibIconCompat#getParticleIcon}
+     * にリダイレクト。
      *
-     * <p>GTNHLib 0.10.0 以降ではこのメソッドが呼ばれることはありません
+     * <p>
+     * GTNHLib 0.10.0 以降ではこのメソッドが呼ばれることはありません
      * ({@code MixinBlock_IconWrapper} クラス自体が存在しないため)。
      */
     private byte[] patchGtnhLibBlockIconMixin(byte[] basicClass) {
@@ -136,9 +121,11 @@ public class CrossTieClassTransformer implements IClassTransformer {
             MethodNode method = (MethodNode) methodObject;
             if (("tweakPaneIcons".equals(method.name) || "func_147787_a".equals(method.name)
                     || "func_147793_a".equals(method.name) || "func_147777_a".equals(method.name))
-                    && ("(Lnet/minecraft/client/renderer/RenderBlocks;Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;".equals(method.desc)
+                    && ("(Lnet/minecraft/client/renderer/RenderBlocks;Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;"
+                            .equals(method.desc)
                             || "(Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;".equals(method.desc)
-                            || "(Lnet/minecraft/block/Block;Lnet/minecraft/world/IBlockAccess;IIII)Lnet/minecraft/util/IIcon;".equals(method.desc)
+                            || "(Lnet/minecraft/block/Block;Lnet/minecraft/world/IBlockAccess;IIII)Lnet/minecraft/util/IIcon;"
+                                    .equals(method.desc)
                             || "(Lnet/minecraft/block/Block;I)Lnet/minecraft/util/IIcon;".equals(method.desc))) {
                 replaceMethodBody(method, angelicaPaneIconBody(method.name, method.desc));
                 changed = true;
@@ -169,19 +156,24 @@ public class CrossTieClassTransformer implements IClassTransformer {
     /**
      * Hodgepodge {@code StringPooler$GuavaPooler} へのパッチ。
      *
-     * <p>Hodgepodge の GuavaPooler は {@code com.google.common.collect.Interner} を使って
+     * <p>
+     * Hodgepodge の GuavaPooler は {@code com.google.common.collect.Interner} を使って
      * 文字列をインターンします。Guava が複数のクラスローダー (例: LaunchClassLoader と
      * AppClassLoader) でロードされると次のような {@code LinkageError} が発生します:
+     * 
      * <pre>
      *   loader constraint violation: loader previously initiated loading
      *   for a different type with name "com/google/common/collect/Interner"
      * </pre>
      *
-     * <p>このパッチは {@code getString(String)} の本体を {@code s.intern()} に差し替えて
+     * <p>
+     * このパッチは {@code getString(String)} の本体を {@code s.intern()} に差し替えて
      * Guava の {@code Interner} を完全に回避します。
      *
-     * <p><b>なぜ Mixin ではなく ASM トランスフォーマーを使うのか:</b><br>
-     * Hodgepodge の {@code NBTTagCompoundHashMapTransformer} が {@code NBTTagCompound} を
+     * <p>
+     * <b>なぜ Mixin ではなく ASM トランスフォーマーを使うのか:</b><br>
+     * Hodgepodge の {@code NBTTagCompoundHashMapTransformer} が
+     * {@code NBTTagCompound} を
      * 早期変換する過程で {@code StringPooler$GuavaPooler} が Mixin フェーズより前に
      * ロードされます。その結果 Mixin で介入しようとすると
      * {@code MixinTargetAlreadyLoadedException} が発生して適用に失敗します。
@@ -230,7 +222,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
 
     private InsnList angelicaPaneIconBody(String methodName, String methodDesc) {
         InsnList instructions = new InsnList();
-        if ("(Lnet/minecraft/client/renderer/RenderBlocks;Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;".equals(methodDesc)) {
+        if ("(Lnet/minecraft/client/renderer/RenderBlocks;Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;"
+                .equals(methodDesc)) {
             instructions.add(new VarInsnNode(Opcodes.ALOAD, 2));
             instructions.add(new VarInsnNode(Opcodes.ILOAD, 3));
             instructions.add(new VarInsnNode(Opcodes.ILOAD, 4));
@@ -250,7 +243,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
                     "getPaneIcon",
                     "(Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;",
                     false));
-        } else if ("(Lnet/minecraft/block/Block;Lnet/minecraft/world/IBlockAccess;IIII)Lnet/minecraft/util/IIcon;".equals(methodDesc)) {
+        } else if ("(Lnet/minecraft/block/Block;Lnet/minecraft/world/IBlockAccess;IIII)Lnet/minecraft/util/IIcon;"
+                .equals(methodDesc)) {
             instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
             instructions.add(new VarInsnNode(Opcodes.ALOAD, 2));
             instructions.add(new VarInsnNode(Opcodes.ILOAD, 3));
@@ -315,8 +309,6 @@ public class CrossTieClassTransformer implements IClassTransformer {
         method.localVariables.clear();
         // method.maxStack = 6; // 削除：COMPUTE_MAXSに任せる
     }
-
-
 
     private byte[] writeClass(ClassNode classNode) {
         ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);

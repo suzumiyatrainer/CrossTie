@@ -19,19 +19,26 @@ public abstract class RailMapCustomCacheMixin {
     private Double crosstie$lengthCache;
 
     @Unique
-    private final Map<Long, double[]> crosstie$posCache = new HashMap<Long, double[]>();
+    private final Map<Long, crosstie$CacheEntry> crosstie$cache = new HashMap<Long, crosstie$CacheEntry>();
 
     @Unique
-    private final Map<Long, Double> crosstie$heightCache = new HashMap<Long, Double>();
+    private static class crosstie$CacheEntry {
+        double[] pos;
+        Double height;
+        Float yaw;
+        Float pitch;
+        Float roll;
+    }
 
     @Unique
-    private final Map<Long, Float> crosstie$yawCache = new HashMap<Long, Float>();
-
-    @Unique
-    private final Map<Long, Float> crosstie$pitchCache = new HashMap<Long, Float>();
-
-    @Unique
-    private final Map<Long, Float> crosstie$rollCache = new HashMap<Long, Float>();
+    private crosstie$CacheEntry crosstie$getOrCreateEntry(long key) {
+        crosstie$CacheEntry entry = crosstie$cache.get(key);
+        if (entry == null) {
+            entry = new crosstie$CacheEntry();
+            crosstie$cache.put(key, entry);
+        }
+        return entry;
+    }
 
     @Inject(method = "getLength", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private void crosstie$getCachedLength(CallbackInfoReturnable<Double> cir) {
@@ -53,9 +60,9 @@ public abstract class RailMapCustomCacheMixin {
         if (!crosstie$railMapCustomCacheEnabled) {
             return;
         }
-        double[] cached = crosstie$posCache.get(crosstie$key(split, index));
-        if (cached != null) {
-            cir.setReturnValue(cached.clone());
+        crosstie$CacheEntry entry = crosstie$cache.get(crosstie$key(split, index));
+        if (entry != null && entry.pos != null) {
+            cir.setReturnValue(entry.pos.clone());
         }
     }
 
@@ -63,7 +70,7 @@ public abstract class RailMapCustomCacheMixin {
     private void crosstie$cacheRailPos(int split, int index, CallbackInfoReturnable<double[]> cir) {
         double[] value = cir.getReturnValue();
         if (crosstie$railMapCustomCacheEnabled && value != null) {
-            crosstie$posCache.put(crosstie$key(split, index), value.clone());
+            crosstie$getOrCreateEntry(crosstie$key(split, index)).pos = value.clone();
         }
     }
 
@@ -72,16 +79,16 @@ public abstract class RailMapCustomCacheMixin {
         if (!crosstie$railMapCustomCacheEnabled) {
             return;
         }
-        Double cached = crosstie$heightCache.get(crosstie$key(split, index));
-        if (cached != null) {
-            cir.setReturnValue(cached);
+        crosstie$CacheEntry entry = crosstie$cache.get(crosstie$key(split, index));
+        if (entry != null && entry.height != null) {
+            cir.setReturnValue(entry.height);
         }
     }
 
     @Inject(method = "getRailHeight", at = @At("RETURN"), require = 0, remap = false)
     private void crosstie$cacheRailHeight(int split, int index, CallbackInfoReturnable<Double> cir) {
         if (crosstie$railMapCustomCacheEnabled) {
-            crosstie$heightCache.put(crosstie$key(split, index), cir.getReturnValue());
+            crosstie$getOrCreateEntry(crosstie$key(split, index)).height = cir.getReturnValue();
         }
     }
 
@@ -90,16 +97,16 @@ public abstract class RailMapCustomCacheMixin {
         if (!crosstie$railMapCustomCacheEnabled) {
             return;
         }
-        Float cached = crosstie$yawCache.get(crosstie$key(split, index));
-        if (cached != null) {
-            cir.setReturnValue(cached);
+        crosstie$CacheEntry entry = crosstie$cache.get(crosstie$key(split, index));
+        if (entry != null && entry.yaw != null) {
+            cir.setReturnValue(entry.yaw);
         }
     }
 
     @Inject(method = "getRailYaw", at = @At("RETURN"), require = 0, remap = false)
     private void crosstie$cacheRailYaw(int split, int index, CallbackInfoReturnable<Float> cir) {
         if (crosstie$railMapCustomCacheEnabled) {
-            crosstie$yawCache.put(crosstie$key(split, index), cir.getReturnValue());
+            crosstie$getOrCreateEntry(crosstie$key(split, index)).yaw = cir.getReturnValue();
         }
     }
 
@@ -108,16 +115,16 @@ public abstract class RailMapCustomCacheMixin {
         if (!crosstie$railMapCustomCacheEnabled) {
             return;
         }
-        Float cached = crosstie$pitchCache.get(crosstie$key(split, index));
-        if (cached != null) {
-            cir.setReturnValue(cached);
+        crosstie$CacheEntry entry = crosstie$cache.get(crosstie$key(split, index));
+        if (entry != null && entry.pitch != null) {
+            cir.setReturnValue(entry.pitch);
         }
     }
 
     @Inject(method = "getRailPitch", at = @At("RETURN"), require = 0, remap = false)
     private void crosstie$cacheRailPitch(int split, int index, CallbackInfoReturnable<Float> cir) {
         if (crosstie$railMapCustomCacheEnabled) {
-            crosstie$pitchCache.put(crosstie$key(split, index), cir.getReturnValue());
+            crosstie$getOrCreateEntry(crosstie$key(split, index)).pitch = cir.getReturnValue();
         }
     }
 
@@ -126,21 +133,21 @@ public abstract class RailMapCustomCacheMixin {
         if (!crosstie$railMapCustomCacheEnabled) {
             return;
         }
-        Float cached = crosstie$rollCache.get(crosstie$key(split, index));
-        if (cached != null) {
-            cir.setReturnValue(cached);
+        crosstie$CacheEntry entry = crosstie$cache.get(crosstie$key(split, index));
+        if (entry != null && entry.roll != null) {
+            cir.setReturnValue(entry.roll);
         }
     }
 
     @Inject(method = "getRailRoll", at = @At("RETURN"), require = 0, remap = false)
     private void crosstie$cacheRailRoll(int split, int index, CallbackInfoReturnable<Float> cir) {
         if (crosstie$railMapCustomCacheEnabled) {
-            crosstie$rollCache.put(crosstie$key(split, index), cir.getReturnValue());
+            crosstie$getOrCreateEntry(crosstie$key(split, index)).roll = cir.getReturnValue();
         }
     }
 
     @Unique
-    private static Long crosstie$key(int split, int index) {
-        return Long.valueOf(((long) split << 32) ^ (index & 0xFFFFFFFFL));
+    private static long crosstie$key(int split, int index) {
+        return ((long) split << 32) ^ (index & 0xFFFFFFFFL);
     }
 }

@@ -136,6 +136,7 @@ dependencies {
     compileOnly('it.unimi.dsi:fastutil:8.5.18') // Needed for ObjectArrayList type in gtnhlib mixin
 
     if (usePrivateMaven) {
+        compileOnly(rfg.deobf(rtmCoordinate))
         // Development/runtime dependencies resolved from the private Maven.
         devOnlyNonPublishable(rfg.deobf(bambooCoordinate))
         devOnlyNonPublishable(rfg.deobf(rtmCoordinate))

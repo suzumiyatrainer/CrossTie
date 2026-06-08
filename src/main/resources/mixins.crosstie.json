@@ -37,6 +37,8 @@
     "kaizpatch.RenderItemMiniatureDynamicLightMixin",
     "rtm.RenderElectricalWiringConnectionCacheMixin",
     "rtm.BlockLinePoleConnectionCacheMixin",
+    "rtm.RenderLargeRailOptimizationMixin",
+    "rtm.RailPartsRendererOptimizationMixin",
     "macros.MacroInputHandlerMixin",
     "macros.MacroModCoreMixin",
     "macros.MacroModPermissionsMixin",

@@ -1,10 +1,6 @@
 package net.suzumiya.crosstie.mixins.kaizpatch;
 
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.Map;
-import java.util.WeakHashMap;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -15,10 +11,6 @@ import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(targets = "jp.ngt.ngtlib.io.ScriptUtil", remap = false)
 public abstract class ScriptUtilInvocableCacheMixin {
-
-    @Unique
-    private static final Map<ScriptEngine, WeakReference<Invocable>> crosstie$invocables =
-            Collections.synchronizedMap(new WeakHashMap<ScriptEngine, WeakReference<Invocable>>());
 
     @Unique
     private static Object crosstie$engineFactory;
@@ -45,7 +37,8 @@ public abstract class ScriptUtilInvocableCacheMixin {
             }
 
             try {
-                for (javax.script.ScriptEngineFactory factory : java.util.ServiceLoader.load(javax.script.ScriptEngineFactory.class, loader)) {
+                for (javax.script.ScriptEngineFactory factory : java.util.ServiceLoader
+                        .load(javax.script.ScriptEngineFactory.class, loader)) {
                     if (factory == null) {
                         continue;
                     }
@@ -80,7 +73,8 @@ public abstract class ScriptUtilInvocableCacheMixin {
         if (factory != null) {
             try {
                 Method getEngineArgs = factory.getClass().getMethod("getScriptEngine", String[].class);
-                return (ScriptEngine) getEngineArgs.invoke(factory, new Object[]{new String[]{"-doe", "--language=es6"}});
+                return (ScriptEngine) getEngineArgs.invoke(factory,
+                        new Object[] { new String[] { "-doe", "--language=es6" } });
             } catch (Throwable ignored) {
                 try {
                     Method getEngineNoArgs = factory.getClass().getMethod("getScriptEngine");
@@ -97,7 +91,7 @@ public abstract class ScriptUtilInvocableCacheMixin {
                 ClassLoader.getSystemClassLoader()
         };
 
-        String[] names = {"nashorn", "JavaScript", "javascript", "js", "ECMAScript", "ecmascript", "rhino"};
+        String[] names = { "nashorn", "JavaScript", "javascript", "js", "ECMAScript", "ecmascript", "rhino" };
         for (ClassLoader classLoader : loaders) {
             if (classLoader == null) {
                 continue;
@@ -132,7 +126,8 @@ public abstract class ScriptUtilInvocableCacheMixin {
 
     /**
      * @author CrossTie
-     * @reason KaizPatchX 1.10.0-rc.2 targets jdk.nashorn directly, but some Java 8 runtimes ship without Nashorn.
+     * @reason KaizPatchX 1.10.0-rc.2 targets jdk.nashorn directly, but some Java 8
+     *         runtimes ship without Nashorn.
      */
     @Overwrite
     public static ScriptEngine doScript(String script) {
@@ -143,7 +138,8 @@ public abstract class ScriptUtilInvocableCacheMixin {
                 try {
                     engine.eval("load(\"nashorn:mozilla_compat.js\");");
                 } catch (ScriptException ignored) {
-                    // If the compatibility helper is absent or cannot be loaded, continue with execution.
+                    // If the compatibility helper is absent or cannot be loaded, continue with
+                    // execution.
                 }
             }
             engine.eval(script);
@@ -160,20 +156,9 @@ public abstract class ScriptUtilInvocableCacheMixin {
     @Overwrite
     public static Object doScriptFunction(ScriptEngine se, String func, Object... args) {
         try {
-            return crosstie$getInvocable(se).invokeFunction(func, args);
+            return ((Invocable) se).invokeFunction(func, args);
         } catch (NoSuchMethodException | ScriptException e) {
             throw new RuntimeException("Script exec error : " + func, e);
         }
-    }
-
-    @Unique
-    private static Invocable crosstie$getInvocable(ScriptEngine se) {
-        WeakReference<Invocable> reference = crosstie$invocables.get(se);
-        Invocable invocable = reference != null ? reference.get() : null;
-        if (invocable == null) {
-            invocable = (Invocable) se;
-            crosstie$invocables.put(se, new WeakReference<>(invocable));
-        }
-        return invocable;
     }
 }
