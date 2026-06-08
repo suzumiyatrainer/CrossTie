@@ -123,7 +123,7 @@ dependencies {
     implementation('com.github.LegacyModdingMC.UniMixins:unimixins-all-1.7.10:0.3.1')
 
     // Some Java 8 runtimes used by launchers no longer include jdk.nashorn.*.
-    nashornLib('org.openjdk.nashorn:nashorn-core:15.4')
+    nashornLib('org.openjdk.nashorn:nashorn-core:15.7')
 
     // Annotation processor for Mixins
     annotationProcessor('org.ow2.asm:asm-debug-all:5.2')
