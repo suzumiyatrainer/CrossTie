@@ -38,6 +38,8 @@
     "rtm.RenderElectricalWiringConnectionCacheMixin",
     "rtm.BlockLinePoleConnectionCacheMixin",
     "macros.MacroInputHandlerMixin",
-    "macros.MacroModCoreMixin"
+    "macros.MacroModCoreMixin",
+    "macros.MacroModPermissionsMixin",
+    "gtnhlib.MixinBlockPaneIconFallback"
   ]
 }

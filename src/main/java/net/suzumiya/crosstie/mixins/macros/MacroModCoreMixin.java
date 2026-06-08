@@ -2,22 +2,26 @@ package net.suzumiya.crosstie.mixins.macros;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(targets = "net.eq2online.macros.core.MacroModCore", remap = false)
 public abstract class MacroModCoreMixin {
 
-    @Inject(
+    @Redirect(
             method = "onTickInGame",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/eq2online/macros/gui/helpers/HelperUserSkinDownload;__displayTexture()V"),
-            cancellable = true,
             remap = false)
-    private void crosstie$skipMissingSkinManagerDisplay(CallbackInfo ci) {
-        if (getUserSkinManager() == null) {
-            ci.cancel();
+    private void crosstie$displayTextureIfSkinManagerExists(Object instance) {
+        if (getUserSkinManager() != null && instance != null) {
+            try {
+                java.lang.reflect.Method method = instance.getClass().getDeclaredMethod("__displayTexture");
+                method.setAccessible(true);
+                method.invoke(instance);
+            } catch (ReflectiveOperationException e) {
+                // Ignore
+            }
         }
     }
 
@@ -31,3 +35,4 @@ public abstract class MacroModCoreMixin {
         }
     }
 }
+

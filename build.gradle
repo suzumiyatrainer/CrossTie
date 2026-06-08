@@ -85,6 +85,10 @@ configurations.configureEach {
     }
 }
 
+configurations {
+    nashornLib
+}
+
 
 dependencies {
     constraints {
@@ -92,7 +96,7 @@ dependencies {
             because 'Fixes vulnerable Gson versions before 2.8.9 and aligns all transitive Gson artifacts.'
         }
         implementation('org.apache.commons:commons-compress:1.28.0') {
-            because 'Fixes multiple archive parsing DoS issues present in older commons-compress releases.'
+            because 'Fixes XmlStreamReader uncontrolled resource consumption issue (CVE in versions < 2.14.0).'
         }
         implementation('commons-io:commons-io:2.22.0') {
             because 'Fixes XmlStreamReader uncontrolled resource consumption issue (CVE in versions < 2.14.0).'
@@ -100,7 +104,10 @@ dependencies {
     }
 
     // UniMixins (Late Mixin support)
-    implementation('com.github.LegacyModdingMC.UniMixins:unimixins-all-1.7.10:0.3.0')
+    implementation('com.github.LegacyModdingMC.UniMixins:unimixins-all-1.7.10:0.3.1')
+
+    // Some Java 8 runtimes used by launchers no longer include jdk.nashorn.*.
+    nashornLib('org.openjdk.nashorn:nashorn-core:15.4')
 
     // Annotation processor for Mixins
     annotationProcessor('org.ow2.asm:asm-debug-all:5.2')
@@ -110,6 +117,7 @@ dependencies {
     // ASM for compilation
     compileOnly('org.ow2.asm:asm-all:5.2') // Try asm-all instead of debug-all
     compileOnly('org.ow2.asm:asm-commons:5.2') // Explicitly add commons just in case
+    compileOnly('it.unimi.dsi:fastutil:8.5.15') // Needed for ObjectArrayList type in gtnhlib mixin
 
     if (usePrivateMaven) {
         // Development/runtime dependencies resolved from the private Maven.
@@ -125,6 +133,14 @@ dependencies {
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 
 java { toolchain { languageVersion = JavaLanguageVersion.of(8) } }
+
+tasks.named('jar') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveClassifier.set('')
+    from {
+        configurations.nashornLib.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
 
 jar {
     manifest {
