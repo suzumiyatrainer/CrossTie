@@ -10,3 +10,29 @@ updates:
       - "dependencies"
     allow:
       - dependency-type: "all"
+    ignore:
+      # -----------------------------------------------------------------------
+      # Minecraft 1.7.10 runtime-provided libraries
+      # These are bundled with Minecraft/Forge and are NOT shipped in the mod
+      # JAR. They cannot be freely upgraded because Minecraft 1.7.10's
+      # decompiled source was written against the older API surfaces.
+      # -----------------------------------------------------------------------
+
+      # Guava: MC 1.7.10 source uses APIs removed in Guava 21+ (e.g. Objects.firstNonNull,
+      # Stopwatch constructors). Forcing a newer version breaks compilation of the
+      # decompiled Minecraft source in build/rfg/minecraft-src.
+      - dependency-name: "com.google.guava:guava"
+
+      # Netty: opt-in upgrade is available via forceSafeNetty=true in gradle.properties.
+      # Not forced by default because newer Netty versions can affect 1.7.10 networking.
+      - dependency-name: "io.netty:netty-all"
+
+      # Apache HttpClient: transitive dep of Minecraft launcher tooling.
+      # 4.5.14 is forced via resolutionStrategy for the build toolchain.
+      - dependency-name: "org.apache.httpcomponents:httpclient"
+      - dependency-name: "org.apache.httpcomponents:httpcore"
+
+      # Scala: opt-in upgrade available via forceSafeScala=true in gradle.properties.
+      - dependency-name: "org.scala-lang:scala-compiler"
+      - dependency-name: "org.scala-lang:scala-library"
+      - dependency-name: "org.scala-lang:scala-reflect"

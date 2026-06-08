@@ -73,6 +73,22 @@ configurations.configureEach {
         force 'org.apache.commons:commons-compress:1.28.0'
         force 'commons-io:commons-io:2.22.0'
 
+        // Log4j: Force to 2.17.2 (last Java-8-compatible patched release) to close all Log4j CVEs.
+        // Log4Shell (JNDI) is also blocked at runtime via the JVM flags in the minecraft block above.
+        // Note: these libs are provided by Minecraft/Forge at runtime and are NOT shipped in the mod JAR.
+        force 'org.apache.logging.log4j:log4j-core:2.17.2'
+        force 'org.apache.logging.log4j:log4j-api:2.17.2'
+        force 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.2'
+
+        // Guava: CANNOT be forced globally. Minecraft 1.7.10 decompiled source uses Guava 14.x APIs
+        // (e.g. Objects.firstNonNull) that were removed in Guava 21+. Forcing 32.x causes compilation
+        // failures in build/rfg/minecraft-src. Guava alerts are suppressed in dependabot.yml instead.
+
+        // Apache HttpClient: 4.5.14 fixes all known Moderate CVEs in the 4.x branch.
+        // HttpClient is not directly referenced by the Minecraft 1.7.10 decompiled source.
+        force 'org.apache.httpcomponents:httpclient:4.5.14'
+        force 'org.apache.httpcomponents:httpcore:4.4.16'
+
         // These upgrades can affect legacy 1.7.10 runtime behavior, so they are opt-in.
         if (forceSafeNetty) {
             force 'io.netty:netty-all:4.2.15.Final'

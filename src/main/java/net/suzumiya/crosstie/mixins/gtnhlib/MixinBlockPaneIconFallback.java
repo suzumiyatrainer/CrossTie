@@ -2,7 +2,6 @@ package net.suzumiya.crosstie.mixins.gtnhlib;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockPane;
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.IBlockAccess;
 import org.spongepowered.asm.mixin.Mixin;
@@ -10,13 +9,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = Block.class, remap = false)
+@Mixin(value = Block.class)
 public abstract class MixinBlockPaneIconFallback {
 
-    @Inject(method = "getIcon(Lnet/minecraft/world/IBlockAccess;IIII)Lnet/minecraft/util/IIcon;",
-            at = @At("RETURN"), cancellable = true, require = 0, remap = false)
+    @Inject(method = "getIcon(Lnet/minecraft/world/IBlockAccess;IIII)Lnet/minecraft/util/IIcon;", at = @At("RETURN"), cancellable = true, require = 0)
     private void crosstie$fixPaneIcon(IBlockAccess blockAccess, int x, int y, int z, int side,
-                                     CallbackInfoReturnable<IIcon> cir) {
+            CallbackInfoReturnable<IIcon> cir) {
         if (isPaneIconCirCompatible(cir)) {
             IIcon paneIcon = ((BlockPane) (Object) this).func_150097_e();
             if (isUsableIcon(paneIcon)) {
@@ -25,8 +23,7 @@ public abstract class MixinBlockPaneIconFallback {
         }
     }
 
-    @Inject(method = "getIcon(II)Lnet/minecraft/util/IIcon;",
-            at = @At("RETURN"), cancellable = true, require = 0, remap = false)
+    @Inject(method = "getIcon(II)Lnet/minecraft/util/IIcon;", at = @At("RETURN"), cancellable = true, require = 0)
     private void crosstie$fixPaneItemIcon(int side, int meta, CallbackInfoReturnable<IIcon> cir) {
         if (isPaneIconCirCompatible(cir)) {
             IIcon paneIcon = ((BlockPane) (Object) this).func_150097_e();
