@@ -133,7 +133,7 @@ dependencies {
     // ASM for compilation
     compileOnly('org.ow2.asm:asm-all:5.2') // Try asm-all instead of debug-all
     compileOnly('org.ow2.asm:asm-commons:5.2') // Explicitly add commons just in case
-    compileOnly('it.unimi.dsi:fastutil:8.5.15') // Needed for ObjectArrayList type in gtnhlib mixin
+    compileOnly('it.unimi.dsi:fastutil:8.5.18') // Needed for ObjectArrayList type in gtnhlib mixin
 
     if (usePrivateMaven) {
         // Development/runtime dependencies resolved from the private Maven.
