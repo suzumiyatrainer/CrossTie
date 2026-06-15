@@ -11,6 +11,7 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.FieldNode;
 
 public class CrossTieClassTransformer implements IClassTransformer {
 
@@ -46,6 +47,18 @@ public class CrossTieClassTransformer implements IClassTransformer {
      */
     private static final String HODGEPODGE_GUAVA_POOLER = "com.mitchej123.hodgepodge.util.StringPooler$GuavaPooler";
 
+    /**
+     * NGTLib/RTM の {@code ScriptUtil} クラス名。
+     * NashornScriptEngineFactory が利用不可な環境で {@code ScriptUtil.doScript(String)}
+     * を {@link net.suzumiya.crosstie.compat.ScriptUtilFallback} にリダイレクトする。
+     */
+    private static final String SCRIPT_UTIL_CLASS = "jp.ngt.ngtlib.io.ScriptUtil";
+
+    // AngelicaConfig の ASM パッチは行わない。
+    // GTNHLib の config システムが static フィールドを初期化時にリセットするため、
+    // クラスロード時のフィールド書き換えは効果がありません。
+    // 代わりに CrossTieCorePlugin で設定ファイルを直接書き換えて対応します。
+
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
         if (basicClass == null) {
@@ -74,6 +87,17 @@ public class CrossTieClassTransformer implements IClassTransformer {
         if (isClass(transformedName, name, HODGEPODGE_GUAVA_POOLER, null)) {
             return patchHodgepodgeGuavaPooler(basicClass);
         }
+
+        // NGTLib/RTM ScriptUtil: NashornScriptEngineFactory が利用不可な環境で
+        // ScriptUtil.doScript(String) を ScriptUtilFallback にリダイレクト
+        if (isClass(transformedName, name, SCRIPT_UTIL_CLASS, null)) {
+            return patchScriptUtil(basicClass);
+        }
+
+        // AngelicaConfig は ASM パッチしない。
+        // GTNHLib の config システムが static フィールドを初期化時にリセットするため、
+        // クラスロード時のフィールド書き換えは効果がありません。
+        // CrossTieCorePlugin.injectData() で設定ファイルを直接書き換えて対応します。
 
         return basicClass;
     }
@@ -200,6 +224,65 @@ public class CrossTieClassTransformer implements IClassTransformer {
                             + " (Guava Interner loader constraint workaround)");
         }
         return changed ? writeClass(classNode) : basicClass;
+    }
+
+    /**
+     * NGTLib/RTM {@code ScriptUtil.doScript(String)} を
+     * {@link net.suzumiya.crosstie.compat.ScriptUtilFallback#doScript(String)}
+     * にリダイレクト。
+     *
+     * <p>
+     * 元の実装は直接 {@code jdk.nashorn.api.scripting.NashornScriptEngineFactory}
+     * を参照するが、このクラスが存在しない環境でも動作するよう、
+     * ASM でメソッド本体を差し替える。
+     *
+     * <p>
+     * <b>なぜ Mixin ではなく ASM トランスフォーマーを使うのか:</b><br>
+     * Mixin は {@code shouldApplyMixin} で条件判定されるが、CrossTieMixinPlugin
+     * が正しくロードされない場合がある。ASM トランスフォーマーは
+     * {@link net.suzumiya.crosstie.asm.CrossTieCorePlugin} で
+     * 登録されているため、必ず動作する。
+     */
+    private byte[] patchScriptUtil(byte[] basicClass) {
+        ClassNode classNode = new ClassNode();
+        new ClassReader(basicClass).accept(classNode, 0);
+
+        boolean changed = false;
+        for (Object methodObject : classNode.methods) {
+            MethodNode method = (MethodNode) methodObject;
+            if ("doScript".equals(method.name)
+                    && "(Ljava/lang/String;)Ljavax/script/ScriptEngine;".equals(method.desc)) {
+                replaceMethodBody(method, scriptUtilFallbackBody());
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            System.out.println("[CrossTie] Patched ScriptUtil.doScript(String) -> ScriptUtilFallback.doScript(String)");
+        }
+        return changed ? writeClass(classNode) : basicClass;
+    }
+
+    /**
+     * {@code ScriptUtilFallback.doScript(String)} を呼ぶだけのメソッド本体を生成します。
+     *
+     * <pre>
+     *   ALOAD_0   // パラメータ script (String)
+     *   INVOKESTATIC net/suzumiya/crosstie/compat/ScriptUtilFallback.doScript (Ljava/lang/String;)Ljavax/script/ScriptEngine;
+     *   ARETURN
+     * </pre>
+     */
+    private InsnList scriptUtilFallbackBody() {
+        InsnList instructions = new InsnList();
+        instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+        instructions.add(new MethodInsnNode(
+                Opcodes.INVOKESTATIC,
+                "net/suzumiya/crosstie/compat/ScriptUtilFallback",
+                "doScript",
+                "(Ljava/lang/String;)Ljavax/script/ScriptEngine;",
+                false));
+        instructions.add(new InsnNode(Opcodes.ARETURN));
+        return instructions;
     }
 
     private InsnList gtnhLibParticleIconBody() {

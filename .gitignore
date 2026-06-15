@@ -90,3 +90,5 @@ libs/*
 # VSCode Workspace
 .Project-Workspace/
 CrossTie.code-workspace
+.clinerules
+jarcontents.txt

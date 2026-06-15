@@ -10,12 +10,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * Hooks AngelicaCompat.transformScript to redirect GL calls via CrossTie's
  * ScriptGlRedirector instead of — or before — Angelica's own transformation.
  *
- * <p>Only the HEAD injector is used. When it sets a return value the method is
+ * <p>
+ * Only the HEAD injector is used. When it sets a return value the method is
  * cancelled and control returns to the caller, so no RETURN injector is needed
  * here. A RETURN injector would run even after a HEAD-cancel and would apply
  * ScriptGlRedirector a second time on an already-transformed script.
  *
- * <p>ModelPackManagerScriptRedirectMixin also hooks ModelPackManager.getScript
+ * <p>
+ * ModelPackManagerScriptRedirectMixin also hooks ModelPackManager.getScript
  * at RETURN and applies ScriptGlRedirector once for the non-Angelica path, so
  * the two mixins together cover both code paths without double-transforming.
  */

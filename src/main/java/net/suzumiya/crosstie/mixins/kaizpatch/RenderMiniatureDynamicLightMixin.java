@@ -16,8 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class RenderMiniatureDynamicLightMixin {
 
     @Unique
-    private static final Map<TileEntity, Integer> crosstie$lastLightByTile =
-            new WeakHashMap<TileEntity, Integer>();
+    private static final Map<TileEntity, Integer> crosstie$lastLightByTile = new WeakHashMap<TileEntity, Integer>();
 
     @Unique
     private static Field crosstie$tileGlListsField;
@@ -25,14 +24,15 @@ public abstract class RenderMiniatureDynamicLightMixin {
     @Unique
     private static Method crosstie$deleteGlListMethod;
 
-    @Inject(method = "renderTileEntityAt", at = @At("HEAD"), require = 0, remap = false)
+    @Inject(method = "func_147500_a", at = @At("HEAD"), require = 0, remap = false)
     private void crosstie$invalidateDisplayListOnLightChange(
             TileEntity tile, double x, double y, double z, float partialTicks, CallbackInfo ci) {
         if (tile == null || tile.getWorldObj() == null) {
             return;
         }
 
-        int lightSignature = tile.getWorldObj().getLightBrightnessForSkyBlocks(tile.xCoord, tile.yCoord, tile.zCoord, 0);
+        int lightSignature = tile.getWorldObj().getLightBrightnessForSkyBlocks(tile.xCoord, tile.yCoord, tile.zCoord,
+                0);
         Integer previous = crosstie$lastLightByTile.put(tile, Integer.valueOf(lightSignature));
         if (previous != null && previous.intValue() != lightSignature) {
             Object[] glLists = crosstie$getDisplayLists(tile);

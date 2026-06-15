@@ -157,6 +157,23 @@ tasks.named('jar') {
     from {
         configurations.nashornLib.collect { it.isDirectory() ? it : zipTree(it) }
     }
+    // Exclude Java 9+ module-info.class that confuses FML 1.7.10's ASM 5.0.3 scanning.
+    // FML's JarDiscoverer cannot parse Java 9 class files and marks the JAR as "corrupt zip",
+    // which prevents proper @Mod discovery and causes loading screen issues.
+    exclude 'module-info.class'
+    // Exclude Nashorn / META-INF service files that trigger early ServiceLoader
+    // initialization during FML jar scanning. This can interfere with SplashProgress
+    // (the loading screen) and cause a black screen during startup.
+    exclude 'META-INF/services/'
+    exclude 'META-INF/versions/'
+    // org.openjdk.nashorn (nashorn-core standalone port) contains class files compiled for Java 11+
+    // (class version 55+) which ASM 5.0.3 bundled with FML 1.7.10 cannot parse.
+    // FML's JarDiscoverer crashes during mod scanning and marks the JAR as "corrupt zip",
+    // causing @Mod discovery failure and preventing the mod from loading.
+    // On Java 8 (the target runtime), the built-in jdk.nashorn.* from the JDK is used instead,
+    // so this standalone Nashorn package is entirely unnecessary at runtime.
+    // On Java 11+, these classes must be provided via a different mechanism (e.g. JVM modules).
+    exclude 'org/openjdk/nashorn/'
 }
 
 jar {

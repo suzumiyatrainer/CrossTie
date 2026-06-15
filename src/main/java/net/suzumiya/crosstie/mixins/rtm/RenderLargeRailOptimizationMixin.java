@@ -13,7 +13,8 @@ public abstract class RenderLargeRailOptimizationMixin {
     private static final double MAX_RENDER_DIST_SQ = 192.0D * 192.0D; // 192m
 
     @Inject(method = "renderTileEntityAt", at = @At("HEAD"), cancellable = true, remap = true)
-    private void crosstie$distanceCulling(TileEntity tileEntity, double d0, double d1, double d2, float f, CallbackInfo ci) {
+    private void crosstie$distanceCulling(TileEntity tileEntity, double d0, double d1, double d2, float f,
+            CallbackInfo ci) {
         if (tileEntity != null && "jp.ngt.rtm.rail.TileEntityLargeRailCore".equals(tileEntity.getClass().getName())) {
             Minecraft mc = Minecraft.getMinecraft();
             if (mc.renderViewEntity != null) {

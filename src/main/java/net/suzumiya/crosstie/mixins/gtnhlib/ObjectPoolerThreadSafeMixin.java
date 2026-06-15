@@ -12,11 +12,15 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 /**
  * ObjectPoolerにスレッドセーフ性を追加するMixin。
  *
- * <p>GTNHLib 0.10.0 では内部フィールド {@code availableInstances} の型が
+ * <p>
+ * GTNHLib 0.10.0 では内部フィールド {@code availableInstances} の型が
  * {@code List<T>} から {@code ObjectArrayList<T>} (fastutil) に変更されました。
  * {@code @Accessor} の戻り値型をそれに合わせて更新しています。
- * 配列一括追加には {@code ObjectArrayList.addElements()} を使用することで
- * 不要なラッパー生成を回避しています。
+ *
+ * <p>
+ * 配列一括追加には GTNHLib 0.11.12 と同様に
+ * {@code ObjectArrayList.addElements()} を使用することで
+ * 不要なラッパー生成を回避しています ({@link java.util.Arrays#asList} 不使用)。
  */
 @Mixin(targets = "com.gtnewhorizon.gtnhlib.util.ObjectPooler", remap = false)
 public abstract class ObjectPoolerThreadSafeMixin<T> {
@@ -50,13 +54,14 @@ public abstract class ObjectPoolerThreadSafeMixin<T> {
     }
 
     /**
-     * GTNHLib 0.10.0 と同様に {@code ObjectArrayList.addElements()} を使用して
+     * GTNHLib 0.11.12 と同様に {@code ObjectArrayList.addElements()} を使用して
      * 配列要素を一括追加します。不要なラッパーオブジェクトを生成しません。
+     * 参照: GTNHLib-0.11.12 ObjectPooler.java#L42
      */
     @Overwrite
     public synchronized void releaseInstances(T[] instances) {
         ObjectArrayList<T> pool = crosstie$getAvailableInstances();
-        pool.addAll(Arrays.asList(instances));
+        pool.addElements(pool.size(), instances);
         Arrays.fill(instances, null);
     }
 
