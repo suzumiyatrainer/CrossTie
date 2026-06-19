@@ -24,7 +24,6 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | Item | Status / Version |
 | --- | --- |
 | **Build** | [![Build](https://github.com/suzumiyatrainer/CrossTie/actions/workflows/build-and-test.yml/badge.svg)](./.github/workflows/build-and-test.yml) |
-| **Modrinth** | [![Modrinth publish](https://github.com/suzumiyatrainer/CrossTie/actions/workflows/modrinth-publish.yml/badge.svg)](./.github/workflows/modrinth-publish.yml) |
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
 | **Java** | `8` |
