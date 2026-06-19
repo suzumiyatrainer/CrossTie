@@ -1,318 +1,179 @@
-# CrossTie
+# 🛠️ CrossTie
 
-CrossTie は、Minecraft 1.7.10 向けの RTM 系最適化・互換パッチ Mod です。
+Minecraft 1.7.10 向けの RTM（RealTrainMod）系総合最適化・互換パッチ Mod です。
 
-RTM/NGTLib/MCTE(KaizPatchX)、Angelica、Bamboo(竹Mod)、IntelliInput に対して、描画負荷の削減と一部互換修正をまとめて提供します。
-対象 Mod は起動時に検出され、存在する場合にのみ対応 Mixin を適用します。
+[![日本語](README.md)](/README.md)
+[![English](README.en.md)](/README.en.md)
+[![한국어](README.ko.md)](/README.ko.md)
+[![简体中文](README.zh-cn.md)](/README.zh-cn.md)
+[![繁體中文](README.zh-tw.md)](/README.zh-tw.md)
 
-## ステータス
+---
 
-| 項目 | 状態 |
+### 📝 プロジェクト概要
+CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInput、GTNHLib、Hodgepodge、LiteLoader / Macro / Keybind Mod など、複数 Mod にわたる**描画負荷削減・更新頻度抑制・互換性修正**を 1 つの JAR で提供します。
+
+> 💡 **自動検出機能**: 対象 Mod は起動時に自動検出され、存在する場合にのみ対応するパッチが有効化されます。
+
+---
+
+## 📊 ステータス
+[![Downloads(latest release)](https://img.shields.io/github/downloads/suzumiyatrainer/CrossTie/latest/total?style=flat-square&color=green&label=ダウンロード数%28最新のリリース%29)](https://github.com/suzumiyatrainer/CrossTie/releases/latest)
+
+### 🔧 動作環境 & ビルドステータス
+| 項目 | 状態 / バージョン |
 | --- | --- |
-| Build | [GitHub Actions](./.github/workflows/build-and-test.yml) |
-| Minecraft | `1.7.10` |
-| Forge | `10.13.4.1614` |
-| Java | `8` |
-| 必須Mod | `UniMixins 0.3.1` |
-| 修正対象Mod | `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput` |
-| 設定実装 | [`CrossTieConfig.java`](./src/main/java/net/suzumiya/crosstie/config/CrossTieConfig.java) |
-| Mixin 制御 | [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java) |
-| CI | `.github/workflows/build-and-test.yml` |
-| 最終確認 | 2026-06-08 |
+| **Build** | [![Build](https://github.com/suzumiyatrainer/CrossTie/actions/workflows/build-and-test.yml/badge.svg)](./.github/workflows/build-and-test.yml) |
+| **Modrinth** | [![Modrinth publish](https://github.com/suzumiyatrainer/CrossTie/actions/workflows/modrinth-publish.yml/badge.svg)](./.github/workflows/modrinth-publish.yml) |
+| **Minecraft** | `1.7.10` |
+| **Forge** | `10.13.4.1614` |
+| **Java** | `8` |
+| **必須Mod** | `UniMixins 0.3.1+` |
+| **ビルドシステム** | RetroFuturaGradle 1.4.1 |
+| **最終確認** | `2026-06-19` |
 
-## 言語
+### 🔍 内部構造インデックス
+* **Mixin 制御**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
+* **ASM CoreMod**: [`CrossTieCorePlugin.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieCorePlugin.java)
+* **ASM Transformer**: [`CrossTieClassTransformer.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieClassTransformer.java)
+* **検出可能Mod**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`
 
-- [日本語](#japanese)
-- [English](#english)
-- [한국어](#korean)
-- [简体中文](#simplified-chinese)
-- [繁體中文](#traditional-chinese)
+---
 
-## 何をする Mod か
+## 🚀 おすすめ構成
 
-CrossTie は、次の 2 系統をまとめて面倒を見ることを目的にしています。
+快適に動作させるための推奨Modバージョン構成です。
 
-- FPS 最適化
-- TPS 最適化
+| Mod名 | 推奨バージョン | 区分 |
+| --- | --- | --- |
+| **CrossTie** | `1.0.0-Alpha6` | **本体** |
+| **UniMixins** | `0.3.1` | **必須** |
+| **KaizPatchX** | `1.10.0` | 推奨 |
+| **Angelica** | `2.1.42+` | 推奨 |
+| **GTNHLib** | `0.11.18+` | 推奨 |
+| **Hodgepodge** | `2.7.162+` | 任意 |
+| **ArchaicFix** | `0.8.0` | 任意 |
+| **ShaderFixer** | `5.4` | 任意 |
 
-RTM と Bamboo の更新・描画を、プレイヤーからの距離に応じて間引きます。
-加えて、Angelica 環境でのディスプレイリスト処理や、RTM スクリプト内の `GL11` 呼び出しも補助します。
+---
 
-## 主な機能
+## ⚡ 何をする Mod か
 
-### FPS 最適化
+CrossTie は、RTM 関連の Mod 群とパフォーマンス系 Mod 群の間で発生する、以下の **3つのコア問題**をまとめて解決します。
 
-#### RTM
+1. **🏃 FPS 最適化**
+   * 描画カリング、更新頻度抑制、即時描画への切り替え
+2. **⏳ TPS 最適化**
+   * エンティティ・TileEntity の更新間引き
+3. **🤝 互換性修正**
+   * Angelica と RTM 間のディスプレイリスト競合の解消
+   * GL 呼び出しのリダイレクト
+   * Mod 間のクラスローダー競合回避
 
-- 車両描画の距離カリング
-- `TileEntity` 系の描画カリング
-- レール系の描画距離調整
-- `RenderEffect`、`RenderMirror`、`RenderPaint` などの追加レンダラも対象
+---
 
-#### Bamboo
+## 🏗️ アーキテクチャ
 
-- Entity の描画カリング
-- `TileEntity` の描画カリング
-- 更新頻度の抑制
+CrossTie は **3層のパッチ機構** を持ち、適切なフェーズで安全に介入します。
 
-#### Angelica 連携
+### 1. ASM CoreMod (`CrossTieCorePlugin`)
+`IFMLLoadingPlugin` として Minecraft 起動直後の最先発フェーズで動作します。
+* **ModDetector**: `mods/` フォルダをスキャンし、JAR/ZIP/litemod のファイル名から導入Modを自動検出。
+* **MinFo 検出 + Angelica 設定自動調整**: MinFo が検出された場合、`config/angelica-modules.cfg` の `B:enableFontRenderer` を強制的に `false` に書き換えます。
 
-- `hi03ExpressRailwayRail` の描画中は、Angelica のディスプレイリスト処理を避けて OpenGL の旧経路を使う
-- MCTE ミニチュア（Miniature）の描画を Angelica のディスプレイリストから除外し、即時描画（Immediate Mode）に切り替えることで表示欠けと消失を防止
-- `TileEntityMiniature` の描写境界を無限に拡張し、カメラ角度による突然の消失を解消
-- `PartsRenderer` のスクリプト実行前に GL コンテキストを整える
-- RTM スクリプト中の `GL11` 呼び出しをブリッジ経由に書き換える
+### 2. ASM Class Transformer (`CrossTieClassTransformer`)
+Mixin フェーズより前にクラスロード時にバイトコードを直接書き換えます。Mixin では対応できない「ロード順の問題」や「MixinTargetAlreadyLoadedException」を完全に回避します。
 
-#### IntelliInput 連携
+| 対象クラス / メソッド | 内容 |
+| --- | --- |
+| **GTNHLib 0.9.x** `MixinBlock_IconWrapper` | `nhlib$getParticleIcon` を `GtnhLibIconCompat` にリダイレクト |
+| **Angelica CTM** `MixinRenderBlocks` | `tweakPaneIcons` 等の glass pane アイコン解決を `AngelicaPaneIconCompat` にリダイレクト |
+| **MCPatcher** `GlassPaneRenderer` | `setupIcons` を `return false` に置換 |
+| **Hodgepodge** `StringPooler$GuavaPooler` | `getString(s)` → `s.intern()` に置換 (Guava クラスローダー競合回避) |
+| **NGTLib/RTM** `ScriptUtil` | `doScript(String)` → `ScriptUtilFallback.doScript(String)` (Nashorn 不在環境対応) |
+| **MacroMod** `MacroModPermissions` | 全メソッドから `tamperCheck()` 呼び出しを削除 |
+| **LiteLoader** `PermissionsManagerClient` | `tamperCheck()` → no-op 化 |
+| **SplashProgress$3** (`SplashProgress$3`) | `run()` 先頭にリフレクション経由の GL 状態リセット (`GL_TEXTURE_2D` + `glColor4f`) を注入 |
 
-- `CallWindowProc` 系のネイティブコールバックを安定化
-- IME 処理中の例外を抑制し、チャット入力時の不具合を避ける
+### 3. Mixin (動的適用)
+`CrossTieMixinPlugin` が、検出された導入Modに応じて必要な Mixin のみを動的に適用します。
 
-### TPS 最適化
+<details>
+<summary>🔍 各Modへの Mixin 適用詳細リスト（クリックで展開）</summary>
 
-- RTM の列車・bogie 系更新を描画距離ベースで間引く
-- Bamboo の `TileEntity` 更新を距離で抑制する
-- MovingMachine は挙動に影響しやすいため、過度に削らない方針
+#### 🔹 Angelica
+* **`AngelicaRenderGlobalDisplayListCrashMixin`** (Client + Angelica + `crosstie.enableNativeRenderGlobalDisplayLists=true`)
+    * `hi03ExpressRailwayRail` 描画時、Angelica のディスプレイリストを回避し OpenGL 旧経路を使用
+* **`SplashProgressBlackoutFixMixin`** (Client + Angelica + `enableFontRenderer=false`)
+    * スプラッシュ画面のテクスチャ状態キャッシュ問題を修正
 
-## 対応環境
+#### 🔹 GTNHLib
+* **`ObjectPoolerThreadSafeMixin`** (GTNHLib 常時)
+    * スレッドセーフなオブジェクトプール化
+* **`MixinBlockPaneFix` / `MixinBlockPaneIconFallback` / `MixinBlockIconFallback`** (Client + GTNHLib)
+    * Glass pane およびブロックのアイコン表示・取得フォールバック修正
 
-- Minecraft: 1.7.10
-- Forge: 10.13.4.1614
-- UniMixins: 0.3.1
-- Java: 8
+#### 🔹 KaizPatchX (NGTScriptUtil / MCTE / RailMapCustom / NGTLib / RTM)
+* **`ScriptUtilInvocableCacheMixin`** (NGTScriptUtil)
+    * Invocable キャッシュの最適化
+* **`AngelicaScriptTransformCacheMixin`** (Client + Angelica + KaizPatch + NGTScriptUtil)
+    * `AngelicaCompat.transformScript` を `ScriptGlRedirector` でインターセプト (GL呼び出しのリダイレクト + キャッシュ)
+* **`ModelPackManagerScriptRedirectMixin`** (Client + Angelica + RTM + NGTScriptUtil)
+    * `ModelPackManager.getScript` に `ScriptGlRedirector` を適用
+* **`RailMapCustomCacheMixin`** (RailMapCustom)
+    * レールマップのキャッシュ最適化
+* **`McteWorldSetBlockDiffMixin`** (MCTE)
+    * ワールドブロック差分セットの最適化
+* **`RenderMiniatureDynamicLightMixin` / `RenderItemMiniatureDynamicLightMixin`** (Client + MCTE)
+    * ミニチュアブロック・アイテムミニチュアの動的ライティング修正
+* **`EntityTrainBaseSpeedSyncMixin` / `EntityTrainBaseOptimizationMixin`** (RTM)
+    * 列車速度同期およびエンティティ更新の最適化
+* **`RenderElectricalWiringConnectionCacheMixin` / `BlockLinePoleConnectionCacheMixin`** (Client + RTM)
+    * 配線レンダリング・線路柱接続のキャッシュ化
+* **`RenderLargeRailOptimizationMixin` / `RenderLargeRailChunkBatchMixin`** (Client + RTM)
+    * 大型レール描画の最適化・チャンクバッチ処理
+* **`RailPartsRendererOptimizationMixin`** (Client + RTM)
+    * レールパーツレンダラーの最適化
 
-## 対応 Mod
+#### 🔹 LiteLoader / MacroMod
+* **`MixinPermissionsManagerClient` / `MacroModCoreMixin`**
+    * パーミッション周りおよびコアの互換性修正
 
-### 必須
+</details>
 
-- UniMixins
+---
 
-### 対応済み
+## 📦 対応 Mod 詳細
 
-- RealTrainMod
-- NGTLib
-- MCTE
-- Angelica
-- Bamboo
-- IntelliInput
+| Mod | 検出名 | 主なパッチ・対応内容 |
+| --- | --- | --- |
+| **RealTrainMod** | `RTM` | 描画最適化、更新間引き、GL リダイレクト |
+| **NGTLib** | `NGTLib` / `NGTScriptUtil` | ScriptUtil 互換、GL リダイレクト |
+| **MCTE** | `MCTE` | ミニチュア描画修正、動的ライティング |
+| **KaizPatch** | `KaizPatch` | Angelica 連携、スクリプトキャッシュ |
+| **Angelica** | `Angelica` / `AngelicaGlsm` | ディスプレイリスト競合修正、設定自動調整 |
+| **Bamboo** | `Bamboo` | 描画カリング、更新頻度抑制 (後方互換) |
+| **IntelliInput** | `IntelliInput` | IME コールバック安定化 (後方互換) |
+| **GTNHLib** | `GTNHLib` | アイコン解決、スレッドセーフ化 |
+| **Hodgepodge** | `Hodgepodge` | Guava クラスローダー競合回避 |
+| **LiteLoader** | `LiteLoader` | パーミッション管理修正 |
+| **MacroMod** | `MacroMod` | `tamperCheck` 除去、パーミッション修正 |
+| **Keybind Mod** | *(同梱検出)* | `tamperCheck` 除去 |
+| **RailMapCustom** | `RailMapCustom` | レールマップキャッシュ |
 
-### 依存解決
+---
 
-開発時は `libs/` に置かれた jar を使う構成です。
-`libs/` は `.gitignore` で除外されており、プロジェクトに jar を直接置いて運用します。
+## 📥 導入方法
 
-ビルドに必要な依存は次の通りです。
+1. ダウンロードした `CrossTie-*.jar` を `mods` フォルダに配置します。
+2. 必須となる `UniMixins 0.3.1+` を `mods` フォルダに配置します。
+3. 目的に応じて、RTM / Angelica / Bamboo / IntelliInput などの対象Modを追加します。
+4. 通常通りゲームを起動します。
 
-- `UniMixins` は必須
-- `RTM` / `Bamboo` / `Angelica` / `IntelliInput` は検出された場合のみ有効化される
-- `NGTLib` は RTM 系との互換性のために必要となるケースが多い
+---
 
-`private Maven` が使える環境では、`gradle.properties` の `privateMavenUrl` / `privateMavenUser` / `privateMavenPassword` を設定して依存を解決します。
+## 🛠️ ビルドと開発
 
-GitHub Actions では、`PRIVATE_MAVEN_URL` シークレットが設定されている場合にのみ `gradlew build` が実行されます。設定がない場合はビルドをスキップします。
-
-## 導入方法
-
-1. `CrossTie-*.jar` を `mods` フォルダに入れます。
-2. `UniMixins` を入れます。
-3. 必要に応じて RTM / Bamboo / Angelica / IntelliInput を入れます。
-4. ゲームを起動します。
-
-## 設定
-
-初回起動後に `config/CrossTie.cfg` が生成されます。
-
-### FPS
-
-- `enableRenderCulling`
-  - RTM / Bamboo の描画カリングを有効にします。
-- `fixAngelicaRailCulling`
-  - Angelica / Sodium 系でのレールカリング問題を避けるための補助設定です。
-
-### TPS
-
-- `enableTileEntityUpdates`
-  - TileEntity の更新最適化を有効にします。
-
-## 開発メモ
-
-- Mixin ベースで実装しています。
-- 対象 Mod の有無は起動時に判定し、入っているものだけを有効化します。
-- `CrossTieMixinPlugin` でクライアント専用 Mixin と導入済み Mod を判別しています。
-
-## ビルド
-
+### 🧱 ビルド手順
 ```bash
 ./gradlew build --no-daemon
-```
-
-注意: `build.gradle` は Java 8 ツールチェーンを使います。
-GitHub Actions の `build` ジョブは `PRIVATE_MAVEN_URL` シークレットが設定されている場合にのみ実行されます。
-公開リポジトリには `libs/` を含めないため、ローカル開発環境では必要な RTM 系 jar を `libs/` に配置してください。
-
-## 日本語 {#japanese}
-
-CrossTie は、Minecraft 1.7.10 向けの RTM 系最適化・互換パッチ Mod です。
-RTM / KaizPatchX、Bamboo、Angelica、IntelliInput、NGTLib に対して、描画負荷の削減と一部互換修正をまとめて提供します。
-
-主な内容:
-
-- RTM / Bamboo の距離カリング
-- Angelica / MCTE 用のディスプレイリスト・即時描画互換
-- ミニチュアブロックの画面端消失（カリング）修正
-- RTM スクリプトの `GL11` ブリッジ
-- IntelliInput のコールバック安定化
-
-対応環境:
-
-- Minecraft 1.7.10
-- Forge 10.13.4.1614
-- Java 8
-- UniMixins 0.3.1
-
-導入:
-
-1. `CrossTie-*.jar` を `mods` に入れる
-2. `UniMixins` を入れる
-3. 必要なら RTM / Bamboo / Angelica / IntelliInput を入れる
-
-設定:
-
-- `enableRenderCulling`: 描画カリングを有効化
-- `fixAngelicaRailCulling`: Angelica / Sodium 向けレールカリング補助
-- `enableTileEntityUpdates`: TileEntity 更新最適化
-
-## English {#english}
-
-CrossTie is an optimization and compatibility patch mod for Minecraft 1.7.10 RTM-based packs.
-It reduces render/update cost for RTM / KaizPatchX, Bamboo, Angelica, IntelliInput, and NGTLib.
-It detects compatible mods at runtime and applies mixins only when the target mods are present.
-
-Highlights:
-
-- Distance culling for RTM and Bamboo renderers
-- Angelica / MCTE compatible immediate rendering
-- Fixed culling for MCTE miniatures at screen edges
-- GL11 bridging for RTM scripts
-- IntelliInput callback stabilization
-
-Supported environment:
-
-- Minecraft 1.7.10
-- Forge 10.13.4.1614
-- Java 8
-- UniMixins 0.3.1
-
-Install:
-
-1. Put `CrossTie-*.jar` into `mods`
-2. Install `UniMixins`
-3. Add RTM / Bamboo / Angelica / IntelliInput if needed
-
-Config:
-
-- `enableRenderCulling`: enable render culling
-- `fixAngelicaRailCulling`: Angelica / Sodium rail-culling helper
-- `enableTileEntityUpdates`: enable TileEntity update optimization
-
-## 한국어 {#korean}
-
-CrossTie는 Minecraft 1.7.10용 RTM 계열 최적화 및 호환 패치 Mod입니다.
-RTM / KaizPatchX, Bamboo, Angelica, IntelliInput, NGTLib의 렌더링과 업데이트 부담을 줄입니다.
-
-핵심 기능:
-
-- RTM 및 Bamboo 렌더러 거리 컷
-- Angelica / MCTE 전용 즉시 렌더링 호환
-- MCTE 미니어처 화면 끝 사라짐(카링) 수정
-- RTM 스크립트의 GL11 브리지
-- IntelliInput 콜백 안정화
-
-지원 환경:
-
-- Minecraft 1.7.10
-- Forge 10.13.4.1614
-- Java 8
-- UniMixins 0.3.1
-
-설치:
-
-1. `CrossTie-*.jar`를 `mods` 폴더에 넣습니다.
-2. `UniMixins`를 설치합니다.
-3. 필요하면 RTM / Bamboo / Angelica / IntelliInput를 추가합니다.
-
-설정:
-
-- `enableRenderCulling`: 렌더 카링 활성화
-- `fixAngelicaRailCulling`: Angelica / Sodium용 레일 카링 보조
-- `enableTileEntityUpdates`: TileEntity 업데이트 최적화
-
-## 简体中文 {#simplified-chinese}
-
-CrossTie 是一个面向 Minecraft 1.7.10 的 RTM 系优化与兼容补丁 Mod。
-它为 RTM / KaizPatchX、Bamboo、Angelica、IntelliInput、NGTLib 提供渲染与更新优化。
-
-主要功能：
-
-- RTM 与 Bamboo 的距离裁剪
-- 兼容 Angelica / MCTE 的即時渲染
-- 修复 MCTE 缩微模型在画面边缘消失的问题
-- RTM 脚本中的 GL11 桥接
-- IntelliInput 回调稳定化
-
-支持环境：
-
-- Minecraft 1.7.10
-- Forge 10.13.4.1614
-- Java 8
-- UniMixins 0.3.1
-
-安装：
-
-1. 将 `CrossTie-*.jar` 放入 `mods`
-2. 安装 `UniMixins`
-3. 如有需要，再加入 RTM / Bamboo / Angelica / IntelliInput
-
-配置：
-
-- `enableRenderCulling`：启用渲染裁剪
-- `fixAngelicaRailCulling`：Angelica / Sodium 轨道裁剪辅助
-- `enableTileEntityUpdates`：启用 TileEntity 更新优化
-
-## 繁體中文 {#traditional-chinese}
-
-CrossTie 是一個面向 Minecraft 1.7.10 的 RTM 系最佳化與相容補丁 Mod。
-它為 RTM / KaizPatchX、Bamboo、Angelica、IntelliInput、NGTLib 提供渲染與更新最佳化。
-
-主要功能：
-
-- RTM 與 Bamboo 的距離裁剪
-- 相容 Angelica / MCTE 的即時渲染
-- 修復 MCTE 縮微模型在畫面邊緣消失的問題
-- RTM 腳本中的 GL11 橋接
-- IntelliInput 回呼穩定化
-
-支援環境：
-
-- Minecraft 1.7.10
-- Forge 10.13.4.1614
-- Java 8
-- UniMixins 0.3.1
-
-安裝：
-
-1. 將 `CrossTie-*.jar` 放入 `mods`
-2. 安裝 `UniMixins`
-3. 如有需要，再加入 RTM / Bamboo / Angelica / IntelliInput
-
-設定：
-
-- `enableRenderCulling`：啟用渲染裁剪
-- `fixAngelicaRailCulling`：Angelica / Sodium 軌道裁剪輔助
-- `enableTileEntityUpdates`：啟用 TileEntity 更新最佳化
-
-## Thanks
-
-- hi03
-- Kaiz_JP
-- GTNewHorizons team

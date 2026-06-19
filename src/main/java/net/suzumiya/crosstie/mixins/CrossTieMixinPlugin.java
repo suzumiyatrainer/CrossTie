@@ -53,10 +53,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.macros.")) {
             shouldApply = isClient && isModPresent("MacroMod");
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.gtnhlib.")) {
-            if (mixinClassName.endsWith(".MixinBlockPaneFix")) {
-                shouldApply = isClient && isModPresent("GTNHLib");
-            } else {
+            if (mixinClassName.endsWith(".ObjectPoolerThreadSafeMixin")) {
                 shouldApply = isModPresent("GTNHLib");
+            } else {
+                shouldApply = isClient && isModPresent("GTNHLib");
             }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.kaizpatch.")) {
             if (mixinClassName.endsWith(".McteWorldSetBlockDiffMixin")) {
@@ -89,15 +89,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.rtm.")) {
             shouldApply = isModPresent("RTM");
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.liteloader.")) {
-            shouldApply = isModPresent("LiteLoader");
+            shouldApply = isModPresent("LiteLoader") || isModPresent("MacroMod");
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.minecraft.")) {
-            // MixinGuiScreenBackgroundFix: apply when font renderer is force-disabled due
-            // to MinFo
-            if (mixinClassName.endsWith(".MixinGuiScreenBackgroundFix")) {
-                shouldApply = isClient && isModPresent("GTNHLib") && isModPresent("MinFo");
-            } else {
-                shouldApply = isClient && isModPresent("GTNHLib");
-            }
+            shouldApply = isClient && isModPresent("GTNHLib");
         } else {
             shouldApply = true;
         }
@@ -118,6 +112,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 + ", KaizPatch=" + isModPresent("KaizPatch")
                 + ", MinFo=" + isModPresent("MinFo")
                 + ", MCTE=" + isModPresent("MCTE")
+                + ", LiteLoader=" + isModPresent("LiteLoader")
+                + ", MacroMod=" + isModPresent("MacroMod")
                 + ", nativeRenderGlobalDisplayLists=" + enableNativeRenderGlobalDisplayLists);
     }
 
@@ -131,6 +127,15 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         // Angelica
         mixins.add("angelica.AngelicaRenderGlobalDisplayListCrashMixin");
+
+        // enableFontRenderer=false 時のスプラッシュ画面暗転修正。
+        // MixinFontRenderer が無効だと SplashFontRenderer の GL 初期化が不完全になり
+        // GLStateManager のキャッシュが GL_TEXTURE_2D=false と誤認して画面が真っ黒になる。
+        // MinFo の有無に関わらず enableFontRenderer=false であれば暗転するため、
+        // 設定ファイルの実際の値を読んで判定する。
+        if (isClient && isModPresent("AngelicaGlsm") && !isAngelicaFontRendererEnabled()) {
+            mixins.add("angelica.SplashProgressBlackoutFixMixin");
+        }
 
         // GTNHLib - always present
         mixins.add("gtnhlib.ObjectPoolerThreadSafeMixin");
@@ -161,13 +166,19 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.EntityTrainBaseOptimizationMixin");
         }
 
-        // LiteLoader
-        if (isModPresent("LiteLoader")) {
+        // LiteLoader / Macro / Keybind Mod
+        if (isModPresent("LiteLoader") || isModPresent("MacroMod")) {
             mixins.add("liteloader.MixinPermissionsManagerClient");
         }
 
         // Client-side mixins
         if (isClient) {
+            if (isModPresent("MacroMod")) {
+                // MacroInputHandlerMixin は update() を全キャンセルするため削除
+                // mixins.add("macros.MacroInputHandlerMixin"); ← 絶対に追加しない
+                mixins.add("macros.MacroModCoreMixin");
+            }
+
             // MCTE client
             if (isModPresent("MCTE")) {
                 mixins.add("kaizpatch.RenderMiniatureDynamicLightMixin");
@@ -179,34 +190,51 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.RenderElectricalWiringConnectionCacheMixin");
                 mixins.add("rtm.BlockLinePoleConnectionCacheMixin");
                 mixins.add("rtm.RenderLargeRailOptimizationMixin");
+                mixins.add("rtm.RenderLargeRailChunkBatchMixin");
                 mixins.add("rtm.RailPartsRendererOptimizationMixin");
-            }
-
-            // MacroMod
-            if (isModPresent("MacroMod")) {
-                mixins.add("macros.MacroInputHandlerMixin");
-                mixins.add("macros.MacroModCoreMixin");
-                mixins.add("macros.MacroModPermissionsMixin");
             }
 
             // GTNHLib client icons
             if (isModPresent("GTNHLib")) {
                 mixins.add("gtnhlib.MixinBlockPaneIconFallback");
-                mixins.add("gtnhlib.MixinTripWireHookIconFallback");
-                mixins.add("gtnhlib.MixinRedstoneBlockIconFallback");
-                mixins.add("gtnhlib.MixinTripWireIconFallback");
-                mixins.add("gtnhlib.MixinBedIconFallback");
-
-                // MinFo (background fix)
-                if (isModPresent("MinFo")) {
-                    mixins.add("minecraft.MixinGuiScreenBackgroundFix");
-                }
+                mixins.add("gtnhlib.MixinBlockIconFallback");
             }
         }
 
         System.out.println("[CrossTieMixin] Dynamic mixin count: " + mixins.size() + " / "
                 + (isClient ? "CLIENT" : "SERVER"));
         return mixins;
+    }
+
+    /**
+     * Angelica の {@code enableFontRenderer} 設定が有効かどうかを判定する。
+     *
+     * <p>
+     * {@code getMixins()} 呼び出し時点では {@code injectData()} が完了しており
+     * {@code CrossTieCorePlugin.getMcDataDir()} で実行ディレクトリが取得できる。
+     * 設定ファイル({@code config/angelica-modules.cfg})を直接読んで判定する。
+     * ファイルが存在しない、または読み取れない場合は Angelica のデフォルト値({@code true})を返す。
+     */
+    private boolean isAngelicaFontRendererEnabled() {
+        java.io.File mcDataDir = CrossTieCorePlugin.getMcDataDir();
+        if (mcDataDir == null) {
+            return true; // 判定不能の場合はデフォルト(有効)扱い
+        }
+        java.io.File configFile = new java.io.File(mcDataDir, "config/angelica-modules.cfg");
+        if (!configFile.exists()) {
+            return true; // ファイルなし = Angelica デフォルト = 有効
+        }
+        try {
+            for (String line : java.nio.file.Files.readAllLines(configFile.toPath())) {
+                String trimmed = line.trim();
+                if (trimmed.startsWith("B:enableFontRenderer=")) {
+                    return !"false".equals(trimmed.substring("B:enableFontRenderer=".length()).trim());
+                }
+            }
+        } catch (java.io.IOException e) {
+            System.err.println("[CrossTieMixin] Failed to read angelica-modules.cfg: " + e.getMessage());
+        }
+        return true; // 該当行なし = デフォルト = 有効
     }
 
     @Override

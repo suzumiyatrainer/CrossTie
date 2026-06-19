@@ -47,7 +47,8 @@ public class ModDetector {
         // Incompatible mods
         MOD_PATTERNS.put("MinFo", new String[] { "minfo" });
 
-        // Other mods
+        // LiteLoader ecosystem (Macro / Keybind Mod ships as .litemod)
+        MOD_PATTERNS.put("LiteLoader", new String[] { "liteloader", "macro", "keybind" });
         MOD_PATTERNS.put("MacroMod", new String[] { "macro", "keybind" });
     }
 
@@ -171,31 +172,27 @@ public class ModDetector {
             System.out.println(
                     "[CrossTie] ModDetector location URL: " + (location != null ? location.toString() : "null"));
             if (location != null) {
-                File file = new File(location.toURI());
-                System.out.println("[CrossTie] ModDetector location file: " + file.getAbsolutePath());
-                if (file.isFile() && (file.getName().endsWith(".jar") || file.getName().endsWith(".zip"))) {
-                    jarModsDir = file.getParentFile();
-                    System.out.println("[CrossTie] Resolved jarModsDir (JAR): "
-                            + (jarModsDir != null ? jarModsDir.getAbsolutePath() : "null"));
-                } else if (file.isDirectory()) {
-                    // Dev environment fallback, e.g. build/classes/java/main/
-                    // We can check if there's a "run/mods" or "mods" folder nearby
-                    File projectDir = file.getParentFile().getParentFile().getParentFile().getParentFile(); // build/classes/java/main
-                                                                                                            // ->
-                                                                                                            // build/classes/java
-                                                                                                            // ->
-                                                                                                            // build/classes
-                                                                                                            // -> build
-                                                                                                            // ->
-                                                                                                            // project
-                                                                                                            // root
-                    if (projectDir != null && projectDir.isDirectory()) {
-                        File runMods = new File(projectDir, "run/mods");
-                        if (runMods.isDirectory()) {
-                            jarModsDir = runMods;
-                            System.out.println("[CrossTie] Resolved jarModsDir (Dev): " + jarModsDir.getAbsolutePath());
+                File file = resolveLocationToFile(location);
+                if (file != null) {
+                    System.out.println("[CrossTie] ModDetector location file: " + file.getAbsolutePath());
+                    if (file.isFile() && (file.getName().endsWith(".jar") || file.getName().endsWith(".zip"))) {
+                        jarModsDir = file.getParentFile();
+                        System.out.println("[CrossTie] Resolved jarModsDir (JAR): "
+                                + (jarModsDir != null ? jarModsDir.getAbsolutePath() : "null"));
+                    } else if (file.isDirectory()) {
+                        // Dev environment fallback, e.g. build/classes/java/main/
+                        // We can check if there's a "run/mods" or "mods" folder nearby
+                        File projectDir = file.getParentFile().getParentFile().getParentFile().getParentFile();
+                        if (projectDir != null && projectDir.isDirectory()) {
+                            File runMods = new File(projectDir, "run/mods");
+                            if (runMods.isDirectory()) {
+                                jarModsDir = runMods;
+                                System.out.println("[CrossTie] Resolved jarModsDir (Dev): " + jarModsDir.getAbsolutePath());
+                            }
                         }
                     }
+                } else {
+                    System.out.println("[CrossTie] Failed to resolve jar location to File (location=" + location + ")");
                 }
             }
         } catch (Exception e) {
@@ -204,6 +201,44 @@ public class ModDetector {
         }
 
         return new File[] { modsDir, modsVersionDir, parentModsDir, jarModsDir };
+    }
+
+    /**
+     * Resolves a {@link java.net.URL} (which may be a {@code file:} or
+     * {@code jar:file:} URL) to a {@link File} representing the JAR or directory
+     * on disk.
+     *
+     * <p>
+     * {@code jar:file:/path/to/mod.jar!/com/example/Foo.class} cannot be passed
+     * directly to {@code new File(url.toURI())} because the URI scheme is
+     * {@code jar:}, not {@code file:}. This method handles both cases.
+     *
+     * @param location the URL to resolve
+     * @return the resolved {@link File}, or {@code null} if resolution fails
+     */
+    private static File resolveLocationToFile(java.net.URL location) {
+        if (location == null) {
+            return null;
+        }
+        try {
+            String protocol = location.getProtocol();
+            if ("file".equals(protocol)) {
+                // Simple file: URL — direct conversion is safe.
+                return new File(location.toURI());
+            } else if ("jar".equals(protocol)) {
+                // jar:file:/path/to/mod.jar!/inner/path
+                // Open as JarURLConnection and grab the JAR file URL.
+                java.net.JarURLConnection juc = (java.net.JarURLConnection) location.openConnection();
+                java.net.URL jarFileUrl = juc.getJarFileURL();
+                return new File(jarFileUrl.toURI());
+            } else {
+                // Unknown protocol — attempt toURI() and hope for the best.
+                return new File(location.toURI());
+            }
+        } catch (Exception e) {
+            System.out.println("[CrossTie] resolveLocationToFile failed for " + location + ": " + e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -216,4 +251,4 @@ public class ModDetector {
         }
         return results;
     }
-}
+}

@@ -1,8 +1,7 @@
 package net.suzumiya.crosstie.mixins.macros;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -10,38 +9,33 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "net.eq2online.macros.input.InputHandler", remap = false)
 public abstract class MacroInputHandlerMixin {
 
+    @Shadow
+    private static Object keybindSneak;
+    @Shadow
+    private static Object keybindActivate;
+
+    /**
+     * 1. クラス初期化時のミラーリング（起動時のnullクラッシュ防止）
+     */
     @Inject(method = "<clinit>", at = @At("TAIL"), remap = false)
     private static void crosstie$initMissingSneakKeyBinding(CallbackInfo ci) {
         try {
-            Class<?> inputHandlerClass = Class.forName(
-                    "net.eq2online.macros.input.InputHandler",
-                    false,
-                    MacroInputHandlerMixin.class.getClassLoader());
-            Field keybindSneak = inputHandlerClass.getDeclaredField("keybindSneak");
-            keybindSneak.setAccessible(true);
-            if (keybindSneak.get(null) != null) {
-                return;
+            if (keybindSneak == null && keybindActivate != null) {
+                keybindSneak = keybindActivate;
+                System.out.println(
+                        "[CrossTie] InputHandler <clinit> mirrored keybindActivate to keybindSneak successfully.");
             }
-
-            Field keybindActivate = inputHandlerClass.getDeclaredField("keybindActivate");
-            keybindActivate.setAccessible(true);
-            Object activateBinding = keybindActivate.get(null);
-            Object disabledSneakBinding = createDisabledKeyBinding(activateBinding);
-            if (disabledSneakBinding != null) {
-                keybindSneak.set(null, disabledSneakBinding);
-            }
-        } catch (ReflectiveOperationException | RuntimeException ignored) {
+        } catch (Throwable ignored) {
         }
     }
 
-    private static Object createDisabledKeyBinding(Object referenceBinding) throws ReflectiveOperationException {
-        if (referenceBinding == null) {
-            return null;
-        }
-
-        Constructor<?> constructor = referenceBinding.getClass()
-                .getDeclaredConstructor(String.class, int.class, String.class);
-        constructor.setAccessible(true);
-        return constructor.newInstance("key.macro_modifier", 0, "key.categories.macros");
+    /**
+     * 2. 【重要修正】諸悪の根源を完全無害化するキャンセルフック
+     * ターゲットメソッドが引数に `Minecraft` を取るため、
+     * メソッドの第一引数に `Object` (Minecraft用) を追加してシグネチャを一致させます。
+     */
+    @Inject(method = "update(Lnet/minecraft/client/Minecraft;)V", at = @At("HEAD"), remap = false, cancellable = true)
+    private static void crosstie$cancelInputUpdate(Object minecraft, CallbackInfo ci) {
+        ci.cancel();
     }
 }

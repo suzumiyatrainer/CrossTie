@@ -15,6 +15,7 @@ public class CrossTieCorePlugin implements IFMLLoadingPlugin {
 
     private static boolean minfoDetected;
     private static ModDetector modDetector;
+    private static File mcDataDir;
 
     public static boolean isMinFoDetected() {
         return minfoDetected;
@@ -22,6 +23,11 @@ public class CrossTieCorePlugin implements IFMLLoadingPlugin {
 
     public static ModDetector getModDetector() {
         return modDetector;
+    }
+
+    /** Minecraft の実行ディレクトリ。{@code injectData()} 完了後に参照可能。 */
+    public static File getMcDataDir() {
+        return mcDataDir;
     }
 
     @Override
@@ -60,6 +66,7 @@ public class CrossTieCorePlugin implements IFMLLoadingPlugin {
         }
 
         // Initialize mod detector and scan for MinFo by JAR file name
+        CrossTieCorePlugin.mcDataDir = mcDataDir;
         modDetector = new ModDetector(mcDataDir);
         System.out.println("[CrossTieCore] mcDataDir: " + (mcDataDir != null ? mcDataDir.getAbsolutePath() : "null"));
         minfoDetected = modDetector.isModPresent("MinFo");

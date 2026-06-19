@@ -11,7 +11,6 @@ import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
-import org.objectweb.asm.tree.FieldNode;
 
 public class CrossTieClassTransformer implements IClassTransformer {
 
@@ -35,6 +34,17 @@ public class CrossTieClassTransformer implements IClassTransformer {
     private static final String MCPATCHER_GLASS_PANE_RENDERER = "com.prupe.mcpatcher.ctm.GlassPaneRenderer";
 
     /**
+     * SplashProgress$3 (スプラッシュ画面の描画ループ) のクラス名。
+     * enableFontRenderer=false 時に Angelica の GL リダイレクターが GL11.glEnable() を
+     * キャッシュ更新のみの GLStateManager.glEnable() に書き換えてしまい、
+     * テクスチャが描画されず画面が真っ黒になる問題を修正する。
+     *
+     * <p>このクラスは Angelica より先に実行される CorePlugin ASM トランスフォーマで
+     * 直接パッチするため、Angelica のバイトコードリダイレクターの影響を受けない。</p>
+     */
+    private static final String SPLASH_PROGRESS_3 = "cpw.mods.fml.client.SplashProgress$3";
+
+    /**
      * Hodgepodge の GuavaPooler クラス名。
      *
      * <p>
@@ -53,6 +63,19 @@ public class CrossTieClassTransformer implements IClassTransformer {
      * を {@link net.suzumiya.crosstie.compat.ScriptUtilFallback} にリダイレクトする。
      */
     private static final String SCRIPT_UTIL_CLASS = "jp.ngt.ngtlib.io.ScriptUtil";
+
+    /**
+     * Macro/Keybind Mod の {@code MacroModPermissions} クラス名。
+     * 各メソッドから tamperCheck() 呼び出しを削除して、
+     * パーミッションシステムを正常に動作させつつクラッシュを回避する。
+     */
+    private static final String MACRO_MOD_PERMISSIONS = "net.eq2online.macros.permissions.MacroModPermissions";
+
+    /**
+     * LiteLoader の {@code PermissionsManagerClient} クラス名。
+     * tamperCheck() を no-op にして Macro / Keybind Mod のクラッシュを回避する。
+     */
+    private static final String PERMISSIONS_MANAGER_CLIENT = "com.mumfrey.liteloader.permissions.PermissionsManagerClient";
 
     // AngelicaConfig の ASM パッチは行わない。
     // GTNHLib の config システムが static フィールドを初期化時にリセットするため、
@@ -92,6 +115,24 @@ public class CrossTieClassTransformer implements IClassTransformer {
         // ScriptUtil.doScript(String) を ScriptUtilFallback にリダイレクト
         if (isClass(transformedName, name, SCRIPT_UTIL_CLASS, null)) {
             return patchScriptUtil(basicClass);
+        }
+
+        // Macro/Keybind Mod MacroModPermissions: tamperCheck() 呼び出しを削除
+        // パーミッションシステムを正常に動作させつつクラッシュを回避する
+        if (isClass(transformedName, name, MACRO_MOD_PERMISSIONS, null)) {
+            return patchMacroModPermissions(basicClass);
+        }
+
+        // LiteLoader PermissionsManagerClient: tamperCheck() を no-op にする
+        if (isClass(transformedName, name, PERMISSIONS_MANAGER_CLIENT, null)) {
+            return patchPermissionsManagerClientTamperCheck(basicClass);
+        }
+
+        // SplashProgress$3 (スプラッシュ描画スレッド): Angelica の GL リダイレクターによる
+        // テクスチャ状態のキャッシュ問題を回避するため、ASM で run() の先頭に
+        // リフレクション経由の glEnable(GL_TEXTURE_2D) + glColor4f(1,1,1,1) を注入する
+        if (isClass(transformedName, name, SPLASH_PROGRESS_3, null)) {
+            return patchSplashProgress3(basicClass);
         }
 
         // AngelicaConfig は ASM パッチしない。
@@ -264,6 +305,79 @@ public class CrossTieClassTransformer implements IClassTransformer {
     }
 
     /**
+     * Macro/Keybind Mod {@code MacroModPermissions} をパッチ。
+     *
+     * <p>
+     * 元の実装は、パーミッション操作時に {@code PermissionsManagerClient.tamperCheck()}
+     * を呼び出します。サーバー接続時に60秒間 tick されていない場合に
+     * {@code IllegalStateException} がスローされます。
+     *
+     * <p>
+     * {@code refreshPermissions} は try/catch を含む複雑なバイトコードのため、
+     * {@code tamperCheck()} 呼び出しだけを削除すると stack map と不整合になり
+     * {@code VerifyError} が発生します。そのためメソッド全体を no-op に置き換えます。
+     * 他メソッドでは {@code tamperCheck()} 呼び出しのみを削除します。
+     */
+    private byte[] patchMacroModPermissions(byte[] basicClass) {
+        ClassNode classNode = new ClassNode();
+        new ClassReader(basicClass).accept(classNode, 0);
+
+        int removedCalls = 0;
+        for (Object methodObject : classNode.methods) {
+            MethodNode method = (MethodNode) methodObject;
+
+            // メソッド名（refreshPermissions）の縛りを消去し、全メソッドを対象にします。
+            // これにより、registerPermission 等に含まれる tamperCheck も確実に捕まえられます。
+            for (int i = 0; i < method.instructions.size(); i++) {
+                if (method.instructions.get(i) instanceof MethodInsnNode) {
+                    MethodInsnNode insn = (MethodInsnNode) method.instructions.get(i);
+
+                    if ("tamperCheck".equals(insn.name)
+                            && "com/mumfrey/liteloader/permissions/PermissionsManagerClient".equals(insn.owner)) {
+
+                        // 呼び出し命令（INVOKEVIRTUAL）を POP に置き換える
+                        method.instructions.set(insn, new InsnNode(Opcodes.POP));
+                        removedCalls++;
+                    }
+                }
+            }
+        }
+
+        if (removedCalls > 0) {
+            System.out.println(
+                    "[CrossTie] Patched MacroModPermissions -> removed " + removedCalls + " tamperCheck() call(s)");
+            return writeClass(classNode);
+        }
+        return basicClass;
+    }
+
+    /**
+     * LiteLoader {@code PermissionsManagerClient.tamperCheck()} を no-op にする。
+     *
+     * <p>
+     * Mixin が ModDetector 判定の都合で適用されない場合の保険として、
+     * coremod ASM でも tamperCheck を無効化します。
+     */
+    private byte[] patchPermissionsManagerClientTamperCheck(byte[] basicClass) {
+        ClassNode classNode = new ClassNode();
+        new ClassReader(basicClass).accept(classNode, 0);
+
+        boolean changed = false;
+        for (Object methodObject : classNode.methods) {
+            MethodNode method = (MethodNode) methodObject;
+            if ("tamperCheck".equals(method.name) && "()V".equals(method.desc)) {
+                replaceMethodBody(method, emptyVoidReturnBody());
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            System.out.println("[CrossTie] Patched PermissionsManagerClient.tamperCheck() -> no-op");
+        }
+        return changed ? writeClass(classNode) : basicClass;
+    }
+
+    /**
      * {@code ScriptUtilFallback.doScript(String)} を呼ぶだけのメソッド本体を生成します。
      *
      * <pre>
@@ -361,6 +475,12 @@ public class CrossTieClassTransformer implements IClassTransformer {
         return instructions;
     }
 
+    private InsnList emptyVoidReturnBody() {
+        InsnList instructions = new InsnList();
+        instructions.add(new InsnNode(Opcodes.RETURN));
+        return instructions;
+    }
+
     /**
      * {@code String.intern()} を呼ぶだけのメソッド本体を生成します。
      *
@@ -383,6 +503,49 @@ public class CrossTieClassTransformer implements IClassTransformer {
         return instructions;
     }
 
+    /**
+     * SplashProgress$3 の run() メソッド先頭にリフレクション経由の GL 状態リセットを注入する。
+     *
+     * <p>Angelica のバイトコードリダイレクターは GL11.glEnable() の呼び出しを
+     * GLStateManager.glEnable() に書き換える。このパッチは {@link SplashGLFix} を
+     * 介してリフレクションで GL11 を呼び出すため、リダイレクターの影響を受けない。</p>
+     */
+    private byte[] patchSplashProgress3(byte[] basicClass) {
+        ClassNode classNode = new ClassNode();
+        new ClassReader(basicClass).accept(classNode, 0);
+
+        boolean changed = false;
+        for (Object methodObject : classNode.methods) {
+            MethodNode method = (MethodNode) methodObject;
+            if ("run".equals(method.name) && "()V".equals(method.desc)) {
+                // run() メソッドの先頭に注入する命令リスト
+                InsnList prologue = new InsnList();
+
+                // SplashGLFix.enableTexture2D()
+                prologue.add(new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "net/suzumiya/crosstie/util/SplashGLFix",
+                    "enableTexture2D",
+                    "()V",
+                    false));
+                // SplashGLFix.resetColor()
+                prologue.add(new MethodInsnNode(
+                    Opcodes.INVOKESTATIC,
+                    "net/suzumiya/crosstie/util/SplashGLFix",
+                    "resetColor",
+                    "()V",
+                    false));
+
+                // メソッドの先頭に挿入
+                method.instructions.insert(prologue);
+                changed = true;
+                System.out.println("[CrossTie] Patched SplashProgress$3.run() - injected reflective GL state reset");
+            }
+        }
+
+        return changed ? writeClass(classNode) : basicClass;
+    }
+
     private void replaceMethodBody(MethodNode method, InsnList instructions) {
         method.access &= ~Opcodes.ACC_ABSTRACT;
         method.access &= ~Opcodes.ACC_NATIVE;
@@ -390,11 +553,35 @@ public class CrossTieClassTransformer implements IClassTransformer {
         method.instructions.add(instructions);
         method.tryCatchBlocks.clear();
         method.localVariables.clear();
-        // method.maxStack = 6; // 削除：COMPUTE_MAXSに任せる
+        // メソッド本体を完全に入れ替えるため、古い StackMapTable のフレーム情報
+        // (FrameNodeとしてinstructionsに残っていたもの)は instructions.clear() で
+        // 一緒に消える。maxStack/maxLocals および新しいStackMapTableは
+        // writeClass() 側で ClassWriter.COMPUTE_FRAMES により再計算される。
     }
 
     private byte[] writeClass(ClassNode classNode) {
-        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        // COMPUTE_MAXS では maxStack/maxLocals のみが再計算され、StackMapTable
+        // (Java 7+のフレーム情報)は再生成されない。バイトコードを書き換えると
+        // 古いフレーム情報と実際のスタック状態が食い違い、
+        // VerifyError: Instruction type does not match stack map の原因になる。
+        // COMPUTE_FRAMES を使うことで StackMapTable を実際のバイトコードから
+        // 正しく再計算させる(maxStack/maxLocalsもこちらで計算される)。
+        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES) {
+            @Override
+            protected String getCommonSuperClass(String type1, String type2) {
+                try {
+                    return super.getCommonSuperClass(type1, type2);
+                } catch (Throwable t) {
+                    // COMPUTE_FRAMES はフレーム計算のために型の継承関係解決を行うが、
+                    // クラスローダーの都合で解決できないMOD/ゲームクラスが
+                    // 含まれる場合に ClassNotFoundException 等で失敗することがある。
+                    // その場合は安全側に倒して Object を共通の親クラスとして返す。
+                    System.err.println("[CrossTie] getCommonSuperClass fallback for "
+                            + type1 + " / " + type2 + ": " + t);
+                    return "java/lang/Object";
+                }
+            }
+        };
         try {
             classNode.accept(writer);
         } catch (Exception e) {
