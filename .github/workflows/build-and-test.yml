@@ -16,9 +16,12 @@ jobs:
     timeout-minutes: 45
     env:
       GRADLE_USER_HOME: ${{ github.workspace }}/.gradle-user-home
-      PRIVATE_MAVEN_URL: ${{ secrets.PRIVATE_MAVEN_URL }}
-      PRIVATE_MAVEN_USER: ${{ secrets.PRIVATE_MAVEN_USER }}
-      PRIVATE_MAVEN_PASSWORD: ${{ secrets.PRIVATE_MAVEN_PASSWORD }}
+      # Optional escape hatch only — the default build resolves everything (including the
+      # RTM/KaizPatchX dependency) from public repositories (JitPack, GTNH Maven, etc.),
+      # so these secrets are not required for the build to succeed.
+      ORG_GRADLE_PROJECT_privateMavenUrl: ${{ secrets.PRIVATE_MAVEN_URL }}
+      ORG_GRADLE_PROJECT_privateMavenUser: ${{ secrets.PRIVATE_MAVEN_USER }}
+      ORG_GRADLE_PROJECT_privateMavenPassword: ${{ secrets.PRIVATE_MAVEN_PASSWORD }}
 
     steps:
     - uses: actions/checkout@v4
@@ -34,14 +37,4 @@ jobs:
       run: chmod +x gradlew
 
     - name: Build with Gradle
-      if: env.PRIVATE_MAVEN_URL != ''
-      env:
-        ORG_GRADLE_PROJECT_privateMavenUrl: ${{ secrets.PRIVATE_MAVEN_URL }}
-        ORG_GRADLE_PROJECT_privateMavenUser: ${{ secrets.PRIVATE_MAVEN_USER }}
-        ORG_GRADLE_PROJECT_privateMavenPassword: ${{ secrets.PRIVATE_MAVEN_PASSWORD }}
       run: ./gradlew build --no-daemon --no-configuration-cache
-
-    - name: Skip build because private Maven is not configured
-      if: env.PRIVATE_MAVEN_URL == ''
-      run: |
-        echo 'Skipping build: PRIVATE_MAVEN_URL is not configured and RTM artifacts are not available in the public repos.'

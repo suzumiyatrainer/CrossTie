@@ -13,8 +13,7 @@ archivesBaseName = 'CrossTie'
 def privateMavenUrl = (findProperty('privateMavenUrl') ?: '').toString().trim()
 def privateMavenUser = (findProperty('privateMavenUser') ?: '').toString().trim()
 def privateMavenPassword = (findProperty('privateMavenPassword') ?: '').toString().trim()
-def bambooCoordinate = (findProperty('bambooCoordinate') ?: 'ruby.bamboo:Bamboo:2.6.8.5').toString().trim()
-def rtmCoordinate = (findProperty('rtmCoordinate') ?: 'jp.ngt.rtm:RTM:1.7.10_20200822+KaizPatchX-1.9.6').toString().trim()
+def rtmCoordinate = (findProperty('rtmCoordinate') ?: 'com.github.Kai-Z-JP:KaizPatchX:v1.10.0:dev').toString().trim()
 def usePrivateMaven = !privateMavenUrl.isEmpty()
 def forceSafeNetty = (findProperty('forceSafeNetty') ?: 'false').toString().toBoolean()
 def forceSafeScala = (findProperty('forceSafeScala') ?: 'false').toString().toBoolean()
@@ -135,15 +134,14 @@ dependencies {
     compileOnly('org.ow2.asm:asm-commons:5.2') // Explicitly add commons just in case
     compileOnly('it.unimi.dsi:fastutil:8.5.18') // Needed for ObjectArrayList type in gtnhlib mixin
 
-    if (usePrivateMaven) {
-        compileOnly(rfg.deobf(rtmCoordinate))
-        // Development/runtime dependencies resolved from the private Maven.
-        devOnlyNonPublishable(rfg.deobf(bambooCoordinate))
-        devOnlyNonPublishable(rfg.deobf(rtmCoordinate))
-    } else {
-        // Local fallback for offline development.
-        implementation fileTree(dir: 'libs', include: ['*.jar'])
-    }
+    // RTM compatibility target (KaizPatchX), resolved from JitPack — see rtmCoordinate
+    // in gradle.properties. Public, so no private Maven or libs/ jar is required.
+    compileOnly(rfg.deobf(rtmCoordinate))
+
+    // Optional: any extra jars dropped in libs/ are still picked up for local-only testing
+    // (e.g. a target mod you want to test against but that isn't declared as a dependency above).
+    // libs/ is gitignored and does not need to contain anything for a normal build to succeed.
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 
 }
 
