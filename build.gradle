@@ -6,7 +6,7 @@ plugins {
 }
 
 // Mod properties from gradle.properties
-version = '1.0.0-Alpha6'
+version = '1.0.0-Alpha7'
 group = project.modGroup
 archivesBaseName = 'CrossTie'
 
@@ -137,6 +137,11 @@ dependencies {
     // RTM compatibility target (KaizPatchX), resolved from JitPack — see rtmCoordinate
     // in gradle.properties. Public, so no private Maven or libs/ jar is required.
     compileOnly(rfg.deobf(rtmCoordinate))
+
+    // Angelica + Iris (for mixin compilation) via JitPack.
+    // Iris classes are bundled inside the Angelica jar.
+    def angelicaVersion = (findProperty('angelicaVersion') ?: '2.1.42').toString().trim()
+    compileOnly("com.github.GTNewHorizons:Angelica:${angelicaVersion}")
 
     // Optional: any extra jars dropped in libs/ are still picked up for local-only testing
     // (e.g. a target mod you want to test against but that isn't declared as a dependency above).

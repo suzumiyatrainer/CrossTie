@@ -31,6 +31,35 @@ public abstract class EntityTrainBaseOptimizationMixin {
     @Unique
     private int crosstie$distantSkipCounter = 0;
 
+    // ========================
+    // P3: 遠距離間引き (Client only)
+    // ========================
+
+    /**
+     * クライアント側でプレイヤーから 256m 以上離れた車両の onUpdate を
+     * DISTANT_SKIP_INTERVAL ティックに1回だけ実行する。
+     */
+    @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true, require = 0, remap = true)
+    private void crosstie$skipDistantUpdate(CallbackInfo ci) {
+        Entity entity = (Entity) (Object) this;
+        if (!entity.worldObj.isRemote) {
+            return;
+        }
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc.renderViewEntity == null) {
+            return;
+        }
+        double dx = entity.posX - mc.renderViewEntity.posX;
+        double dz = entity.posZ - mc.renderViewEntity.posZ;
+        if (dx * dx + dz * dz > DISTANT_THRESHOLD_SQ) {
+            if (++this.crosstie$distantSkipCounter % DISTANT_SKIP_INTERVAL != 0) {
+                ci.cancel();
+            }
+        } else {
+            this.crosstie$distantSkipCounter = 0;
+        }
+    }
+
     @Unique
     private int crosstie$lastBX = Integer.MIN_VALUE;
 
@@ -42,33 +71,6 @@ public abstract class EntityTrainBaseOptimizationMixin {
 
     @Unique
     private Block crosstie$cachedBlock = null;
-
-    // ========================
-    // P3: onUpdate の遠距離間引き (client only)
-    // ========================
-
-    @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true, require = 0)
-    private void crosstie$distantThrottle(CallbackInfo ci) {
-        Entity self = (Entity) (Object) this;
-        World world = self.worldObj;
-        if (world != null && world.isRemote) {
-            Minecraft mc = Minecraft.getMinecraft();
-            if (mc.renderViewEntity != null) {
-                double dx = self.posX - mc.renderViewEntity.posX;
-                double dy = self.posY - mc.renderViewEntity.posY;
-                double dz = self.posZ - mc.renderViewEntity.posZ;
-                if (dx * dx + dy * dy + dz * dz > DISTANT_THRESHOLD_SQ) {
-                    crosstie$distantSkipCounter++;
-                    if (crosstie$distantSkipCounter % DISTANT_SKIP_INTERVAL != 0) {
-                        ci.cancel();
-                        return;
-                    }
-                } else {
-                    crosstie$distantSkipCounter = 0;
-                }
-            }
-        }
-    }
 
     // ========================
     // P4: onUpdate 内の getBlock() 呼び出しキャッシュ

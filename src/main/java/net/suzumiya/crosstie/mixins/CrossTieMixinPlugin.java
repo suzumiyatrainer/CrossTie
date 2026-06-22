@@ -128,6 +128,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         // Angelica
         mixins.add("angelica.AngelicaRenderGlobalDisplayListCrashMixin");
 
+        // FontConfigScreen が Keyboard.enableRepeatEvents(true) を適切に無効化しない問題の修正
+        if (isClient && isModPresent("AngelicaGlsm")) {
+            mixins.add("angelica.FontConfigScreenFixMixin");
+        }
+
         // enableFontRenderer=false 時のスプラッシュ画面暗転修正。
         // MixinFontRenderer が無効だと SplashFontRenderer の GL 初期化が不完全になり
         // GLStateManager のキャッシュが GL_TEXTURE_2D=false と誤認して画面が真っ黒になる。
@@ -191,7 +196,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.BlockLinePoleConnectionCacheMixin");
                 mixins.add("rtm.RenderLargeRailOptimizationMixin");
                 mixins.add("rtm.RenderLargeRailChunkBatchMixin");
-                mixins.add("rtm.RailPartsRendererOptimizationMixin");
+                mixins.add("rtm.RTMRailTESRThrottleMixin");
+                mixins.add("rtm.RailTessellateOptimizationMixin");
+                mixins.add("rtm.TileEntitySignalNoCullingMixin");
+                mixins.add("rtm.TileEntityCrossingGateNoCullingMixin");
             }
 
             // GTNHLib client icons

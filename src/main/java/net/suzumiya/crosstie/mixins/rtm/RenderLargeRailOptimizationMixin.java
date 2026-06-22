@@ -15,9 +15,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "jp.ngt.rtm.rail.RenderLargeRail", remap = false)
 public abstract class RenderLargeRailOptimizationMixin {
 
-    /** 256m 距離カリング閾値（二乗距離） */
+    /**
+     * 距離カリング閾値（二乗距離）。
+     * 描画距離設定(chunks × 32) を上限とし、最小 256m を下回らないようにする。
+     * 設定変更時の再計算を避けるため、前回値からの変動がなければキャッシュを返す。
+     */
     @Unique
-    private static final double MAX_RENDER_DIST_SQ = 256.0D * 256.0D;
+    private static int crosstie$lastRenderDist = -1;
+    @Unique
+    private static double crosstie$cachedMaxDistSq = 256.0D * 256.0D;
+
+    @Unique
+    private static double crosstie$getMaxRenderDistanceSq() {
+        int currentDist = (Minecraft.getMinecraft().gameSettings.renderDistanceChunks + 1) * 16;
+        if (currentDist != crosstie$lastRenderDist) {
+            crosstie$lastRenderDist = currentDist;
+            double distSq = (double) currentDist * (double) currentDist;
+            crosstie$cachedMaxDistSq = Math.max(distSq, 256.0D * 256.0D);
+        }
+        return crosstie$cachedMaxDistSq;
+    }
 
     /** フラストラムキャッシュ（毎フレーム {@link #renderTileEntityAt} 間で共有） */
     @Unique
@@ -41,11 +58,11 @@ public abstract class RenderLargeRailOptimizationMixin {
             return;
         }
 
-        // === 距離カリング（256m） ===
+        // === 距離カリング（動的：描画距離×32 〜 最低256m） ===
         double dx = tileEntity.xCoord + 0.5D - renderView.posX;
         double dy = tileEntity.yCoord + 0.5D - renderView.posY;
         double dz = tileEntity.zCoord + 0.5D - renderView.posZ;
-        if (dx * dx + dy * dy + dz * dz > MAX_RENDER_DIST_SQ) {
+        if (dx * dx + dy * dy + dz * dz > crosstie$getMaxRenderDistanceSq()) {
             ci.cancel();
             return;
         }

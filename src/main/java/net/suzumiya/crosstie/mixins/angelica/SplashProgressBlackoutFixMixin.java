@@ -53,4 +53,13 @@ public class SplashProgressBlackoutFixMixin {
         SplashGLFix.enableTexture2D();
         SplashGLFix.resetColor();
     }
+
+    /**
+     * 各フレームの描画ループ内（Display.update()の直後）で GL_TEXTURE_2D を強制有効化する。
+     */
+    @Inject(method = "run", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/Display;update()V", shift = At.Shift.AFTER, remap = false), remap = false, require = 0)
+    private void crosstie$forceTextureStateForSplashLoop(CallbackInfo ci) {
+        SplashGLFix.enableTexture2D();
+        SplashGLFix.resetColor();
+    }
 }

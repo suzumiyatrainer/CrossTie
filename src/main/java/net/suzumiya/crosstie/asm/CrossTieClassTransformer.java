@@ -539,7 +539,32 @@ public class CrossTieClassTransformer implements IClassTransformer {
                 // メソッドの先頭に挿入
                 method.instructions.insert(prologue);
                 changed = true;
-                System.out.println("[CrossTie] Patched SplashProgress$3.run() - injected reflective GL state reset");
+                System.out.println("[CrossTie] Patched SplashProgress$3.run() - injected reflective GL state reset at HEAD");
+
+                // Display.update() の直後にも注入する
+                org.objectweb.asm.tree.AbstractInsnNode[] instructions = method.instructions.toArray();
+                for (org.objectweb.asm.tree.AbstractInsnNode insn : instructions) {
+                    if (insn instanceof MethodInsnNode) {
+                        MethodInsnNode minsn = (MethodInsnNode) insn;
+                        if ("org/lwjgl/opengl/Display".equals(minsn.owner) && "update".equals(minsn.name) && "()V".equals(minsn.desc)) {
+                            InsnList loopPrologue = new InsnList();
+                            loopPrologue.add(new MethodInsnNode(
+                                Opcodes.INVOKESTATIC,
+                                "net/suzumiya/crosstie/util/SplashGLFix",
+                                "enableTexture2D",
+                                "()V",
+                                false));
+                            loopPrologue.add(new MethodInsnNode(
+                                Opcodes.INVOKESTATIC,
+                                "net/suzumiya/crosstie/util/SplashGLFix",
+                                "resetColor",
+                                "()V",
+                                false));
+                            method.instructions.insert(insn, loopPrologue);
+                            System.out.println("[CrossTie] Patched SplashProgress$3.run() - injected reflective GL state reset after Display.update()");
+                        }
+                    }
+                }
             }
         }
 
