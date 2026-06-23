@@ -46,18 +46,14 @@ public class SplashProgressBlackoutFixMixin {
      * {@code require = 0} にしているため、ターゲットクラスが存在しない環境では
      * 無音でスキップされる。
      */
-    @Inject(method = "run", at = @At("HEAD"), remap = false, require = 0)
-    private void crosstie$forceTextureStateForSplash(CallbackInfo ci) {
-        // リフレクションで GL11.glEnable(GL_TEXTURE_2D) を呼び出し、
-        // Angelica のバイトコードリダイレクトをバイパスする
-        SplashGLFix.markSplashStateDirty();
-    }
-
     /**
-     * 各フレームの描画ループ内（Display.update()の直後）で GL_TEXTURE_2D を強制有効化する。
+     * 各 drawBar() 呼び出し直前に GL_TEXTURE_2D を強制有効化する。
+     * Angelica が GL11.glEnable() を GLStateManager 経由にリダイレクトするため、
+     * フォント描画時(GL_TEXTURE_2D)がオフになって文字が表示されない。
+     * リフレクションで直接 glEnable を呼び出すことでこれを回避する。
      */
-    @Inject(method = "run", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/Display;update()V", shift = At.Shift.AFTER, remap = false), remap = false, require = 0)
-    private void crosstie$forceTextureStateForSplashLoop(CallbackInfo ci) {
-        SplashGLFix.markSplashStateDirty();
+    @Inject(method = "run", at = @At(value = "INVOKE", target = "Lcpw/mods/fml/client/SplashProgress$3;drawBar(Lnet/minecraftforge/fml/common/ProgressManager$ProgressBar;)V", remap = false), remap = false, require = 0)
+    private void crosstie$forceTexture2DBeforeDrawBar(CallbackInfo ci) {
+        SplashGLFix.forceGLEnableTexture2D();
     }
 }

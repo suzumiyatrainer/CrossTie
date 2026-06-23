@@ -76,6 +76,20 @@ public final class SplashGLFix {
     }
 
     /**
+     * GL11.glEnable(GL_TEXTURE_2D) を強制的に呼び出す。
+     * Angelica のバイトコードリダイレクトを完全にバイパスするため、
+     * 直接 GL11 クラスのリフレクションを使用する。
+     */
+    public static void forceGLEnableTexture2D() {
+        try {
+            java.lang.reflect.Method glEnable = org.lwjgl.opengl.GL11.class.getMethod("glEnable", int.class);
+            glEnable.invoke(null, org.lwjgl.opengl.GL11.GL_TEXTURE_2D);
+        } catch (Throwable e) {
+            System.err.println("[CrossTie] SplashGLFix: forceGLEnable failed: " + e.getMessage());
+        }
+    }
+
+    /**
      * リフレクション経由で {@code GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f)} を呼び出す。
      * Angelica のバイトコードリダイレクターの影響を受けない。
      */
