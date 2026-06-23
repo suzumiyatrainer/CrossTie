@@ -29,10 +29,10 @@ public abstract class EntityTrainBaseSpeedSyncMixin {
     private static final int DW_SPEED = 25;
 
     @Unique
-    private static final float SPEED_SYNC_THRESHOLD = 0.0025F;
+    private static final float SPEED_SYNC_THRESHOLD = 0.001F;
 
     @Unique
-    private static final int MAX_SPEED_SYNC_INTERVAL_TICKS = 20;
+    private static final int MAX_SPEED_SYNC_INTERVAL_TICKS = 12;
 
     @Unique
     private float crosstie$lastSyncedSpeed = Float.NaN;
