@@ -1,6 +1,7 @@
 package net.suzumiya.crosstie.util;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 
 /**
  * リフレクション経由で GL11 のメソッドを呼び出すユーティリティ。
@@ -14,18 +15,51 @@ import java.lang.reflect.Method;
  */
 public final class SplashGLFix {
 
-    private static Method glEnable;
-    private static Method glColor4f;
-    private static boolean initFailed;
+    private static Field angelicaTextures;
+    private static Field angelicaClearColor;
+    private static Field colorRed;
+    private static Field colorGreen;
+    private static Field colorBlue;
+    private static Field colorAlpha;
+    private static Method angelicaGetActiveTextureUnit;
+    private static Method angelicaEnableTexture;
+    private static Method angelicaClearCurrentColor;
+    private static Method angelicaGetTextureUnitStates;
+    private static Method angelicaGetTextureUnitBindings;
+    private static Method angelicaSetUnknownState;
+    private static Method angelicaSetBinding;
+    private static boolean angelicaInitFailed;
 
     static {
         try {
-            final Class<?> gl11 = Class.forName("org.lwjgl.opengl.GL11");
-            glEnable = gl11.getDeclaredMethod("glEnable", int.class);
-            glColor4f = gl11.getDeclaredMethod("glColor4f", float.class, float.class, float.class, float.class);
-        } catch (Exception e) {
-            initFailed = true;
-            System.err.println("[CrossTie] SplashGLFix: Failed to initialize GL11 reflection: " + e.getMessage());
+            final Class<?> glStateManager = Class.forName("com.gtnewhorizons.angelica.glsm.GLStateManager");
+            final Class<?> textureUnitArray = Class.forName("com.gtnewhorizons.angelica.glsm.states.TextureUnitArray");
+            final Class<?> booleanState = Class.forName("com.gtnewhorizons.angelica.glsm.states.BooleanState");
+            final Class<?> textureBinding = Class.forName("com.gtnewhorizons.angelica.glsm.states.TextureBinding");
+            final Class<?> color4 = Class.forName("com.gtnewhorizons.angelica.glsm.states.Color4");
+
+            angelicaTextures = glStateManager.getDeclaredField("textures");
+            angelicaTextures.setAccessible(true);
+            angelicaClearColor = glStateManager.getDeclaredField("clearColor");
+            angelicaClearColor.setAccessible(true);
+            colorRed = color4.getDeclaredField("red");
+            colorGreen = color4.getDeclaredField("green");
+            colorBlue = color4.getDeclaredField("blue");
+            colorAlpha = color4.getDeclaredField("alpha");
+            colorRed.setAccessible(true);
+            colorGreen.setAccessible(true);
+            colorBlue.setAccessible(true);
+            colorAlpha.setAccessible(true);
+            angelicaGetActiveTextureUnit = glStateManager.getDeclaredMethod("getActiveTextureUnit");
+            angelicaEnableTexture = glStateManager.getDeclaredMethod("enableTexture");
+            angelicaClearCurrentColor = glStateManager.getDeclaredMethod("clearCurrentColor");
+            angelicaGetTextureUnitStates = textureUnitArray.getDeclaredMethod("getTextureUnitStates", int.class);
+            angelicaGetTextureUnitBindings = textureUnitArray.getDeclaredMethod("getTextureUnitBindings", int.class);
+            angelicaSetUnknownState = booleanState.getDeclaredMethod("setUnknownState");
+            angelicaSetBinding = textureBinding.getDeclaredMethod("setBinding", int.class);
+        } catch (Throwable ignored) {
+            angelicaInitFailed = true;
+            // Angelica is optional. Without Angelica there is no GLSM splash cache to repair.
         }
     }
 
@@ -37,12 +71,8 @@ public final class SplashGLFix {
      * Angelica のバイトコードリダイレクターの影響を受けない。
      */
     public static void enableTexture2D() {
-        if (initFailed) return;
-        try {
-            glEnable.invoke(null, 0x0DE1); // GL_TEXTURE_2D = 0x0DE1
-        } catch (Exception e) {
-            System.err.println("[CrossTie] SplashGLFix: glEnable failed: " + e.getMessage());
-        }
+        markAngelicaTextureStateDirty();
+        invokeAngelica(angelicaEnableTexture, "enableTexture");
     }
 
     /**
@@ -50,11 +80,55 @@ public final class SplashGLFix {
      * Angelica のバイトコードリダイレクターの影響を受けない。
      */
     public static void resetColor() {
-        if (initFailed) return;
+        invokeAngelica(angelicaClearCurrentColor, "clearCurrentColor");
+    }
+
+    public static void prepareTexturedSplashDraw() {
+        enableTexture2D();
+        resetColor();
+    }
+
+    public static void markSplashStateDirty() {
+        markAngelicaTextureStateDirty();
+        markAngelicaClearColorDirty();
+        resetColor();
+    }
+
+    private static void invokeAngelica(Method method, String name) {
+        if (angelicaInitFailed || method == null) return;
         try {
-            glColor4f.invoke(null, 1.0f, 1.0f, 1.0f, 1.0f);
-        } catch (Exception e) {
-            System.err.println("[CrossTie] SplashGLFix: glColor4f failed: " + e.getMessage());
+            method.invoke(null);
+        } catch (Throwable e) {
+            System.err.println("[CrossTie] SplashGLFix: GLStateManager." + name + " failed: " + e.getMessage());
+        }
+    }
+
+    private static void markAngelicaTextureStateDirty() {
+        if (angelicaInitFailed) return;
+        try {
+            int activeUnit = ((Integer) angelicaGetActiveTextureUnit.invoke(null)).intValue();
+            Object textures = angelicaTextures.get(null);
+
+            Object textureState = angelicaGetTextureUnitStates.invoke(textures, activeUnit);
+            angelicaSetUnknownState.invoke(textureState);
+
+            Object textureBinding = angelicaGetTextureUnitBindings.invoke(textures, activeUnit);
+            angelicaSetBinding.invoke(textureBinding, -1);
+        } catch (Throwable e) {
+            System.err.println("[CrossTie] SplashGLFix: failed to dirty Angelica texture cache: " + e.getMessage());
+        }
+    }
+
+    private static void markAngelicaClearColorDirty() {
+        if (angelicaInitFailed) return;
+        try {
+            Object clearColor = angelicaClearColor.get(null);
+            colorRed.setFloat(clearColor, Float.NaN);
+            colorGreen.setFloat(clearColor, Float.NaN);
+            colorBlue.setFloat(clearColor, Float.NaN);
+            colorAlpha.setFloat(clearColor, Float.NaN);
+        } catch (Throwable e) {
+            System.err.println("[CrossTie] SplashGLFix: failed to dirty Angelica clear color cache: " + e.getMessage());
         }
     }
 }

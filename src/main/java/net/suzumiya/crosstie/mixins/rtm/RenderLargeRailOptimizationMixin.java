@@ -6,6 +6,7 @@ import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
+import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -47,6 +48,9 @@ public abstract class RenderLargeRailOptimizationMixin {
     @Inject(method = "renderTileEntityAt", at = @At("HEAD"), cancellable = true, remap = true)
     private void crosstie$distanceAndFrustumCulling(TileEntity tileEntity,
             double d0, double d1, double d2, float f, CallbackInfo ci) {
+        if (!CrossTieConfig.largeRailCullingEnabled) {
+            return;
+        }
         if (tileEntity == null || !"jp.ngt.rtm.rail.TileEntityLargeRailCore"
                 .equals(tileEntity.getClass().getName())) {
             return;

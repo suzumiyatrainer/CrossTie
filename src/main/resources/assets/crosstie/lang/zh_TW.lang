@@ -1,0 +1,4 @@
+crosstie.command.usage=用法: /crosstie <cfgr>
+crosstie.command.unknown=未知的子命令。
+crosstie.command.cfgr.success=Config 已重新載入。
+crosstie.command.cfgr.restart_note=部分變更需要重啟。請重啟 Minecraft 以套用所有變更。

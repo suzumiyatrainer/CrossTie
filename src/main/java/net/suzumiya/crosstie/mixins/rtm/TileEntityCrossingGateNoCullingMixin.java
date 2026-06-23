@@ -5,6 +5,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
+import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -45,6 +46,9 @@ public abstract class TileEntityCrossingGateNoCullingMixin {
     @Inject(method = "getRenderBoundingBox", at = @At("HEAD"), cancellable = true, remap = false)
     @SideOnly(Side.CLIENT)
     public void injectGetRenderBoundingBox(CallbackInfoReturnable<AxisAlignedBB> cir) {
+        if (!CrossTieConfig.disableSignalCulling) {
+            return;
+        }
         cir.setReturnValue(TileEntity.INFINITE_EXTENT_AABB);
     }
 
@@ -56,6 +60,9 @@ public abstract class TileEntityCrossingGateNoCullingMixin {
     @Inject(method = "getMaxRenderDistanceSquared", at = @At("HEAD"), cancellable = true, remap = false)
     @SideOnly(Side.CLIENT)
     public void injectMaxRenderDistanceSquared(CallbackInfoReturnable<Double> cir) {
+        if (!CrossTieConfig.disableSignalCulling) {
+            return;
+        }
         cir.setReturnValue(crosstie$getMaxRenderDistanceSq());
     }
 

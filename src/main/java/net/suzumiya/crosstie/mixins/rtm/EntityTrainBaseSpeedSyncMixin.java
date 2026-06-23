@@ -2,6 +2,7 @@ package net.suzumiya.crosstie.mixins.rtm;
 
 import net.minecraft.entity.DataWatcher;
 import net.minecraft.entity.Entity;
+import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -41,6 +42,9 @@ public abstract class EntityTrainBaseSpeedSyncMixin {
 
     @Inject(method = "getSpeed", at = @At("HEAD"), cancellable = true)
     private void crosstie$returnAuthoritativeServerSpeed(CallbackInfoReturnable<Float> cir) {
+        if (!CrossTieConfig.trainSpeedSyncEnabled) {
+            return;
+        }
         Entity entity = (Entity) (Object) this;
         if (entity.worldObj != null && !entity.worldObj.isRemote) {
             cir.setReturnValue(this.trainSpeed);
@@ -49,6 +53,9 @@ public abstract class EntityTrainBaseSpeedSyncMixin {
 
     @Inject(method = "setSpeed_NoSync", at = @At("HEAD"), cancellable = true)
     private void crosstie$throttleSpeedSync(float newSpeed, CallbackInfo ci) {
+        if (!CrossTieConfig.trainSpeedSyncEnabled) {
+            return;
+        }
         if (this.trainSpeed != newSpeed) {
             this.trainSpeed = newSpeed;
             this.crosstie$ticksSinceSpeedSync++;

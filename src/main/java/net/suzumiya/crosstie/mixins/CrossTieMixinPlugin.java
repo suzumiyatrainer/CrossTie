@@ -15,12 +15,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isClient;
     private ModDetector modDetector;
-    private boolean enableNativeRenderGlobalDisplayLists;
 
     @Override
     public void onLoad(String mixinPackage) {
         isClient = FMLLaunchHandler.side() == Side.CLIENT;
-        enableNativeRenderGlobalDisplayLists = Boolean.getBoolean("crosstie.enableNativeRenderGlobalDisplayLists");
 
         // Try to get ModDetector from CorePlugin; may be null if injectData() hasn't
         // run yet. will be lazily resolved in shouldApplyMixin().
@@ -34,6 +32,25 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
      * available during {@link #onLoad}, retry here since {@code injectData()}
      * will have been called by the time mixins are actually applied.
      */
+    /**
+     * RenderGlobal.displayList ネイティブ最適化が有効かどうかを返す。
+     *
+     * <p>システムプロパティが設定されていればそれを優先し、未設定の場合は
+     * {@link net.suzumiya.crosstie.CrossTieConfig#enableNativeRenderGlobalDisplayLists} の値を参照する。
+     * config は preInit 後に読み込まれるため、それまではデフォルト false となる。
+     *
+     * @return 有効なら true
+     */
+    private boolean isNativeRenderGlobalDisplayListsEnabled() {
+        // システムプロパティが設定されていれば常にそれを優先
+        String prop = System.getProperty("crosstie.enableNativeRenderGlobalDisplayLists");
+        if (prop != null) {
+            return Boolean.parseBoolean(prop);
+        }
+        // システムプロパティ未設定 → config の値を参照（preInit 前に呼ばれた場合はデフォルト false）
+        return net.suzumiya.crosstie.CrossTieConfig.enableNativeRenderGlobalDisplayLists;
+    }
+
     private boolean isModPresent(String modName) {
         if (modDetector == null) {
             modDetector = CrossTieCorePlugin.getModDetector();
@@ -82,7 +99,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.angelica.")) {
             if (mixinClassName.endsWith(".AngelicaRenderGlobalDisplayListCrashMixin")) {
-                shouldApply = isClient && isModPresent("AngelicaGlsm") && enableNativeRenderGlobalDisplayLists;
+                shouldApply = isClient && isModPresent("AngelicaGlsm") && isNativeRenderGlobalDisplayListsEnabled();
             } else {
                 shouldApply = isClient && isModPresent("AngelicaGlsm");
             }
@@ -114,7 +131,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 + ", MCTE=" + isModPresent("MCTE")
                 + ", LiteLoader=" + isModPresent("LiteLoader")
                 + ", MacroMod=" + isModPresent("MacroMod")
-                + ", nativeRenderGlobalDisplayLists=" + enableNativeRenderGlobalDisplayLists);
+                + ", nativeRenderGlobalDisplayLists=" + isNativeRenderGlobalDisplayListsEnabled());
     }
 
     @Override

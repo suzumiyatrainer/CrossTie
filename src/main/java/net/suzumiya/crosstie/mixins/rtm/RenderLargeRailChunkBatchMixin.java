@@ -2,6 +2,7 @@ package net.suzumiya.crosstie.mixins.rtm;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
+import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,6 +35,9 @@ public abstract class RenderLargeRailChunkBatchMixin {
     @Inject(method = "renderTileEntityAt", at = @At("HEAD"), require = 0, remap = true)
     private void crosstie$batchChunkRender(TileEntity tileEntity,
             double d0, double d1, double d2, float f, CallbackInfo ci) {
+        if (!CrossTieConfig.largeRailChunkBatchingEnabled) {
+            return;
+        }
         if (tileEntity == null || !"jp.ngt.rtm.rail.TileEntityLargeRailCore"
                 .equals(tileEntity.getClass().getName())) {
             return;

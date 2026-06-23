@@ -3,6 +3,7 @@ package net.suzumiya.crosstie.mixins.angelica;
 import com.gtnewhorizons.angelica.glsm.GLStateManager;
 import net.coderbot.iris.Iris;
 import net.minecraft.client.renderer.RenderGlobal;
+import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,16 +17,20 @@ public abstract class AngelicaRenderDistanceWaterFixMixin {
 
     @Inject(method = "renderWorld", at = @At("HEAD"))
     private void crosstie$beforeRenderWorld(float partialTicks, long finishTimeNano, CallbackInfo ci) {
+        if (!CrossTieConfig.fixAngelicaWaterRenderDistance) {
+            return;
+        }
         if (Iris.enabled) {
-            // GLStateManager.GL_CULL_FACE から GL_CULL_FACE に修正
             GLStateManager.glEnable(GL_CULL_FACE);
         }
     }
 
     @Inject(method = "renderWorld", at = @At("RETURN"))
     private void crosstie$afterRenderWorld(float partialTicks, long finishTimeNano, CallbackInfo ci) {
+        if (!CrossTieConfig.fixAngelicaWaterRenderDistance) {
+            return;
+        }
         if (Iris.enabled) {
-            // GLStateManager.GL_CULL_FACE から GL_CULL_FACE に修正
             GLStateManager.glDisable(GL_CULL_FACE);
         }
     }

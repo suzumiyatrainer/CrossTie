@@ -1,0 +1,4 @@
+crosstie.command.usage=Usage: /crosstie <cfgr>
+crosstie.command.unknown=Unknown subcommand.
+crosstie.command.cfgr.success=Config reloaded.
+crosstie.command.cfgr.restart_note=Some changes require a restart. Please restart Minecraft to apply all changes.

@@ -50,8 +50,7 @@ public class SplashProgressBlackoutFixMixin {
     private void crosstie$forceTextureStateForSplash(CallbackInfo ci) {
         // リフレクションで GL11.glEnable(GL_TEXTURE_2D) を呼び出し、
         // Angelica のバイトコードリダイレクトをバイパスする
-        SplashGLFix.enableTexture2D();
-        SplashGLFix.resetColor();
+        SplashGLFix.markSplashStateDirty();
     }
 
     /**
@@ -59,7 +58,6 @@ public class SplashProgressBlackoutFixMixin {
      */
     @Inject(method = "run", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/Display;update()V", shift = At.Shift.AFTER, remap = false), remap = false, require = 0)
     private void crosstie$forceTextureStateForSplashLoop(CallbackInfo ci) {
-        SplashGLFix.enableTexture2D();
-        SplashGLFix.resetColor();
+        SplashGLFix.markSplashStateDirty();
     }
 }

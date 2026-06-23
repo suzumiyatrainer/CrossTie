@@ -3,6 +3,7 @@ package net.suzumiya.crosstie.util;
 import java.util.concurrent.atomic.AtomicLong;
 
 import net.suzumiya.crosstie.CrossTie;
+import net.suzumiya.crosstie.CrossTieConfig;
 
 /**
  * P0 計測ユーティリティ (audit §9 P0)
@@ -11,14 +12,15 @@ import net.suzumiya.crosstie.CrossTie;
  * 診断ログは {@link #logAndReset()} を定期的に呼ぶことで出力される。
  * 本クラス自体は外部 mod クラスへの依存を持たないため、任意の Mixin から利用できる。
  *
- * <p>有効化: {@code crosstie.diagnostics=true} をシステムプロパティに設定する。
+ * <p>有効化: config/crosstie.cfg の enableDiagnostics=true、または
+ * システムプロパティ crosstie.diagnostics=true を設定する。
  */
 public final class CrossTieDiagnostics {
 
     /** 診断を有効化するシステムプロパティキー。 */
     public static final String PROP_ENABLED = "crosstie.diagnostics";
 
-    private static final boolean ENABLED = Boolean.getBoolean(PROP_ENABLED);
+    private static final boolean ENABLED_BY_PROPERTY = Boolean.getBoolean(PROP_ENABLED);
 
     // ---- カウンタ群 ---- //
 
@@ -51,9 +53,18 @@ public final class CrossTieDiagnostics {
 
     private CrossTieDiagnostics() {}
 
-    /** 診断ログが有効かどうかを返す。 */
+    /**
+     * 診断ログが有効かどうかを返す。
+     *
+     * <p>システムプロパティ {@code crosstie.diagnostics=true} が設定されていればそれを優先。
+     * 設定されていない場合は {@link CrossTieConfig#enableDiagnostics} の値を参照する。
+     * config は preInit 後に読み込まれるため、preInit より前にこのメソッドが呼ばれた場合は
+     * デフォルトの false を返すことに注意。
+     *
+     * @return 診断が有効なら true
+     */
     public static boolean isEnabled() {
-        return ENABLED;
+        return ENABLED_BY_PROPERTY || CrossTieConfig.enableDiagnostics;
     }
 
     /**
@@ -61,7 +72,7 @@ public final class CrossTieDiagnostics {
      * サーバー/クライアント tick の末尾から定期的に呼ぶことを想定する。
      */
     public static void logAndReset() {
-        if (!ENABLED) {
+        if (!isEnabled()) {
             return;
         }
 

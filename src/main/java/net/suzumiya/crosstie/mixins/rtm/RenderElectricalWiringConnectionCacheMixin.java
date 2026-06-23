@@ -3,6 +3,7 @@ package net.suzumiya.crosstie.mixins.rtm;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import net.minecraft.tileentity.TileEntity;
+import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Coerce;
@@ -24,6 +25,9 @@ public abstract class RenderElectricalWiringConnectionCacheMixin {
             @Coerce Object connection,
             float partialTicks,
             CallbackInfoReturnable<Object> cir) {
+        if (!CrossTieConfig.connectionCacheEnabled) {
+            return;
+        }
         if (!(tileEntity instanceof TileEntity) || connection == null) {
             return;
         }

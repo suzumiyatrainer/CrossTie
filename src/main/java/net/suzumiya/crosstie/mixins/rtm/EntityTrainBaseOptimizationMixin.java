@@ -4,6 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
+import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -41,6 +42,9 @@ public abstract class EntityTrainBaseOptimizationMixin {
      */
     @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true, require = 0, remap = true)
     private void crosstie$skipDistantUpdate(CallbackInfo ci) {
+        if (!CrossTieConfig.trainDistantCullingEnabled) {
+            return;
+        }
         Entity entity = (Entity) (Object) this;
         if (!entity.worldObj.isRemote) {
             return;
@@ -81,6 +85,9 @@ public abstract class EntityTrainBaseOptimizationMixin {
                     target = "Lnet/minecraft/world/World;getBlock(III)Lnet/minecraft/block/Block;"),
             require = 0)
     private Block crosstie$cachedGetBlock(World world, int x, int y, int z) {
+        if (!CrossTieConfig.trainGetBlockCacheEnabled) {
+            return world.getBlock(x, y, z);
+        }
         if (x == crosstie$lastBX && y == crosstie$lastBY && z == crosstie$lastBZ && crosstie$cachedBlock != null) {
             return crosstie$cachedBlock;
         }

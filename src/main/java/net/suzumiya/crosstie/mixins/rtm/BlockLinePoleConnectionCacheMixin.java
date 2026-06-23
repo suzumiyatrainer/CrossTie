@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,6 +35,9 @@ public abstract class BlockLinePoleConnectionCacheMixin {
             int z,
             boolean connectOther,
             CallbackInfoReturnable<Boolean> cir) {
+        if (!CrossTieConfig.connectionCacheEnabled) {
+            return;
+        }
         TickCache cache = crosstie$getClientTickCache(world);
         if (cache == null) {
             return;

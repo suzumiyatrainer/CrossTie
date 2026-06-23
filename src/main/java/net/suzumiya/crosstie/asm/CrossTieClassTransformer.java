@@ -39,8 +39,10 @@ public class CrossTieClassTransformer implements IClassTransformer {
      * キャッシュ更新のみの GLStateManager.glEnable() に書き換えてしまい、
      * テクスチャが描画されず画面が真っ黒になる問題を修正する。
      *
-     * <p>このクラスは Angelica より先に実行される CorePlugin ASM トランスフォーマで
-     * 直接パッチするため、Angelica のバイトコードリダイレクターの影響を受けない。</p>
+     * <p>
+     * このクラスは Angelica より先に実行される CorePlugin ASM トランスフォーマで
+     * 直接パッチするため、Angelica のバイトコードリダイレクターの影響を受けない。
+     * </p>
      */
     private static final String SPLASH_PROGRESS_3 = "cpw.mods.fml.client.SplashProgress$3";
 
@@ -506,9 +508,11 @@ public class CrossTieClassTransformer implements IClassTransformer {
     /**
      * SplashProgress$3 の run() メソッド先頭にリフレクション経由の GL 状態リセットを注入する。
      *
-     * <p>Angelica のバイトコードリダイレクターは GL11.glEnable() の呼び出しを
+     * <p>
+     * Angelica のバイトコードリダイレクターは GL11.glEnable() の呼び出しを
      * GLStateManager.glEnable() に書き換える。このパッチは {@link SplashGLFix} を
-     * 介してリフレクションで GL11 を呼び出すため、リダイレクターの影響を受けない。</p>
+     * 介してリフレクションで GL11 を呼び出すため、リダイレクターの影響を受けない。
+     * </p>
      */
     private byte[] patchSplashProgress3(byte[] basicClass) {
         ClassNode classNode = new ClassNode();
@@ -517,57 +521,50 @@ public class CrossTieClassTransformer implements IClassTransformer {
         boolean changed = false;
         for (Object methodObject : classNode.methods) {
             MethodNode method = (MethodNode) methodObject;
-            if ("run".equals(method.name) && "()V".equals(method.desc)) {
-                // run() メソッドの先頭に注入する命令リスト
-                InsnList prologue = new InsnList();
+            org.objectweb.asm.tree.AbstractInsnNode[] instructions = method.instructions.toArray();
+            for (org.objectweb.asm.tree.AbstractInsnNode insn : instructions) {
+                if (!(insn instanceof MethodInsnNode))
+                    continue;
+                MethodInsnNode minsn = (MethodInsnNode) insn;
 
-                // SplashGLFix.enableTexture2D()
-                prologue.add(new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    "net/suzumiya/crosstie/util/SplashGLFix",
-                    "enableTexture2D",
-                    "()V",
-                    false));
-                // SplashGLFix.resetColor()
-                prologue.add(new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    "net/suzumiya/crosstie/util/SplashGLFix",
-                    "resetColor",
-                    "()V",
-                    false));
+                // setGL(): Display.getDrawable().makeCurrent() の直後に注入（GLコンテキスト確立後）
+                boolean isMakeCurrent = "org/lwjgl/opengl/Drawable".equals(minsn.owner)
+                        && "makeCurrent".equals(minsn.name);
+                // run(): Display.update() の直後にも注入（毎フレーム先頭）
+                boolean isUpdate = "org/lwjgl/opengl/Display".equals(minsn.owner)
+                        && "update".equals(minsn.name)
+                        && "()V".equals(minsn.desc);
+                // setGL(): glClearColor() の直前に clear color cache を dirty にする
+                boolean isClearColor = "org/lwjgl/opengl/GL11".equals(minsn.owner)
+                        && "glClearColor".equals(minsn.name)
+                        && "(FFFF)V".equals(minsn.desc);
+                // drawBar()/Angelica memory bar: text drawing just before binding the splash font texture
+                boolean isDrawString = "drawString".equals(minsn.name)
+                        && "(Ljava/lang/String;III)I".equals(minsn.desc);
+                // run(): logo/forge texture bind can also be skipped by Angelica's cached binding
+                boolean isSplashTextureBind = "cpw/mods/fml/client/SplashProgress$Texture".equals(minsn.owner)
+                        && "bind".equals(minsn.name)
+                        && "()V".equals(minsn.desc);
 
-                // メソッドの先頭に挿入
-                method.instructions.insert(prologue);
-                changed = true;
-                System.out.println("[CrossTie] Patched SplashProgress$3.run() - injected reflective GL state reset at HEAD");
-
-                // Display.update() の直後にも注入する
-                org.objectweb.asm.tree.AbstractInsnNode[] instructions = method.instructions.toArray();
-                for (org.objectweb.asm.tree.AbstractInsnNode insn : instructions) {
-                    if (insn instanceof MethodInsnNode) {
-                        MethodInsnNode minsn = (MethodInsnNode) insn;
-                        if ("org/lwjgl/opengl/Display".equals(minsn.owner) && "update".equals(minsn.name) && "()V".equals(minsn.desc)) {
-                            InsnList loopPrologue = new InsnList();
-                            loopPrologue.add(new MethodInsnNode(
-                                Opcodes.INVOKESTATIC,
-                                "net/suzumiya/crosstie/util/SplashGLFix",
-                                "enableTexture2D",
-                                "()V",
-                                false));
-                            loopPrologue.add(new MethodInsnNode(
-                                Opcodes.INVOKESTATIC,
-                                "net/suzumiya/crosstie/util/SplashGLFix",
-                                "resetColor",
-                                "()V",
-                                false));
-                            method.instructions.insert(insn, loopPrologue);
-                            System.out.println("[CrossTie] Patched SplashProgress$3.run() - injected reflective GL state reset after Display.update()");
-                        }
+                if (isMakeCurrent || isUpdate || isClearColor || isDrawString || isSplashTextureBind) {
+                    InsnList patch = new InsnList();
+                    patch.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
+                            "net/suzumiya/crosstie/util/SplashGLFix",
+                            isClearColor || isUpdate ? "markSplashStateDirty" : "prepareTexturedSplashDraw",
+                            "()V",
+                            false));
+                    if (isClearColor || isDrawString || isSplashTextureBind) {
+                        method.instructions.insertBefore(insn, patch);
+                    } else {
+                        method.instructions.insert(insn, patch);
                     }
+                    changed = true;
+                    System.out.println("[CrossTie] SplashProgress$3." + method.name + "() patched "
+                            + (isClearColor || isDrawString || isSplashTextureBind ? "before " : "after ")
+                            + minsn.name + "()");
                 }
             }
         }
-
         return changed ? writeClass(classNode) : basicClass;
     }
 

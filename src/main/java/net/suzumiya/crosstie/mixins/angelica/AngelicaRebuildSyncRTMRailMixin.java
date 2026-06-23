@@ -4,6 +4,7 @@ import jp.ngt.rtm.rail.TileEntityLargeRailCore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
+import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -34,6 +35,9 @@ public abstract class AngelicaRebuildSyncRTMRailMixin {
     @Inject(method = "scheduleRebuildForBlockArea", at = @At("TAIL"), require = 0, remap = false)
     private void crosstie$syncRails(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, boolean important,
             CallbackInfo ci) {
+        if (!CrossTieConfig.fixAngelicaRebuildSync) {
+            return;
+        }
         // 【修正】Minecraftのクライアントインスタンスから現在のワールドを安全に取得
         World clientWorld = Minecraft.getMinecraft().theWorld;
         if (clientWorld == null) {
