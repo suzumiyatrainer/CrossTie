@@ -29,9 +29,9 @@ public abstract class EntityTrainClientSmoothingMixin {
     private boolean crosstie$hasTarget = false;
 
     @Unique
-    private static final double LERP_POS = 0.18D;
+    private static final double LERP_POS = 0.35D;
     @Unique
-    private static final double LERP_ROT = 0.22D;
+    private static final double LERP_ROT = 0.35D;
 
     /**
      * サーバーから位置・回転が送られてきた時点で「目標位置」を記録します。
