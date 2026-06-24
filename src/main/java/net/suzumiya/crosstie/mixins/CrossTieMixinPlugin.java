@@ -35,8 +35,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     /**
      * RenderGlobal.displayList ネイティブ最適化が有効かどうかを返す。
      *
-     * <p>システムプロパティが設定されていればそれを優先し、未設定の場合は
-     * {@link net.suzumiya.crosstie.CrossTieConfig#enableNativeRenderGlobalDisplayLists} の値を参照する。
+     * <p>
+     * システムプロパティが設定されていればそれを優先し、未設定の場合は
+     * {@link net.suzumiya.crosstie.CrossTieConfig#enableNativeRenderGlobalDisplayLists}
+     * の値を参照する。
      * config は preInit 後に読み込まれるため、それまではデフォルト false となる。
      *
      * @return 有効なら true
@@ -94,13 +96,14 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                         && isModPresent("KaizPatch")
                         && isModPresent("NGTScriptUtil");
                 debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + isModPresent("AngelicaGlsm")
-                    + ", KaizPatch=" + isModPresent("KaizPatch") + ", NGTScriptUtil=" + isModPresent("NGTScriptUtil");
+                        + ", KaizPatch=" + isModPresent("KaizPatch") + ", NGTScriptUtil="
+                        + isModPresent("NGTScriptUtil");
             } else if (mixinClassName.endsWith(".ModelPackManagerScriptRedirectMixin")) {
                 shouldApply = isClient && isModPresent("AngelicaGlsm")
                         && isModPresent("RTM")
                         && isModPresent("NGTScriptUtil");
                 debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + isModPresent("AngelicaGlsm")
-                    + ", RTM=" + isModPresent("RTM") + ", NGTScriptUtil=" + isModPresent("NGTScriptUtil");
+                        + ", RTM=" + isModPresent("RTM") + ", NGTScriptUtil=" + isModPresent("NGTScriptUtil");
             } else if (mixinClassName.endsWith(".RailMapCustomCacheMixin")) {
                 shouldApply = isModPresent("RailMapCustom");
                 debugReason = "RailMapCustom=" + isModPresent("RailMapCustom");
@@ -115,13 +118,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             if (mixinClassName.endsWith(".AngelicaRenderGlobalDisplayListCrashMixin")) {
                 shouldApply = isClient && isModPresent("AngelicaGlsm") && isNativeRenderGlobalDisplayListsEnabled();
                 debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + isModPresent("AngelicaGlsm")
-                    + ", nativeLists=" + isNativeRenderGlobalDisplayListsEnabled();
-            } else if (mixinClassName.endsWith(".SplashProgressBlackoutFixMixin")) {
-                boolean fontEnabled = isAngelicaFontRendererEnabled();
-                boolean angelicaPresent = isModPresent("AngelicaGlsm");
-                shouldApply = isClient && angelicaPresent && !fontEnabled;
-                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + angelicaPresent
-                    + ", fontRendererEnabled=" + fontEnabled;
+                        + ", nativeLists=" + isNativeRenderGlobalDisplayListsEnabled();
             } else {
                 shouldApply = isClient && isModPresent("AngelicaGlsm");
                 debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + isModPresent("AngelicaGlsm");
@@ -140,7 +137,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             debugReason = "default=true";
         }
 
-        System.out.println("[CrossTieMixin] " + mixinClassName + " -> " + (shouldApply ? "APPLY" : "SKIP") + " (" + debugReason + ")");
+        System.out.println("[CrossTieMixin] " + mixinClassName + " -> " + (shouldApply ? "APPLY" : "SKIP") + " ("
+                + debugReason + ")");
         return shouldApply;
     }
 
@@ -171,20 +169,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         // Angelica
         mixins.add("angelica.AngelicaRenderGlobalDisplayListCrashMixin");
-
-        // FontConfigScreen が Keyboard.enableRepeatEvents(true) を適切に無効化しない問題の修正
-        if (isClient && isModPresent("AngelicaGlsm")) {
-            mixins.add("angelica.FontConfigScreenFixMixin");
-        }
-
-        // enableFontRenderer=false 時のスプラッシュ画面暗転修正。
-        // MixinFontRenderer が無効だと SplashFontRenderer の GL 初期化が不完全になり
-        // GLStateManager のキャッシュが GL_TEXTURE_2D=false と誤認して画面が真っ黒になる。
-        // MinFo の有無に関わらず enableFontRenderer=false であれば暗転するため、
-        // 設定ファイルの実際の値を読んで判定する。
-        if (isClient && isModPresent("AngelicaGlsm") && !isAngelicaFontRendererEnabled()) {
-            mixins.add("angelica.SplashProgressBlackoutFixMixin");
-        }
 
         // GTNHLib - always present
         mixins.add("gtnhlib.ObjectPoolerThreadSafeMixin");
@@ -244,12 +228,23 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.RailTessellateOptimizationMixin");
                 mixins.add("rtm.TileEntitySignalNoCullingMixin");
                 mixins.add("rtm.TileEntityCrossingGateNoCullingMixin");
+                mixins.add("rtm.GuiSelectTexturePagingMixin");
             }
 
             // GTNHLib client icons
             if (isModPresent("GTNHLib")) {
                 mixins.add("gtnhlib.MixinBlockPaneIconFallback");
                 mixins.add("gtnhlib.MixinBlockIconFallback");
+            }
+
+            // Angelica splash screen blackout fix
+            if (isModPresent("AngelicaGlsm")) {
+                if (!isAngelicaFontRendererEnabled()) {
+                    System.out.println(
+                            "[CrossTieMixin] Angelica FontRenderer is disabled. Applying Splash Screen Blackout Fix.");
+                    mixins.add("splash.MixinSplashProgressMatrixSync");
+                    mixins.add("splash.MixinSplashProgressRunnableSync");
+                }
             }
         }
 
@@ -259,34 +254,42 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     }
 
     /**
-     * Angelica の {@code enableFontRenderer} 設定が有効かどうかを判定する。
-     *
-     * <p>
-     * {@code getMixins()} 呼び出し時点では {@code injectData()} が完了しており
-     * {@code CrossTieCorePlugin.getMcDataDir()} で実行ディレクトリが取得できる。
-     * 設定ファイル({@code config/angelica-modules.cfg})を直接読んで判定する。
-     * ファイルが存在しない、または読み取れない場合は Angelica のデフォルト値({@code true})を返す。
+     * Angelica の enableFontRenderer 設定が有効かどうかを判定する。
      */
     private boolean isAngelicaFontRendererEnabled() {
         java.io.File mcDataDir = CrossTieCorePlugin.getMcDataDir();
         if (mcDataDir == null) {
-            return true; // 判定不能の場合はデフォルト(有効)扱い
+            // CorePluginから取得できない場合はカレントディレクトリ(.minecraft)をフォールバックに
+            mcDataDir = new java.io.File(".");
         }
+
         java.io.File configFile = new java.io.File(mcDataDir, "config/angelica-modules.cfg");
         if (!configFile.exists()) {
-            return true; // ファイルなし = Angelica デフォルト = 有効
+            return true; // ファイルがない場合はAngelicaのデフォルト値（有効）とみなす
         }
+
         try {
             for (String line : java.nio.file.Files.readAllLines(configFile.toPath())) {
                 String trimmed = line.trim();
-                if (trimmed.startsWith("B:enableFontRenderer=")) {
-                    return !"false".equals(trimmed.substring("B:enableFontRenderer=".length()).trim());
+                // コメントアウトされている行をスキップ
+                if (trimmed.startsWith("#")) {
+                    continue;
+                }
+
+                // 設定行のパースを堅牢にするため、全ての空白文字（スペースやインデント）を除去
+                String cleanLine = line.replaceAll("\\s+", "");
+
+                if (cleanLine.startsWith("B:enableFontRenderer=")) {
+                    // "B:enableFontRenderer=false" と完全一致する場合のみ false と判定
+                    return !cleanLine.equals("B:enableFontRenderer=false");
                 }
             }
         } catch (java.io.IOException e) {
             System.err.println("[CrossTieMixin] Failed to read angelica-modules.cfg: " + e.getMessage());
         }
-        return true; // 該当行なし = デフォルト = 有効
+
+        // 設定項目自体が見つからない場合はデフォルトの true
+        return true;
     }
 
     @Override

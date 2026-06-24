@@ -65,6 +65,7 @@ public final class CrossTieConfig {
             "railTessellateOptimizationEnabled",
             "trainGetBlockCacheEnabled",
             "connectionCacheEnabled",
+            "signboardGuiPagingEnabled",
             // Fixes
             "fixAngelicaCloudRendering",
             "fixAngelicaRebuildSync",
@@ -136,6 +137,13 @@ public final class CrossTieConfig {
 
     /** 配線/支柱の接続キャッシュ */
     public static boolean connectionCacheEnabled;
+
+    /**
+     * サインボード選択 GUI の仮想スクロールを有効にするかどうか。
+     * 有効時は画面に表示される行数分のボタンのみ生成するため、
+     * テクスチャ数が多い環境での GUI 開き遅延を大幅に改善する。
+     */
+    public static boolean signboardGuiPagingEnabled;
 
     // ---- 設定項目 (Fixes) ---- //
 
@@ -302,6 +310,13 @@ public final class CrossTieConfig {
                 true,
                 "配線/支柱の接続判定結果をキャッシュし、パフォーマンスを向上します。");
 
+        signboardGuiPagingEnabled = config.getBoolean(
+                "signboardGuiPagingEnabled",
+                CAT_PERFORMANCE,
+                true,
+                "サインボード選択 GUI を仮想スクロール方式にし、テクスチャ数が多い環境での"
+                        + " GUI 開き遅延を改善します。");
+
         // ---- 3. Fixes カテゴリ ---- //
         fixAngelicaCloudRendering = config.getBoolean(
                 "fixAngelicaCloudRendering",
@@ -343,6 +358,7 @@ public final class CrossTieConfig {
         railTessellateOptimizationEnabled = true;
         trainGetBlockCacheEnabled = true;
         connectionCacheEnabled = true;
+        signboardGuiPagingEnabled = true;
         fixAngelicaCloudRendering = true;
         fixAngelicaRebuildSync = true;
         fixAngelicaWaterRenderDistance = true;

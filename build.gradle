@@ -10,6 +10,20 @@ version = '1.0.0-Alpha7'
 group = project.modGroup
 archivesBaseName = 'CrossTie'
 
+eclipse {
+    classpath {
+        file {
+            whenMerged {
+                entries.each { entry ->
+                    if (entry.kind == 'src' && entry.path.startsWith('build/')) {
+                        entry.entryAttributes['ignore_optional_problems'] = 'true'
+                    }
+                }
+            }
+        }
+    }
+}
+
 def privateMavenUrl = (findProperty('privateMavenUrl') ?: '').toString().trim()
 def privateMavenUser = (findProperty('privateMavenUser') ?: '').toString().trim()
 def privateMavenPassword = (findProperty('privateMavenPassword') ?: '').toString().trim()
