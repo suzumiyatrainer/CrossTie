@@ -47,6 +47,10 @@ public class ModDetector {
         // Incompatible mods
         MOD_PATTERNS.put("MinFo", new String[] { "minfo" });
 
+        // OptiFine / FastCraft (brightness fix targets)
+        MOD_PATTERNS.put("OptiFine", new String[] { "optifine" });
+        MOD_PATTERNS.put("FastCraft", new String[] { "fastcraft" });
+
         // LiteLoader ecosystem (Macro / Keybind Mod ships as .litemod)
         MOD_PATTERNS.put("LiteLoader", new String[] { "liteloader", "macro", "keybind" });
         MOD_PATTERNS.put("MacroMod", new String[] { "macro", "keybind" });

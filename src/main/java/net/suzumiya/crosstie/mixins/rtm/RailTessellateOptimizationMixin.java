@@ -53,7 +53,9 @@ public abstract class RailTessellateOptimizationMixin {
                 }
 
                 // Script-side visibility check (rarely used, keep minimal overhead)
-                if (!((Boolean) jp.ngt.ngtlib.io.ScriptUtil.doScriptFunction(
+                // script == null means BasicRailPartsRenderer (no-script renderer)
+                // whose shouldRenderObject() always returns true, so skip the call entirely.
+                if (script != null && !((Boolean) jp.ngt.ngtlib.io.ScriptUtil.doScriptFunction(
                         script, "shouldRenderObject", tileEntity, group.name, capacity, i))) {
                     continue;
                 }

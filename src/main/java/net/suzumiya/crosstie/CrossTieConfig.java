@@ -70,7 +70,10 @@ public final class CrossTieConfig {
             "fixAngelicaCloudRendering",
             "fixAngelicaRebuildSync",
             "fixAngelicaWaterRenderDistance",
-            "disableSignalCulling"));
+            "disableSignalCulling",
+            "fixOptiFineRailBrightness",
+            "fixOptiFineWireNormalize",
+            "fixOptiFineWireShadowPass"));
 
     /** config_version プロパティの名前 */
     private static final String PROP_CONFIG_VERSION = "config_version";
@@ -158,6 +161,28 @@ public final class CrossTieConfig {
 
     /** シグナル/踏切のカリング無効化 */
     public static boolean disableSignalCulling;
+
+    /**
+     * OptiFine/FastCraft 環境で OpenGlHelper.lightmapTexUnit が 0 になることによる
+     * LargeRail の UV 座標破壊（緑の縦線）を修正する。
+     * Angelica が存在する場合はMixin自体が適用されないため、実質的にAngelica専用修正と完全分離。
+     */
+    public static boolean fixOptiFineRailBrightness;
+
+    /**
+     * RTMのワイヤー描画の非均等スケールで法線が歪み、シェーダー環境で完全に透明になる問題を修正する。
+     * 描画時に {@code GL_NORMALIZE} を有効化する。
+     */
+    public static boolean fixOptiFineWireNormalize;
+
+
+    /**
+     * OptiFine/FastCraft + shadersmod 環境で、shadow pass 中に
+     * {@code MinecraftForgeClient.getRenderPass()} が {@code -1} を返すことで
+     * ワイヤー（電線）が shadow map に描画されず画面上で消えてしまう問題を修正する。
+     * Angelica が存在する場合はMixin自体が適用されないため自動的に無効。
+     */
+    public static boolean fixOptiFineWireShadowPass;
 
     // ---- 初期化 ---- //
 
@@ -342,6 +367,29 @@ public final class CrossTieConfig {
                 CAT_FIXES,
                 true,
                 "シグナル/踏切のカリングを無効化し、遠距離でも描画されるようにします。");
+
+        fixOptiFineRailBrightness = config.getBoolean(
+                "fixOptiFineRailBrightness",
+                CAT_FIXES,
+                true,
+                "OptiFine/FastCraft 環境で OpenGlHelper.lightmapTexUnit が 0 になることによる"
+                        + " LargeRail の UV 座標破壊（緑の縦線）を修正します。"
+                        + " Angelica 環境では自動的に無効化されます。");
+
+        fixOptiFineWireNormalize = config.getBoolean(
+                "fixOptiFineWireNormalize",
+                CAT_FIXES,
+                true,
+                "RTMのワイヤー描画時の非均等スケールで法線が歪み、シェーダー環境で完全に透明になる問題を修正します。"
+                        + " Angelica 環境では自動的に無効化されます。");
+
+        fixOptiFineWireShadowPass = config.getBoolean(
+                "fixOptiFineWireShadowPass",
+                CAT_FIXES,
+                true,
+                "OptiFine/FastCraft + shadersmod 環境で shadow pass 中にワイヤー（電線）が"
+                        + " 描画されず画面上で消えてしまう問題を修正します。"
+                        + " Angelica 環境では自動的に無効化されます。");
     }
 
     /**
@@ -362,7 +410,9 @@ public final class CrossTieConfig {
         fixAngelicaCloudRendering = true;
         fixAngelicaRebuildSync = true;
         fixAngelicaWaterRenderDistance = true;
-        disableSignalCulling = true;
+        fixOptiFineRailBrightness = true;
+        fixOptiFineWireNormalize = true;
+        fixOptiFineWireShadowPass = true;
     }
 
     /**

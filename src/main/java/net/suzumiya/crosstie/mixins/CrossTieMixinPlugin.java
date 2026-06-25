@@ -129,6 +129,13 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.liteloader.")) {
             shouldApply = isModPresent("LiteLoader") || isModPresent("MacroMod");
             debugReason = "LiteLoader=" + isModPresent("LiteLoader") + ", MacroMod=" + isModPresent("MacroMod");
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.optifine.")) {
+            // Angelicaがある場合は絶対に適用しない（二重安全網）
+            shouldApply = (isModPresent("OptiFine") || isModPresent("FastCraft"))
+                    && !isModPresent("AngelicaGlsm");
+            debugReason = "OptiFine=" + isModPresent("OptiFine")
+                    + ", FastCraft=" + isModPresent("FastCraft")
+                    + ", AngelicaGlsm=" + isModPresent("AngelicaGlsm");
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.minecraft.")) {
             shouldApply = isClient && isModPresent("GTNHLib");
             debugReason = "isClient=" + isClient + ", GTNHLib=" + isModPresent("GTNHLib");
@@ -156,6 +163,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 + ", MCTE=" + isModPresent("MCTE")
                 + ", LiteLoader=" + isModPresent("LiteLoader")
                 + ", MacroMod=" + isModPresent("MacroMod")
+                + ", OptiFine=" + isModPresent("OptiFine")
+                + ", FastCraft=" + isModPresent("FastCraft")
                 + ", nativeRenderGlobalDisplayLists=" + isNativeRenderGlobalDisplayListsEnabled());
     }
 
@@ -202,6 +211,13 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         // LiteLoader / Macro / Keybind Mod
         if (isModPresent("LiteLoader") || isModPresent("MacroMod")) {
             mixins.add("liteloader.MixinPermissionsManagerClient");
+        }
+
+        // OptiFine / FastCraft - LargeRail brightness fix (Angelicaがある場合は追加しない)
+        if ((isModPresent("OptiFine") || isModPresent("FastCraft")) && !isModPresent("AngelicaGlsm")) {
+            mixins.add("optifine.RailBrightnessDisplayListSafeMixin");
+            mixins.add("optifine.WireShadowPassRenderMixin");
+            mixins.add("optifine.WireNormalizeShaderFixMixin");
         }
 
         // Client-side mixins

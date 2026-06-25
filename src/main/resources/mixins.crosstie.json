@@ -1,18 +1,19 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "net.suzumiya.crosstie.mixins",
-  "plugin": "net.suzumiya.crosstie.mixins.CrossTieMixinPlugin",
-  "refmap": "mixins.crosstie.refmap.json",
-  "target": "@env(DEFAULT)",
-  "compatibilityLevel": "JAVA_8",
-  "mixins": [
-    "angelica.AngelicaRebuildSyncRTMRailMixin",
-    "rtm.EntityTrainBaseSpeedSyncMixin"
-  ],
-  "client": [
-    "angelica.AngelicaCloudRenderingFixMixin",
-    "angelica.AngelicaRenderDistanceWaterFixMixin",
-    "rtm.EntityTrainClientSmoothingMixin"
-  ]
+    "required":  true,
+    "minVersion":  "0.8",
+    "package":  "net.suzumiya.crosstie.mixins",
+    "plugin":  "net.suzumiya.crosstie.mixins.CrossTieMixinPlugin",
+    "refmap":  "mixins.crosstie.refmap.json",
+    "target":  "@env(DEFAULT)",
+    "compatibilityLevel":  "JAVA_8",
+    "mixins":  [
+                   "angelica.AngelicaRebuildSyncRTMRailMixin",
+                   "rtm.EntityTrainBaseSpeedSyncMixin"
+               ],
+    "client":  [
+                   "angelica.AngelicaCloudRenderingFixMixin",
+                   "angelica.AngelicaRenderDistanceWaterFixMixin",
+                   "rtm.EntityTrainClientSmoothingMixin",
+                   "optifine.WireColorShaderFixMixin"
+               ]
 }
