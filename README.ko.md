@@ -28,7 +28,6 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
 | **Gradle** | `9.6.0` |
-| **Kotlin** | `2.1.0` |
 | **필수 Mod** | `UniMixins 0.3.1+` |
 | **빌드 시스템** | RetroFuturaGradle 2.0.2 |
 | **최종 확인** | `2026-06-28` |

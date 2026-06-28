@@ -28,7 +28,6 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
 | **Gradle** | `9.6.0` |
-| **Kotlin** | `2.1.0` |
 | **Required Mod** | `UniMixins 0.3.1+` |
 | **Build System** | RetroFuturaGradle 2.0.2 |
 | **Last Verified** | `2026-06-28` |

@@ -28,7 +28,6 @@ CrossTie 将针对 RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、Intell
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
 | **Gradle** | `9.6.0` |
-| **Kotlin** | `2.1.0` |
 | **必要 Mod** | `UniMixins 0.3.1+` |
 | **构建系统** | RetroFuturaGradle 2.0.2 |
 | **最后确认** | `2026-06-28` |
