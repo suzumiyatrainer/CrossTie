@@ -13,5 +13,9 @@ public class CrossTiePacketHandler {
 
     public static void init() {
         INSTANCE.registerMessage(MessageRemoveWireHandler.class, MessageRemoveWire.class, packetId++, Side.SERVER);
+        
+        INSTANCE.registerMessage(MessagePlayTrainSoundHandler.class, MessagePlayTrainSound.class, packetId++, Side.CLIENT);
+        INSTANCE.registerMessage(MessagePlayStationSoundHandler.class, MessagePlayStationSound.class, packetId++, Side.CLIENT);
+        INSTANCE.registerMessage(MessageStopSoundHandler.class, MessageStopSound.class, packetId++, Side.CLIENT);
     }
 }

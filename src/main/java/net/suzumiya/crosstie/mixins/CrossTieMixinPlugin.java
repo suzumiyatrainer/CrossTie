@@ -194,6 +194,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         if (isModPresent("RTM")) {
             mixins.add("rtm.EntityTrainBaseSpeedSyncMixin");
             mixins.add("rtm.EntityTrainBaseOptimizationMixin");
+            mixins.add("rtm.MixinSoundAPIEntityTrainBase");
+        }
+
+        // ATSAssistMod
+        if (isModPresent("ATSAssistMod")) {
+            mixins.add("atsassist.MixinSoundAPIATSAssistJS");
         }
 
         // KaizPatch / NGTScriptUtil
