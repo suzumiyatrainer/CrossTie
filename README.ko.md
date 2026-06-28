@@ -29,7 +29,7 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 | **Java** | `8` |
 | **필수 Mod** | `UniMixins 0.3.1+` |
 | **빌드 시스템** | RetroFuturaGradle 1.4.1 |
-| **최종 확인** | `2026-06-19` |
+| **최종 확인** | `2026-06-27` |
 
 ### 🔍 내부 구조 인덱스
 * **Mixin 제어**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -61,13 +61,39 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 CrossTie는 RTM 관련 Mod 군과 성능 향상 Mod 군 사이에서 발생하는 다음 **3가지 핵심 문제**를 통합하여 해결합니다.
 
 1. **🏃 FPS 최적화**
-   * 렌더링 컬링, 업데이트 빈도 억제, 즉시 모드 렌더링으로 전환
-2. **⏳ TPS 최적화**
-   * 엔티티 및 TileEntity의 업데이트 간소화
-3. **🤝 호환성 수정**
-   * Angelica와 RTM 간의 디스플레이 리스트 충돌 해결
-   * GL 호출 리다이렉트
-   * Mod 간의 클래스 로더 충돌 회피
+   * [RTM] LargeRail의 거리 컬링 및 프러스텀 컬링
+   * [RTM] LargeRail의 청크 단위 렌더링 일괄 처리
+   * [RTM] LargeRail TESR의 거리에 따른 렌더링 빈도 스로틀링
+   * [RTM] 레일 테셀레이션 루프 최적화
+   * [RTM] 배선 및 선로주 연결 판정 결과 캐싱
+   * [RTM] 사인보드 선택 GUI의 가상 스크롤 도입을 통한 열기 지연 대폭 개선
+   * [RTM] 신호기/건널목 컬링 비활성화를 통한 원경 렌더링 유지
+   * [NGTScriptUtil] 스크립트 실행 (Invocable) 캐시 최적화
+   * [RailMapCustom] 레일맵 캐시 최적화
+   * [MCTE] 월드 블록 차분 세트 최적화
+   * [Angelica] RenderGlobal.displayList의 네이티브 최적화
+   * [KaizPatch, NGTScriptUtil, Angelica] 스크립트에서의 GL 호출 리다이렉트 및 캐시 최적화
+2. **⏳ TPS / 서버 부하 최적화**
+   * [RTM] 256m 이상 떨어진 Train Entity의 클라이언트 측 업데이트 빈도 감소
+   * [RTM] Train 속도 DataWatcher 동기화 최적화를 통한 네트워크 부하 감소
+   * [RTM] Train onUpdate 내 중복 getBlock() 호출 캐싱
+   * [GTNHLib] 스레드 세이프 객체 풀링
+3. **🤝 호환성 및 렌더링 버그 수정**
+   * [Angelica] 셰이더 활성화 시 바닐라 구름이 이중으로 렌더링되는 문제 수정
+   * [Angelica] 셰이더 활성화 시 물의 렌더링 거리가 비정상적으로 적용되는 문제 수정
+   * [Angelica, RTM] 블록 리빌드 시 레일 TESR의 라이팅이 업데이트되지 않는 문제 수정
+   * [Angelica] 스플래시 화면의 텍스처 상태 캐시 문제 수정
+   * [OptiFine, RTM] LargeRail의 UV 좌표 손상(초록색 세로선) 문제 수정
+   * [OptiFine, RTM] 와이어 렌더링 시 법선 왜곡으로 인해 셰이더 환경에서 투명해지는 문제 수정
+   * [OptiFine, RTM] 그림자 패스(shadow pass) 중 와이어가 렌더링되지 않고 사라지는 문제 수정
+   * [GTNHLib] 유리 판 및 블록의 아이콘 표시 및 획득 폴백 수정
+   * [Hodgepodge] Guava 클래스 로더 충돌 회피
+   * [LiteLoader, MacroMod] 권한 관리 및 코어 호환성 수정
+   * [MCTE] 미니어처 블록 및 아이템 미니어처의 동적 조명 수정
+   * [KaizPatch] ModelLoaderKt 폴백 수정
+4. **✨ 새로운 기능 추가**
+   * [RTM] 재시작 없이 모델 팩을 다시 로드하는 기능 추가 (설정 또는 mods→CrossTie→RTM→reloadPacks) *약간의 버그가 있을 수 있지만 대부분 정상적으로 작동합니다.*
+   * [RTM] 두 지점 사이의 가공선(와이어)을 삭제하는 기능 추가 (설정된 키 + 우클릭) *맨손일 때만 작동합니다.*
 
 ---
 

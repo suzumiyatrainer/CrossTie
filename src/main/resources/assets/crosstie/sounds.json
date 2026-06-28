@@ -1,0 +1,11 @@
+{
+  "rtmreloaded": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "crosstie:rtmreloaded",
+        "stream": false
+      }
+    ]
+  }
+}

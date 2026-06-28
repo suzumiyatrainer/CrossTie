@@ -33,7 +33,7 @@ public abstract class VehicleTrackerThrottleMixin {
      * 送信ループの間引き条件を書き換え：updateFrequency に関わらず THROTTLED_UPDATE_FREQUENCY で送信。
      */
     @Inject(method = "sendLocationToAllClients", at = @At("HEAD"), cancellable = true)
-    private void crosstie$throttleSend(java.util.List par1, CallbackInfo ci) {
+    private void crosstie$throttleSend(java.util.List<?> par1, CallbackInfo ci) {
         VehicleTrackerEntry self = (VehicleTrackerEntry) (Object) this;
         if (self.ticks % THROTTLED_UPDATE_FREQUENCY != 0) {
             ci.cancel();

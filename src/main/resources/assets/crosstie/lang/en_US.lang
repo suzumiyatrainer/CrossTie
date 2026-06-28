@@ -2,3 +2,15 @@ crosstie.command.usage=Usage: /crosstie <cfgr>
 crosstie.command.unknown=Unknown subcommand.
 crosstie.command.cfgr.success=Config reloaded.
 crosstie.command.cfgr.restart_note=Some changes require a restart. Please restart Minecraft to apply all changes.
+crosstie.config.rtm.name=RTM
+crosstie.config.rtm.reloadPacks.name=Reload Packs
+crosstie.gui.reloadPacks.warn_in_world=You are currently in a world or server. Please disconnect and return to the Title Screen to safely reload packs.
+crosstie.gui.reloadPacks.confirm=Are you sure you want to reload all RTM model packs now?
+crosstie.gui.reloadPacks.wait=Reloading packs... This may take up to 5 minutes.
+crosstie.gui.reloadPacks.done=Reloading complete
+crosstie.gui.reloadPacks.clearing_caches=Clearing caches...
+crosstie.gui.reloadPacks.reloading_fileloader=Reloading FileLoader...
+crosstie.gui.reloadPacks.recreating_cachedpolygonmodel=Recreating CachedPolygonModel...
+
+key.categories.crosstie=CrossTie
+key.crosstie.remove_wire=Fast Wire Removal

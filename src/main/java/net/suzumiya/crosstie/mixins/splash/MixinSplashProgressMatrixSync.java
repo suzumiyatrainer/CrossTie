@@ -1,26 +1,21 @@
 package net.suzumiya.crosstie.mixins.splash;
 
-import com.gtnewhorizons.angelica.glsm.GLStateManager;
-import cpw.mods.fml.client.SplashProgress;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
-
-@Mixin(value = SplashProgress.class, remap = false)
+/**
+ * このクラスは廃止されました。
+ *
+ * 旧実装は GL11.glMatrixMode / GL11.glLoadIdentity / GL11.glOrtho を @Redirect ターゲットとして
+ * いたが、AngelicaのGLSMRedirectorがバイトコードレベルでこれらを GLStateManager.* に
+ * 書き換えるため、@Redirect のターゲットが存在せず MixinException でクラッシュしていた。
+ *
+ * スプラッシュ画面黒化の根本修正は
+ * {@link MixinSplashProgressEarlyGLStateManagerLoad} で行っている。
+ *
+ * このクラスは JSON から除外し、CrossTieMixinPlugin.getMixins() にも追加しない。
+ * ファイルは参考用として残す。
+ *
+ * @deprecated 使用しない
+ */
+@Deprecated
 public class MixinSplashProgressMatrixSync {
-
-    @Redirect(method = "start", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glMatrixMode(I)V"))
-    private static void redirectMatrixMode(int mode) {
-        GLStateManager.glMatrixMode(mode);
-    }
-
-    @Redirect(method = "start", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glLoadIdentity()V"))
-    private static void redirectLoadIdentity() {
-        GLStateManager.glLoadIdentity();
-    }
-
-    @Redirect(method = "start", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glOrtho(DDDDDD)V"))
-    private static void redirectOrtho(double left, double right, double bottom, double top, double zNear, double zFar) {
-        GLStateManager.glOrtho(left, right, bottom, top, zNear, zFar);
-    }
+    // 意図的に空 - このMixinは適用しない
 }

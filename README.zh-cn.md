@@ -29,7 +29,7 @@ CrossTie 将针对 RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、Intell
 | **Java** | `8` |
 | **必要 Mod** | `UniMixins 0.3.1+` |
 | **构建系统** | RetroFuturaGradle 1.4.1 |
-| **最后确认** | `2026-06-19` |
+| **最后确认** | `2026-06-27` |
 
 ### 🔍 内部结构索引
 * **Mixin 控制**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -61,13 +61,39 @@ CrossTie 将针对 RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、Intell
 CrossTie 旨在统一解决 RTM 相关 Mod 与性能优化类 Mod 之间产生的以下 **3 个核心问题**。
 
 1. **🏃 FPS 优化**
-   * 渲染剔除 (Culling)、抑制更新频率、切换至立即模式渲染。
-2. **⏳ TPS 优化**
-   * 实体 (Entity) 与方块实体 (TileEntity) 的更新抽稀。
-3. **🤝 兼容性修正**
-   * 解决 Angelica 与 RTM 之间的显示列表 (Display List) 冲突。
-   * GL 调用重定向。
-   * 规避 Mod 之间的类加载器 (Class Loader) 冲突。
+   * [RTM] LargeRail 的距离剔除 (Culling) 与视锥体剔除
+   * [RTM] LargeRail 的区块分批渲染
+   * [RTM] LargeRail TESR 基于距离的渲染频率节流
+   * [RTM] 轨道曲面细分 (Tessellation) 循环优化
+   * [RTM] 电线与电线杆连接判定结果的缓存化
+   * [RTM] 通过虚拟滚动技术大幅改善标志牌选择 GUI 的打开延迟
+   * [RTM] 禁用信号灯/平交道的剔除以维持远景渲染
+   * [NGTScriptUtil] 脚本执行 (Invocable) 缓存优化
+   * [RailMapCustom] 铁路地图缓存优化
+   * [MCTE] 世界方块差分集合优化
+   * [Angelica] RenderGlobal.displayList 的原生优化
+   * [KaizPatch, NGTScriptUtil, Angelica] 脚本 GL 调用重定向及缓存优化
+2. **⏳ TPS / 服务器负载优化**
+   * [RTM] 降低距离 256m 以上的 Train Entity 的客户端更新频率
+   * [RTM] 优化 Train 速度 DataWatcher 同步以降低网络负载
+   * [RTM] 缓存 Train onUpdate 中重复的 getBlock() 调用
+   * [GTNHLib] 线程安全的对象池化
+3. **🤝 兼容性与渲染 Bug 修正**
+   * [Angelica] 修正启用着色器时原版云层重复渲染的问题
+   * [Angelica] 修正启用着色器时水体渲染距离错误的问题
+   * [Angelica, RTM] 修正方块重建时轨道 TESR 的光照不更新的问题
+   * [Angelica] 修正启动画面的纹理状态缓存问题
+   * [OptiFine, RTM] 修正 LargeRail 的 UV 坐标损坏（绿色竖线）问题
+   * [OptiFine, RTM] 修正电线渲染时法线扭曲导致在着色器环境下完全透明的问题
+   * [OptiFine, RTM] 修正 shadow pass 中电线无法渲染而消失的问题
+   * [GTNHLib] 修正玻璃面板及方块的图标显示与获取回退机制
+   * [Hodgepodge] 规避 Guava 类加载器冲突
+   * [LiteLoader, MacroMod] 权限管理及核心兼容性修正
+   * [MCTE] 修正微缩方块与微缩物品的动态光照
+   * [KaizPatch] ModelLoaderKt 回退修正
+4. **✨ 新功能**
+   * [RTM] 增加免重启的重载模型包功能 (设置 或 mods→CrossTie→RTM→reloadPacks) *可能仍藏有少许 Bug，但大体运行正常。*
+   * [RTM] 增加删除两点上方架空线（电线）的功能 (设定键 + 右键单击) *仅限空手时有效。*
 
 ---
 

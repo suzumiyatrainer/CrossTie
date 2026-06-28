@@ -39,7 +39,7 @@ public abstract class AngelicaRenderGlobalDisplayListCrashMixin {
 
     @Inject(method = "glNewList", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private static void crosstie$useNativeRenderGlobalList(int list, int mode, CallbackInfo ci) {
-        if (!crosstie$nativeRenderGlobalListsEnabled || list <= 0 || !crosstie$isRenderGlobalConstructor()) {
+        if (list <= 0 || !crosstie$isNativeDisplayListTarget()) {
             return;
         }
         crosstie$nativeRenderGlobalLists.add(Integer.valueOf(list));
@@ -85,11 +85,19 @@ public abstract class AngelicaRenderGlobalDisplayListCrashMixin {
     }
 
     @Unique
-    private static boolean crosstie$isRenderGlobalConstructor() {
+    private static boolean crosstie$isNativeDisplayListTarget() {
         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
         for (StackTraceElement element : trace) {
-            if ("net.minecraft.client.renderer.RenderGlobal".equals(element.getClassName())
-                    && "<init>".equals(element.getMethodName())) {
+            String className = element.getClassName();
+            String methodName = element.getMethodName();
+            if ("net.minecraft.client.renderer.RenderGlobal".equals(className) && "<init>".equals(methodName)) {
+                return crosstie$nativeRenderGlobalListsEnabled;
+            }
+            if ("jp.ngt.rtm.render.Parts".equals(className) && "render".equals(methodName)) {
+                return true;
+            }
+            // Also check for BasicVehiclePartsRenderer.render just in case, though Parts.render is the one compiling.
+            if ("jp.ngt.rtm.render.BasicVehiclePartsRenderer".equals(className) && "render".equals(methodName)) {
                 return true;
             }
         }

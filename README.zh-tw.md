@@ -29,7 +29,7 @@ CrossTie 將 RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInput
 | **Java** | `8` |
 | **必要 Mod** | `UniMixins 0.3.1+` |
 | **建置系統** | RetroFuturaGradle 1.4.1 |
-| **最後確認** | `2026-06-19` |
+| **最後確認** | `2026-06-27` |
 
 ### 🔍 內部結構索引
 * **Mixin 控制**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -61,13 +61,39 @@ CrossTie 將 RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInput
 CrossTie 旨在一次解決 RTM 相關 Mod 群與效能最佳化 Mod 群之間產生的**三個核心問題**：
 
 1. **🏃 FPS 最佳化**
-   * 畫面渲染剔除（Culling）、抑制更新頻率、切換至立即渲染模式。
-2. **⏳ TPS 最佳化**
-   * 降低實體（Entity）與方塊實體（TileEntity）的更新頻率（間歇更新）。
-3. **🤝 相容性修正**
-   * 解決 Angelica 與 RTM 之間的顯示列表（Display List）衝突。
-   * 重定向 GL 呼叫。
-   * 避免 Mod 之間的類別載入器（Class Loader）衝突。
+   * [RTM] LargeRail 的距離剔除（Culling）與視錐體剔除
+   * [RTM] LargeRail 的區塊批次渲染
+   * [RTM] LargeRail TESR 基於距離的渲染頻率節流
+   * [RTM] 鐵軌曲面細分（Tessellation）迴圈最佳化
+   * [RTM] 電線與電線桿連接判定結果的快取化
+   * [RTM] 透過虛擬滾動技術大幅改善標誌牌選擇 GUI 的開啟延遲
+   * [RTM] 停用號誌/平交道的剔除以維持遠景渲染
+   * [NGTScriptUtil] 腳本執行 (Invocable) 快取最佳化
+   * [RailMapCustom] 鐵路地圖快取最佳化
+   * [MCTE] 世界方塊差分集合最佳化
+   * [Angelica] RenderGlobal.displayList 的原生最佳化
+   * [KaizPatch, NGTScriptUtil, Angelica] 腳本 GL 呼叫重定向及快取最佳化
+2. **⏳ TPS / 伺服器負載最佳化**
+   * [RTM] 降低距離 256m 以上的 Train Entity 的客戶端更新頻率
+   * [RTM] 最佳化 Train 速度 DataWatcher 同步以降低網路負載
+   * [RTM] 快取 Train onUpdate 中重複的 getBlock() 呼叫
+   * [GTNHLib] 執行緒安全的物件池化
+3. **🤝 相容性與渲染 Bug 修正**
+   * [Angelica] 修正啟用光影時原版雲層重複渲染的問題
+   * [Angelica] 修正啟用光影時水體渲染距離錯誤的問題
+   * [Angelica, RTM] 修正方塊重建時鐵軌 TESR 的光照不更新的問題
+   * [Angelica] 修正啟動畫面的紋理狀態快取問題
+   * [OptiFine, RTM] 修正 LargeRail 的 UV 座標損壞（綠色直線）問題
+   * [OptiFine, RTM] 修正電線渲染時法線扭曲導致在光影環境下完全透明的問題
+   * [OptiFine, RTM] 修正 shadow pass 中電線無法渲染而消失的問題
+   * [GTNHLib] 修正玻璃板與方塊的圖標顯示與獲取後備（Fallback）方案
+   * [Hodgepodge] 避免 Guava 類別載入器衝突
+   * [LiteLoader, MacroMod] 權限管理系統及核心相容性修正
+   * [MCTE] 修正微縮方塊與微縮物品的動態光源
+   * [KaizPatch] ModelLoaderKt 後備修正
+4. **✨ 新功能**
+   * [RTM] 新增免重啟的模型包重新載入功能 (設定 或 mods→CrossTie→RTM→reloadPacks) *可能仍藏有些許 Bug，但大致上運作正常。*
+   * [RTM] 新增刪除兩點間高架線（電線）的功能 (設定的按鍵 + 右鍵點擊) *僅限空手時有效。*
 
 ---
 

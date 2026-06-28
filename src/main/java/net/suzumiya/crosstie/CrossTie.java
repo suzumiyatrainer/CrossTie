@@ -6,10 +6,10 @@ import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(modid = Tags.MODID, name = Tags.MODNAME, version = Tags.VERSION, dependencies = "required-after:unimixins")
+@Mod(modid = Tags.MODID, name = Tags.MODNAME, version = Tags.VERSION, dependencies = "required-after:unimixins", guiFactory = "net.suzumiya.crosstie.gui.CrossTieGuiFactory")
 public class CrossTie {
 
-    public static final Logger LOGGER = LogManager.getLogger(Tags.MODID);
+    public static final Logger LOGGER = LogManager.getLogger("CrossTie");
 
     @Mod.Instance(Tags.MODID)
     public static CrossTie instance;
@@ -28,11 +28,23 @@ public class CrossTie {
         // Configuration を初期化し config/crosstie.cfg を生成/ロード
         CrossTieConfig.init(event);
 
+        // ネットワーク初期化
+        net.suzumiya.crosstie.network.CrossTiePacketHandler.init();
+
         // システムプロパティによるオーバーライドを適用
         CrossTieConfig.applySystemPropertyOverrides();
 
         LOGGER.info("CrossTie preInit completed. Config file: {}",
                 event.getSuggestedConfigurationFile().getAbsolutePath());
+    }
+
+    @Mod.EventHandler
+    public void init(cpw.mods.fml.common.event.FMLInitializationEvent event) {
+        if (event.getSide() == cpw.mods.fml.relauncher.Side.CLIENT) {
+            net.suzumiya.crosstie.client.CrossTieKeyBindings.init();
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(new net.suzumiya.crosstie.gui.CrossTieGuiEventHandler());
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(new net.suzumiya.crosstie.client.WireFastRemoveTracker());
+        }
     }
 
     /**

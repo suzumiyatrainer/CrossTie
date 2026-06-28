@@ -47,7 +47,9 @@ public abstract class AngelicaRebuildSyncRTMRailMixin {
         // Iterate all loaded tile entities in the world and check if any RTM rail
         // falls within the rebuild region. Using loadedTileEntityList is acceptable
         // here as this runs on the render thread and the list is a snapshot.
-        for (TileEntity te : (java.util.List<TileEntity>) clientWorld.loadedTileEntityList) {
+        @SuppressWarnings("unchecked")
+        java.util.List<TileEntity> tiles = clientWorld.loadedTileEntityList;
+        for (TileEntity te : tiles) {
             if (te instanceof TileEntityLargeRailCore) {
                 TileEntityLargeRailCore rail = (TileEntityLargeRailCore) te;
                 int tx = te.xCoord;

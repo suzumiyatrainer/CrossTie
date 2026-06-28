@@ -29,7 +29,7 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | **Java** | `8` |
 | **Required Mod** | `UniMixins 0.3.1+` |
 | **Build System** | RetroFuturaGradle 1.4.1 |
-| **Last Verified** | `2026-06-19` |
+| **Last Verified** | `2026-06-27` |
 
 ### 🔍 Internal Structure Index
 * **Mixin Control**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -61,13 +61,39 @@ Recommended Mod versions for optimal performance.
 CrossTie solves the following **three core problems** that occur between RTM-related Mods and performance-enhancing Mods.
 
 1. **🏃 FPS Optimization**
-   * Rendering culling, update frequency suppression, and switching to immediate rendering.
-2. **⏳ TPS Optimization**
-   * Thinning updates for Entities and TileEntities.
-3. **🤝 Compatibility Fixes**
-   * Resolving display list conflicts between Angelica and RTM.
-   * Redirecting GL calls.
-   * Avoiding class loader conflicts between Mods.
+   * [RTM] Distance culling and frustum culling for LargeRail
+   * [RTM] Chunk-based rendering batching for LargeRail
+   * [RTM] Distance-based rendering frequency throttle for LargeRail TESR
+   * [RTM] Optimization of the rail tessellation loop
+   * [RTM] Caching of electrical wiring and line pole connection detection results
+   * [RTM] Significant opening delay improvement by virtual scrolling for the signboard selection GUI
+   * [RTM] Maintaining distant views by disabling culling for signals and crossing gates
+   * [NGTScriptUtil] Cache optimization for script execution (Invocable)
+   * [RailMapCustom] Optimization of rail map cache
+   * [MCTE] Optimization of world block difference sets
+   * [Angelica] Native optimization of RenderGlobal.displayList
+   * [KaizPatch, NGTScriptUtil, Angelica] GL call redirection from scripts and cache optimization
+2. **⏳ TPS / Server Load Optimization**
+   * [RTM] Client-side update frequency reduction for Train Entities more than 256m away
+   * [RTM] Network load reduction through Train speed DataWatcher synchronization optimization
+   * [RTM] Caching of redundant getBlock() calls inside Train onUpdate
+   * [GTNHLib] Thread-safe object pooling
+3. **🤝 Compatibility & Rendering Bug Fixes**
+   * [Angelica] Fixes double-rendering of vanilla clouds when shaders are enabled
+   * [Angelica] Fixes incorrect water render distance when shaders are enabled
+   * [Angelica, RTM] Fixes rail TESR lighting not updating during block rebuilds
+   * [Angelica] Fixes texture state caching issues on the splash screen
+   * [OptiFine, RTM] Fixes LargeRail UV coordinate corruption (green vertical lines)
+   * [OptiFine, RTM] Fixes normal distortion during wire rendering, preventing wires from becoming fully transparent in shader environments
+   * [OptiFine, RTM] Fixes wires not rendering and disappearing during the shadow pass
+   * [GTNHLib] Fixes icon display and retrieval fallbacks for glass panes and blocks
+   * [Hodgepodge] Avoids Guava class loader conflicts
+   * [LiteLoader, MacroMod] Permission management and core compatibility fixes
+   * [MCTE] Dynamic lighting fixes for miniature blocks and item miniatures
+   * [KaizPatch] ModelLoaderKt fallback fix
+4. **✨ New Features**
+   * [RTM] Adds a model pack reload feature that doesn't require a restart (Settings or mods→CrossTie→RTM→reloadPacks) *May still contain minor bugs, but works reasonably well.*
+   * [RTM] Adds a feature to delete overhead wires (catenary) between two points (Configured key + Right click) *Requires an empty hand.*
 
 ---
 

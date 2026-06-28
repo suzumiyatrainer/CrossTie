@@ -29,7 +29,7 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 | **Java** | `8` |
 | **必須Mod** | `UniMixins 0.3.1+` |
 | **ビルドシステム** | RetroFuturaGradle 1.4.1 |
-| **最終確認** | `2026-06-19` |
+| **最終確認** | `2026-06-27` |
 
 ### 🔍 内部構造インデックス
 * **Mixin 制御**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -45,14 +45,14 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 
 | Mod名 | 推奨バージョン | 区分 |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha6` | **本体** |
+| **CrossTie** | `1.0.0-Alpha6+` | **本体** |
 | **UniMixins** | `0.3.1` | **必須** |
 | **KaizPatchX** | `1.10.0` | 推奨 |
 | **Angelica** | `2.1.42+` | 推奨 |
 | **GTNHLib** | `0.11.18+` | 推奨 |
 | **Hodgepodge** | `2.7.162+` | 任意 |
-| **ArchaicFix** | `0.8.0` | 任意 |
-| **ShaderFixer** | `5.4` | 任意 |
+| **ArchaicFix** | `0.8.0+` | 任意 |
+| **ShaderFixer** | `5.4+` | 任意 |
 
 ---
 
@@ -61,13 +61,39 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 CrossTie は、RTM 関連の Mod 群とパフォーマンス系 Mod 群の間で発生する、以下の **3つのコア問題**をまとめて解決します。
 
 1. **🏃 FPS 最適化**
-   * 描画カリング、更新頻度抑制、即時描画への切り替え
-2. **⏳ TPS 最適化**
-   * エンティティ・TileEntity の更新間引き
-3. **🤝 互換性修正**
-   * Angelica と RTM 間のディスプレイリスト競合の解消
-   * GL 呼び出しのリダイレクト
-   * Mod 間のクラスローダー競合回避
+   * [RTM] LargeRailの距離カリングとフラストラムカリング
+   * [RTM] LargeRailのチャンク単位レンダリング集約
+   * [RTM] LargeRail TESRの距離に応じた描画頻度スロットル
+   * [RTM] レールテッセレーションループの最適化
+   * [RTM] 配線および支柱の接続判定結果のキャッシュ化
+   * [RTM] サインボード選択GUIの仮想スクロール化による開き遅延改善
+   * [RTM] シグナル/踏切のカリング無効化による遠景描画の維持
+   * [NGTScriptUtil] スクリプト実行 (Invocable) のキャッシュ最適化
+   * [RailMapCustom] レールマップのキャッシュ最適化
+   * [MCTE] ワールドブロック差分セットの最適化
+   * [Angelica] RenderGlobal.displayList のネイティブ最適化
+   * [KaizPatch, NGTScriptUtil, Angelica] スクリプトからのGL呼び出しリダイレクトおよびキャッシュ最適化
+2. **⏳ TPS / サーバー負荷最適化**
+   * [RTM] 256m以上離れたTrain Entityのクライアント側更新頻度を低減
+   * [RTM] Train速度の DataWatcher 同期最適化によるネットワーク負荷低減
+   * [RTM] Train onUpdate 内の重複 getBlock() 呼び出しのキャッシュ化
+   * [GTNHLib] スレッドセーフなオブジェクトプール化
+3. **🤝 互換性・描画バグ修正**
+   * [Angelica] シェーダー有効時にバニラ雲が二重描画される問題の修正
+   * [Angelica] シェーダー有効時に水の描画距離が不正になる問題の修正
+   * [Angelica, RTM] ブロックリビルド時にレールTESRのライティングが更新されない問題の修正
+   * [Angelica] スプラッシュ画面のテクスチャ状態キャッシュ問題の修正
+   * [OptiFine, RTM] LargeRailのUV座標破壊（緑の縦線）の修正
+   * [OptiFine, RTM] ワイヤー描画時の法線の歪みによるシェーダー環境での透明化の修正
+   * [OptiFine, RTM] shadow pass中にワイヤーが描画されず消えてしまう問題の修正
+   * [GTNHLib] Glass pane およびブロックのアイコン表示・取得フォールバック修正
+   * [Hodgepodge] Guava クラスローダーの競合回避
+   * [LiteLoader, MacroMod] パーミッション管理およびコアの互換性修正
+   * [MCTE] ミニチュアブロックおよびアイテムミニチュアの動的ライティング修正
+   * [KaizPatch] ModelLoaderKt のフォールバック修正
+4. **✨ 新機能の追加**
+   * [RTM] 再起動不要のモデルパック再読み込み機能の追加 (設定 or mods→CrossTie→RTM→reloadPacks) ※バグが紛れてる可能性が未だありますが、概ね正常に動きます。
+   * [RTM] 2点上の架線を削除する機能(キー設定で設定したキー+右クリック) ※素手でない場合は動きません。
 
 ---
 

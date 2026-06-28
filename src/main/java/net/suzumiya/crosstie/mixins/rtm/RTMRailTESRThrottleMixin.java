@@ -1,6 +1,5 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import jp.ngt.rtm.rail.RenderLargeRail;
 import jp.ngt.rtm.rail.TileEntityLargeRailCore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.culling.Frustrum;

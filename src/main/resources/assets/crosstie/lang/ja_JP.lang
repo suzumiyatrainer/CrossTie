@@ -2,3 +2,15 @@ crosstie.command.usage=使い方: /crosstie <cfgr>
 crosstie.command.unknown=不明なサブコマンドです。
 crosstie.command.cfgr.success=Config を再読み込みしました。
 crosstie.command.cfgr.restart_note=一部の変更は再起動が必要です。Minecraft を再起動してすべての変更を適用してください。
+crosstie.config.rtm.name=RTM
+crosstie.config.rtm.reloadPacks.name=パックのリロード
+crosstie.gui.reloadPacks.warn_in_world=現在ワールドまたはサーバーに参加中です。リロードを安全に行うため、一度切断してタイトル画面に戻ってください。
+crosstie.gui.reloadPacks.confirm=RTMの全モデルパックを再読み込みしますか？
+crosstie.gui.reloadPacks.wait=再読込中、これには5分ほどかかります。
+crosstie.gui.reloadPacks.done=再読み込みが完了しました
+crosstie.gui.reloadPacks.clearing_caches=キャッシュをクリアしています...
+crosstie.gui.reloadPacks.reloading_fileloader=ファイルローダーを再構成しています...
+crosstie.gui.reloadPacks.recreating_cachedpolygonmodel=ポリゴンモデルのキャッシュを再構築しています...
+
+key.categories.crosstie=CrossTie
+key.crosstie.remove_wire=ワイヤー削除 (2点指定)

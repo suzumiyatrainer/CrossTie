@@ -1,12 +1,10 @@
 package net.suzumiya.crosstie.command;
 
-import java.util.Arrays;
 import java.util.List;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 import net.suzumiya.crosstie.CrossTieConfig;
@@ -39,6 +37,7 @@ public class CommandCrossTie extends CommandBase {
         return 2; // OP 権限が必要
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
         if (args.length == 1) {

@@ -40,7 +40,7 @@ public abstract class GuiSelectTexturePagingMixin extends GuiScreen {
     // ---- @Shadow : GuiSelectTexture のプライベートフィールドを参照 ----
 
     @Shadow
-    public ITextureHolder holder;
+    public ITextureHolder<?> holder;
 
     @Shadow
     private List<TextureProperty> properties;
@@ -148,6 +148,7 @@ public abstract class GuiSelectTexturePagingMixin extends GuiScreen {
      *
      * @param scrollRow 先頭に表示する行インデックス（0 始まり）
      */
+    @SuppressWarnings("unchecked")
     @Unique
     private void crosstie$buildPage(int scrollRow) {
         this.buttonList.clear();
@@ -178,6 +179,7 @@ public abstract class GuiSelectTexturePagingMixin extends GuiScreen {
      * 全テクスチャ分のボタンを生成する
      * ({@link CrossTieConfig#signboardGuiPagingEnabled} 無効時のフォールバック)。
      */
+    @SuppressWarnings("unchecked")
     @Unique
     private void crosstie$buildAll() {
         final int x = this.crosstie$cellW;

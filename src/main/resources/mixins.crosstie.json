@@ -7,13 +7,14 @@
     "target":  "@env(DEFAULT)",
     "compatibilityLevel":  "JAVA_8",
     "mixins":  [
-                   "angelica.AngelicaRebuildSyncRTMRailMixin",
-                   "rtm.EntityTrainBaseSpeedSyncMixin"
+                   "angelica.AngelicaRebuildSyncRTMRailMixin"
                ],
     "client":  [
                    "angelica.AngelicaCloudRenderingFixMixin",
                    "angelica.AngelicaRenderDistanceWaterFixMixin",
-                   "rtm.EntityTrainClientSmoothingMixin",
+                   "angelica.IdMapOrderFixMixin",
+                   "angelica.AngelicaBlockMaterialMappingCaseFixMixin",
+                   "angelica.AngelicaItemMaterialHelperCaseFixMixin",
                    "optifine.WireColorShaderFixMixin"
                ]
 }

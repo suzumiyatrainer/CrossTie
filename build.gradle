@@ -1,6 +1,6 @@
 plugins {
     id 'java-library'
-    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.1'
+    id 'com.gtnewhorizons.retrofuturagradle' version '2.0.2'
     id 'idea'
     id 'eclipse'
 }
@@ -8,7 +8,7 @@ plugins {
 // Mod properties from gradle.properties
 version = '1.0.0-Alpha7'
 group = project.modGroup
-archivesBaseName = 'CrossTie'
+base.archivesName.set('CrossTie')
 
 eclipse {
     classpath {
@@ -157,6 +157,10 @@ dependencies {
     def angelicaVersion = (findProperty('angelicaVersion') ?: '2.1.42').toString().trim()
     compileOnly("com.github.GTNewHorizons:Angelica:${angelicaVersion}")
 
+    // Hodgepodge via JitPack
+    def hodgepodgeVersion = (findProperty('hodgepodgeVersion') ?: '2.7.166').toString().trim()
+    compileOnly("com.github.GTNewHorizons:Hodgepodge:${hodgepodgeVersion}")
+
     // Optional: any extra jars dropped in libs/ are still picked up for local-only testing
     // (e.g. a target mod you want to test against but that isn't declared as a dependency above).
     // libs/ is gitignored and does not need to contain anything for a normal build to succeed.
@@ -238,4 +242,9 @@ processResources {
             'modVersion': mod_version
         )
     }
+}
+
+tasks.withType(Javadoc) {
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
 }
