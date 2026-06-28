@@ -26,10 +26,12 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | **Build** | [![Build](https://github.com/suzumiyatrainer/CrossTie/actions/workflows/build-and-test.yml/badge.svg)](./.github/workflows/build-and-test.yml) |
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
-| **Java** | `8` |
+| **Java** | `25(mod:8)` |
+| **Gradle** | `9.6.0` |
+| **Kotlin** | `2.1.0` |
 | **Required Mod** | `UniMixins 0.3.1+` |
-| **Build System** | RetroFuturaGradle 1.4.1 |
-| **Last Verified** | `2026-06-27` |
+| **Build System** | RetroFuturaGradle 2.0.2 |
+| **Last Verified** | `2026-06-28` |
 
 ### 🔍 Internal Structure Index
 * **Mixin Control**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -45,14 +47,14 @@ Recommended Mod versions for optimal performance.
 
 | Mod Name | Recommended Version | Category |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha6` | **Main** |
+| **CrossTie** | `1.0.0-Alpha7` | **Main** |
 | **UniMixins** | `0.3.1` | **Required** |
 | **KaizPatchX** | `1.10.0` | Recommended |
 | **Angelica** | `2.1.42+` | Recommended |
 | **GTNHLib** | `0.11.18+` | Recommended |
 | **Hodgepodge** | `2.7.162+` | Optional |
-| **ArchaicFix** | `0.8.0` | Optional |
-| **ShaderFixer** | `5.4` | Optional |
+| **ArchaicFix** | `0.8.0+` | Optional |
+| **ShaderFixer** | `5.4+` | Optional |
 
 ---
 
@@ -202,3 +204,4 @@ Directly rewrites bytecode during class loading, before the Mixin phase. This co
 ### 🧱 Build Procedure
 ```bash
 ./gradlew build --no-daemon
+```
