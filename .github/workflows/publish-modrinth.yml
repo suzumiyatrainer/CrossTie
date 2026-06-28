@@ -1,0 +1,73 @@
+name: Publish to Modrinth
+
+on:
+  release:
+    types: [published] # GitHubでReleaseが「公開(Published)」されたら起動
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/.gradle-user-home
+      ORG_GRADLE_PROJECT_privateMavenUrl: ${{ secrets.PRIVATE_MAVEN_URL }}
+      ORG_GRADLE_PROJECT_privateMavenUser: ${{ secrets.PRIVATE_MAVEN_USER }}
+      ORG_GRADLE_PROJECT_privateMavenPassword: ${{ secrets.PRIVATE_MAVEN_PASSWORD }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # 提供されたベースに合わせ JDK 25 をセットアップ
+    - name: Set up JDK 25
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # Gradleビルドを実行して製品版JARを生成
+    - name: Build with Gradle
+      run: ./gradlew build --no-daemon --no-configuration-cache
+
+    # Modrinthへの公開処理
+    - name: Publish to Modrinth
+      uses: Kir-Skay/modrinth-publish-action@v1
+      with:
+        # GitHubリポジトリのSecretsに登録した「MODRINTH_TOKEN」を使用します
+        token: ${{ secrets.MODRINTH_TOKEN }}
+        
+        # 指定されたcrosstieのプロジェクトID
+        project-id: "xrwNprGB"
+        
+        # build.gradleでbase.archivesName.set('CrossTie')が指定されているため、
+        # 生成されるJARファイル名は「CrossTie-バージョン.jar」となります。
+        # GitHubのタグ名（例: 1.0.0-Alpha7）を動的に当てはめます。
+        file-path: "build/libs/CrossTie-${{ github.event.release.tag_name }}.jar"
+        
+        # タイトルと変更ログをGitHubのリリースからそのまま同期
+        version-title: "CrossTie ${{ github.event.release.tag_name }}"
+        changelog: ${{ github.event.release.body }}
+        
+        version-number: ${{ github.event.release.tag_name }}
+        
+        # リリースの種類（GitHub側がプレリリースなら 'beta'、正式版なら 'release' に自動判定）
+        version-type: ${{ github.event.release.prerelease && 'beta' || 'release' }}
+
+        # 対象環境等のメタデータ設定
+        game-versions: |
+          1.7.10
+        loaders: |
+          forge
+        environments: |
+          client
+          server
+
+        # 必須前提Modとして UniMixins を指定
+        dependencies: |
+          unimixins:required
