@@ -1,6 +1,5 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -19,13 +18,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * <p>RenderConnectablePole.js asks BlockLinePole.isConnected six times per pole render.
  * The result depends only on the queried world/block state, so a one-tick client cache
  * avoids repeating the same world.getBlock lookups across dense pole clusters.
+ *
+ * <p>このキャッシュはクライアントスレッドのみで使用されるため、
+ * synchronized ラッパーは不要。WeakHashMap で十分。
  */
 @Mixin(targets = "jp.ngt.rtm.block.BlockLinePole", remap = false)
 public abstract class BlockLinePoleConnectionCacheMixin {
 
     @Unique
     private static final Map<World, TickCache> crosstie$connectionCacheByWorld =
-            Collections.synchronizedMap(new WeakHashMap<World, TickCache>());
+            new WeakHashMap<World, TickCache>();
+
 
     @Inject(method = "isConnected", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private static void crosstie$getCachedConnection(

@@ -30,10 +30,10 @@ public class SoundQueueManager {
     }
 
     // --- Train Task ---
-    public void enqueueTrainSound(int entityId, float length, String[] sounds, int[] delayTicks, byte type) {
+    public void enqueueTrainSound(int entityId, float length, float maxRadius, String[] sounds, int[] delayTicks, byte type) {
         for (int i = 0; i < sounds.length; i++) {
             if (i < delayTicks.length) {
-                queue.add(new TrainQueueTask(entityId, length, sounds[i], delayTicks[i], type));
+                queue.add(new TrainQueueTask(entityId, length, maxRadius, sounds[i], delayTicks[i], type));
             }
         }
     }
@@ -103,20 +103,23 @@ public class SoundQueueManager {
     private static class TrainQueueTask extends QueueTask {
         int entityId;
         float length;
+        float maxRadius;
         String soundName;
         byte type;
 
-        TrainQueueTask(int entityId, float length, String soundName, int delay, byte type) {
+        TrainQueueTask(int entityId, float length, float maxRadius, String soundName, int delay, byte type) {
             super(delay);
             this.entityId = entityId;
             this.length = length;
+            this.maxRadius = maxRadius;
             this.soundName = soundName;
             this.type = type;
         }
 
         @Override
         void execute() {
-            CrossTiePacketHandler.INSTANCE.sendToAll(new MessagePlayTrainSound(entityId, length, soundName, type));
+            if (net.suzumiya.crosstie.CrossTieConfig.enableSoundDebug) System.out.println("[CrossTie-Debug] TrainQueueTask.execute. send packet: trainId=" + entityId + ", maxRadius=" + maxRadius + ", sound=" + soundName + ", type=" + type);
+            CrossTiePacketHandler.INSTANCE.sendToAll(new MessagePlayTrainSound(entityId, length, maxRadius, soundName, type));
         }
     }
 

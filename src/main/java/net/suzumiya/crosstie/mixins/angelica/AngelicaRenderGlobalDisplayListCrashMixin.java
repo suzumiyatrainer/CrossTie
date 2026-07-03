@@ -3,6 +3,7 @@ package net.suzumiya.crosstie.mixins.angelica;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import net.suzumiya.crosstie.util.CrossTiePartsRenderContext;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -84,20 +85,39 @@ public abstract class AngelicaRenderGlobalDisplayListCrashMixin {
         }
     }
 
+    /**
+     * ネイティブ DisplayList のターゲットかどうかを判定する。
+     *
+     * <p>以前はスタックトレースウォーキング ({@code Thread.currentThread().getStackTrace()})
+     * でコールスタックを走査していたが、これは JVM で最も重い操作のひとつで
+     * {@code glNewList} が呼ばれるたびに実行されるため深刻なパフォーマンス問題だった。
+     *
+     * <p>代わりに {@link CrossTiePartsRenderContext#isInsidePartsRender()} を使用する。
+     * これは {@code Parts.render()} の HEAD/RETURN に注入した Mixin によって
+     * {@link ThreadLocal} ベースで管理されるため、スタック走査が不要。
+     */
     @Unique
     private static boolean crosstie$isNativeDisplayListTarget() {
+        // Parts.render() のコンテキスト内であれば RTM パーツのディスプレイリスト
+        if (CrossTiePartsRenderContext.isInsidePartsRender()) {
+            return true;
+        }
+        // RenderGlobal.<init> からの呼び出しは opt-in フラグで制御
+        return crosstie$nativeRenderGlobalListsEnabled
+                && crosstie$isCalledFromRenderGlobalInit();
+    }
+
+    /**
+     * RenderGlobal.&lt;init&gt; から呼ばれているかをスタックで確認する。
+     *
+     * <p>これは起動時に1〜2回しか呼ばれないため、パフォーマンス上の問題はない。
+     */
+    @Unique
+    private static boolean crosstie$isCalledFromRenderGlobalInit() {
         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
         for (StackTraceElement element : trace) {
-            String className = element.getClassName();
-            String methodName = element.getMethodName();
-            if ("net.minecraft.client.renderer.RenderGlobal".equals(className) && "<init>".equals(methodName)) {
-                return crosstie$nativeRenderGlobalListsEnabled;
-            }
-            if ("jp.ngt.rtm.render.Parts".equals(className) && "render".equals(methodName)) {
-                return true;
-            }
-            // Also check for BasicVehiclePartsRenderer.render just in case, though Parts.render is the one compiling.
-            if ("jp.ngt.rtm.render.BasicVehiclePartsRenderer".equals(className) && "render".equals(methodName)) {
+            if ("net.minecraft.client.renderer.RenderGlobal".equals(element.getClassName())
+                    && "<init>".equals(element.getMethodName())) {
                 return true;
             }
         }

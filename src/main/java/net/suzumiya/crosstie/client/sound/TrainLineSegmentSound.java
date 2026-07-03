@@ -13,13 +13,16 @@ public class TrainLineSegmentSound extends PositionedSound implements ITickableS
 
     private final EntityTrainBase train;
     private final float length;
+    private final float maxRadius;
     private final byte type; // 0: InCar, 1: Exterior
     private boolean donePlaying = false;
+    private int crosstie$tickCounter = 0;
 
-    public TrainLineSegmentSound(EntityTrainBase train, float length, String soundName, byte type) {
+    public TrainLineSegmentSound(EntityTrainBase train, float length, float maxRadius, String soundName, byte type) {
         super(new ResourceLocation(soundName));
         this.train = train;
         this.length = length;
+        this.maxRadius = maxRadius;
         this.type = type;
         this.volume = 0.0F; // 初期値は0、毎チック計算
         this.field_147663_c = 1.0F; // pitch
@@ -83,77 +86,59 @@ public class TrainLineSegmentSound extends PositionedSound implements ITickableS
         boolean isLeft = crossProduct > 0; // 車両の向き定義により逆になる場合があるが、相対的左右として扱う
 
         TrainSoundContext ctx = SoundManager.getInstance().getContext(train);
-        boolean isDoorOpenLeft = (ctx.getDoorState() & 1) == 1;
-        boolean isDoorOpenRight = (ctx.getDoorState() & 2) == 2;
+        byte doorState = train.getTrainStateData(4); // 4 = TrainStateType.State_Door.id
+        ctx.setDoorState(doorState); // クライアント側のコンテキスト状態も更新（これにより lastOpenSide も自動更新）
+        
+        boolean isDoorOpenLeft = (doorState & 1) == 1;
+        boolean isDoorOpenRight = (doorState & 2) == 2;
         boolean areBothDoorsClosed = (!isDoorOpenLeft && !isDoorOpenRight);
         
         TrainSoundContext.DoorSide lastOpen = ctx.getLastOpenSide();
 
         if (type == 0) {
-            // ----- IN CAR -----
+            // ----- IN CAR (車内放送) -----
             if (d_center <= 1.5) {
+                // 車内（直径3ブロック = 半径1.5m）は常に 1.0F
                 this.volume = 1.0F;
             } else if (areBothDoorsClosed) {
+                // ドアが閉まっている時は完全遮音（車外に漏れない）
                 this.volume = 0.0F;
             } else {
                 // 開いている側の外側かどうか
                 if ((isLeft && isDoorOpenLeft) || (!isLeft && isDoorOpenRight) || (isDoorOpenLeft && isDoorOpenRight)) {
-                    if (d_side <= 3.0) {
-                        this.volume = 0.8F;
-                    } else if (d_side < 9.0) {
-                        this.volume = 0.8F * (float)((9.0 - d_side) / 6.0);
-                    } else {
-                        this.volume = 0.0F;
-                    }
+                    // 開いている側は 0.8F 基準で maxRadius にかけて線形減衰 (若干速めの減衰など、JS側指定による)
+                    this.volume = calculateVolumeFade(d_side, 0.8F, this.maxRadius);
                 } else {
-                    this.volume = 0.0F; // 閉まっている側の外側には漏れない
+                    // 閉まっている側の外側は完全遮音
+                    this.volume = 0.0F;
                 }
             }
         } else if (type == 1) {
-            // ----- EXTERIOR -----
+            // ----- EXTERIOR (車外スピーカー) -----
             if (d_center <= 1.5) {
-                // 車内
-                this.volume = (isDoorOpenLeft || isDoorOpenRight) ? 0.4F : 0.0F;
+                // 車内：ドアが開いているなら 0.5F、閉まっていても 0.1F で聞こえる
+                this.volume = (isDoorOpenLeft || isDoorOpenRight) ? 0.5F : 0.1F;
             } else {
-                // 車外
-                boolean isCurrentSideOpen = (isLeft && isDoorOpenLeft) || (!isLeft && isDoorOpenRight);
-                boolean isOppositeSideClosed = (isLeft && !isDoorOpenRight) || (!isLeft && !isDoorOpenLeft);
-                
-                boolean isCurrentSideBase = isBaseSide(isLeft, lastOpen);
-                boolean isOppositeSideBase = isBaseSide(!isLeft, lastOpen);
-
-                if (areBothDoorsClosed) {
-                    // 両閉時は最後に開いた側を基準とする
-                    if (isCurrentSideBase) {
-                        this.volume = calculateExteriorFade(d_side);
-                    } else if (isOppositeSideBase) {
-                        this.volume = 0.0F;
-                    } else {
-                        this.volume = 0.0F; // NONEの場合等
-                    }
-                } else if (isCurrentSideOpen) {
-                    this.volume = calculateExteriorFade(d_side);
-                } else if (isOppositeSideClosed) {
-                    this.volume = 0.0F; // 閉まっている側は聞こえない
-                } else {
-                    // 片方開いていて、そちらが基準側の場合
-                    this.volume = 0.0F; 
-                }
+                // 車外：ドアの状態に関わらず常に聞こえる (最大可聴範囲 maxRadius は駅用と同一ロジック)
+                this.volume = calculateVolumeFade(d_side, 0.8F, this.maxRadius);
             }
         }
-    }
-    
-    private boolean isBaseSide(boolean isLeft, TrainSoundContext.DoorSide lastOpen) {
-        if (lastOpen == TrainSoundContext.DoorSide.BOTH) return true;
-        if (isLeft && lastOpen == TrainSoundContext.DoorSide.LEFT) return true;
-        if (!isLeft && lastOpen == TrainSoundContext.DoorSide.RIGHT) return true;
-        return false;
+
+        if (net.suzumiya.crosstie.CrossTieConfig.enableSoundDebug && this.crosstie$tickCounter++ % 20 == 0) {
+            System.out.println("[CrossTie-Debug] SoundUpdate. trainId=" + train.getEntityId() + 
+                ", type=" + type +
+                ", d_center=" + d_center + 
+                ", d_side=" + d_side + 
+                ", isLeft=" + isLeft + 
+                ", doorState=" + ctx.getDoorState() + 
+                ", lastOpen=" + lastOpen + 
+                ", volume=" + this.volume);
+        }
     }
 
-    private float calculateExteriorFade(double d_side) {
-        if (d_side <= 3.0) return 0.8F;
-        if (d_side < 9.0) return 0.8F * (float)((9.0 - d_side) / 6.0);
-        return 0.0F;
+    private float calculateVolumeFade(double d_side, float baseVolume, float maxRadius) {
+        if (d_side >= maxRadius) return 0.0F;
+        return baseVolume * (float) (1.0 - (d_side / maxRadius));
     }
 
     private double[] getClosestPointOnSegment(double px, double pz, double ax, double az, double bx, double bz) {

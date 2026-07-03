@@ -2,6 +2,7 @@ package net.suzumiya.crosstie.mixins.kaizpatch;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -9,11 +10,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * RailMapCustom の各種 getter 結果をキャッシュし、同一 Tick 内の重複計算を排除する。
+ * RailMapCustom の各種 getter 結果をキャッシュし、同一エポック内の重複計算を排除する。
  *
- * <p>キャッシュはワールド時間が変わると自動クリアされるため、
- * レールが更新されて新しい Tick が進めば古い値は破棄される。
- * これにより手動のキャッシュ無効化処理が不要になる。
+ * <p>キャッシュの有効期間は {@link #crosstie$tickEpoch} で管理される。
+ * 外部から {@code crosstie$tickEpoch.incrementAndGet()} を呼ぶか、
+ * 各 getter が呼ばれるたびにエポックの差分でキャッシュを自動クリアする。
  */
 @Mixin(targets = "jp.ngt.rtm.rail.util.RailMapCustom", remap = false)
 public abstract class RailMapCustomCacheMixin {
@@ -26,8 +27,17 @@ public abstract class RailMapCustomCacheMixin {
     @Unique
     private static final int MAX_CACHE_ENTRIES = 4096;
 
+    /**
+     * グローバルエポックカウンタ。インクリメントされるとすべてのインスタンスのキャッシュが
+     * 次回アクセス時に自動クリアされる。
+     * 外部から無効化したい場合は {@code crosstie$tickEpoch.incrementAndGet()} を呼べばよい。
+     */
     @Unique
-    private long crosstie$cachedTick = -1L;
+    public static final AtomicLong crosstie$tickEpoch = new AtomicLong(0L);
+
+    /** このインスタンスが最後にキャッシュを検証したエポック値 */
+    @Unique
+    private long crosstie$localEpoch = -1L;
 
     @Unique
     private Double crosstie$lengthCache;
@@ -45,6 +55,20 @@ public abstract class RailMapCustomCacheMixin {
     }
 
     @Unique
+    private void crosstie$ensureCacheValid() {
+        if (!crosstie$railMapCustomCacheEnabled) {
+            return;
+        }
+        long currentEpoch = crosstie$tickEpoch.get();
+        if (crosstie$localEpoch != currentEpoch) {
+            // エポックが変わっていたらキャッシュを全クリア
+            crosstie$localEpoch = currentEpoch;
+            crosstie$cache.clear();
+            crosstie$lengthCache = null;
+        }
+    }
+
+    @Unique
     private crosstie$CacheEntry crosstie$getOrCreateEntry(long key) {
         crosstie$CacheEntry entry = crosstie$cache.get(key);
         if (entry == null) {
@@ -57,27 +81,17 @@ public abstract class RailMapCustomCacheMixin {
         return entry;
     }
 
-    @Unique
-    private boolean crosstie$isCacheValid() {
-        if (!crosstie$railMapCustomCacheEnabled) {
-            return false;
-        }
-        // ワールド時間が変わっていないか確認（Tick跨ぎで自動無効化）
-        // EntityTrainBase や World の時間に依存しない簡易方式:
-        // 実質的にこのメソッドが呼ばれるたびに true を返し、
-        // 外部から clearCache() が呼ばれる想定。
-        // 代わりにスタティックな epoch カウンタ方式を採用する。
-        return true;
-    }
-
     // ========== getLength ==========
 
     @Inject(method = "getLength", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private void crosstie$getCachedLength(CallbackInfoReturnable<Double> cir) {
-        if (!crosstie$railMapCustomCacheEnabled || crosstie$lengthCache == null) {
+        if (!crosstie$railMapCustomCacheEnabled) {
             return;
         }
-        cir.setReturnValue(crosstie$lengthCache);
+        crosstie$ensureCacheValid();
+        if (crosstie$lengthCache != null) {
+            cir.setReturnValue(crosstie$lengthCache);
+        }
     }
 
     @Inject(method = "getLength", at = @At("RETURN"), require = 0, remap = false)
@@ -94,6 +108,7 @@ public abstract class RailMapCustomCacheMixin {
         if (!crosstie$railMapCustomCacheEnabled) {
             return;
         }
+        crosstie$ensureCacheValid();
         crosstie$CacheEntry entry = crosstie$cache.get(crosstie$key(split, index));
         if (entry != null && entry.pos != null) {
             cir.setReturnValue(entry.pos.clone());
@@ -115,6 +130,7 @@ public abstract class RailMapCustomCacheMixin {
         if (!crosstie$railMapCustomCacheEnabled) {
             return;
         }
+        crosstie$ensureCacheValid();
         crosstie$CacheEntry entry = crosstie$cache.get(crosstie$key(split, index));
         if (entry != null && entry.height != null) {
             cir.setReturnValue(entry.height);
@@ -135,6 +151,7 @@ public abstract class RailMapCustomCacheMixin {
         if (!crosstie$railMapCustomCacheEnabled) {
             return;
         }
+        crosstie$ensureCacheValid();
         crosstie$CacheEntry entry = crosstie$cache.get(crosstie$key(split, index));
         if (entry != null && entry.yaw != null) {
             cir.setReturnValue(entry.yaw);
@@ -155,6 +172,7 @@ public abstract class RailMapCustomCacheMixin {
         if (!crosstie$railMapCustomCacheEnabled) {
             return;
         }
+        crosstie$ensureCacheValid();
         crosstie$CacheEntry entry = crosstie$cache.get(crosstie$key(split, index));
         if (entry != null && entry.pitch != null) {
             cir.setReturnValue(entry.pitch);
@@ -175,6 +193,7 @@ public abstract class RailMapCustomCacheMixin {
         if (!crosstie$railMapCustomCacheEnabled) {
             return;
         }
+        crosstie$ensureCacheValid();
         crosstie$CacheEntry entry = crosstie$cache.get(crosstie$key(split, index));
         if (entry != null && entry.roll != null) {
             cir.setReturnValue(entry.roll);

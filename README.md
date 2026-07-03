@@ -30,7 +30,7 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 | **Gradle** | `9.6.0` |
 | **必須Mod** | `UniMixins 0.3.1+` |
 | **ビルドシステム** | RetroFuturaGradle 2.0.2 |
-| **最終確認** | `2026-06-28` |
+| **最終確認** | `2026-06-29` |
 
 ### 🔍 内部構造インデックス
 * **Mixin 制御**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -95,6 +95,7 @@ CrossTie は、RTM 関連の Mod 群とパフォーマンス系 Mod 群の間で
 4. **✨ 新機能の追加**
    * [RTM] 再起動不要のモデルパック再読み込み機能の追加 (設定 or mods→CrossTie→RTM→reloadPacks) ※バグが紛れてる可能性が未だありますが、概ね正常に動きます。
    * [RTM] 2点上の架線を削除する機能(キー設定で設定したキー+右クリック) ※素手でない場合は動きません。
+   * [RTM] ドア閉時に車外に漏れない車内放送用サウンドAPIの追加
 
 ---
 

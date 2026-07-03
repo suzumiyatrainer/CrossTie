@@ -60,6 +60,10 @@ repositories {
         url = 'https://nexus.gtnewhorizons.com/repository/public/'
     }
     maven {
+        name = 'CurseMaven'
+        url = 'https://cursemaven.com'
+    }
+    maven {
         name = 'SpongePowered'
         url = 'https://repo.spongepowered.org/repository/maven-public/'
     }
@@ -158,12 +162,16 @@ dependencies {
 
     // Angelica + Iris (for mixin compilation) via JitPack.
     // Iris classes are bundled inside the Angelica jar.
-    def angelicaVersion = (findProperty('angelicaVersion') ?: '2.1.42').toString().trim()
+    def angelicaVersion = (findProperty('angelicaVersion') ?: '2.1.49').toString().trim()
     compileOnly("com.github.GTNewHorizons:Angelica:${angelicaVersion}")
 
     // Hodgepodge via JitPack
     def hodgepodgeVersion = (findProperty('hodgepodgeVersion') ?: '2.7.166').toString().trim()
     compileOnly("com.github.GTNewHorizons:Hodgepodge:${hodgepodgeVersion}")
+
+    // ProjectRed
+    compileOnly rfg.deobf("curse.maven:project-red-core-228702:2280728")
+    compileOnly rfg.deobf("curse.maven:project-red-illumination-229046:2280733")
 
     // Optional: any extra jars dropped in libs/ are still picked up for local-only testing
     // (e.g. a target mod you want to test against but that isn't declared as a dependency above).
@@ -172,7 +180,13 @@ dependencies {
 
 }
 
-tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(JavaExec) {
+    systemProperty 'file.encoding', 'UTF-8'
+}
 
 java { toolchain { languageVersion = JavaLanguageVersion.of(8) } }
 
@@ -251,4 +265,11 @@ processResources {
 tasks.withType(Javadoc) {
     options.encoding = 'UTF-8'
     options.charSet = 'UTF-8'
+}
+
+task showDirs {
+    doLast {
+        println "プロジェクトディレクトリ: $projectDir"
+        println "ルートプロジェクトディレクトリ: $rootDir"
+    }
 }

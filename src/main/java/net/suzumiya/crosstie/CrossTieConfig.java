@@ -48,7 +48,7 @@ public final class CrossTieConfig {
      */
     private static final Set<String> KNOWN_KEYS = new HashSet<>(Arrays.asList(
             // General
-            "enableNativeRenderGlobalDisplayLists", "enableDiagnostics", "config_version",
+            "enableNativeRenderGlobalDisplayLists", "enableDiagnostics", "enableSoundDebug", "config_version",
             // Performance
             "trainDistantCullingEnabled", "trainSpeedSyncEnabled", "railTesrThrottleEnabled", "largeRailCullingEnabled",
             "largeRailChunkBatchingEnabled", "railTessellateOptimizationEnabled", "trainGetBlockCacheEnabled",
@@ -93,6 +93,9 @@ public final class CrossTieConfig {
 
     /** 診断ログ (CrossTieDiagnostics) を有効にするかどうか。 */
     public static boolean enableDiagnostics;
+
+    /** サウンド系のデバッグログ出力を有効にするかどうか。 */
+    public static boolean enableSoundDebug;
 
     /** Rキー＋右クリックでのワイヤー物理削除機能を有効にするかどうか。 */
     public static boolean enableWireFastRemove;
@@ -258,6 +261,9 @@ public final class CrossTieConfig {
         enableDiagnostics = config.getBoolean("enableDiagnostics", Configuration.CATEGORY_GENERAL, false,
                 "診断ログ (CrossTieDiagnostics) を有効にします。" + " システムプロパティ 'crosstie.diagnostics=true' でも設定可能です。");
 
+        enableSoundDebug = config.getBoolean("enableSoundDebug", Configuration.CATEGORY_GENERAL, false,
+                "サウンド系API（車内放送等）のデバッグログ出力を有効にします。");
+
         // ---- 1.5. Features カテゴリ ---- //
         enableWireFastRemove = config.getBoolean("enableWireFastRemove", CAT_FEATURES, true,
                 "Rキー＋右クリックでのワイヤー物理削除機能を有効にします。");
@@ -323,6 +329,7 @@ public final class CrossTieConfig {
     private static void setDefaults() {
         enableNativeRenderGlobalDisplayLists = false;
         enableDiagnostics = false;
+        enableSoundDebug = false;
         enableWireFastRemove = true;
         trainDistantCullingEnabled = true;
         trainSpeedSyncEnabled = true;

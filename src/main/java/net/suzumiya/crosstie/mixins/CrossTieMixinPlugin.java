@@ -75,85 +75,112 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         String debugReason = "";
 
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.macros.")) {
-            shouldApply = isClient && isModPresent("MacroMod");
-            debugReason = "isClient=" + isClient + ", MacroMod=" + isModPresent("MacroMod");
+            boolean hasMacroMod = isModPresent("MacroMod");
+            shouldApply = isClient && hasMacroMod;
+            debugReason = "isClient=" + isClient + ", MacroMod=" + hasMacroMod;
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.gtnhlib.")) {
+            boolean hasGtnhLib = isModPresent("GTNHLib");
             if (mixinClassName.endsWith(".ObjectPoolerThreadSafeMixin")) {
-                shouldApply = isModPresent("GTNHLib");
-                debugReason = "GTNHLib=" + isModPresent("GTNHLib");
+                shouldApply = hasGtnhLib;
+                debugReason = "GTNHLib=" + hasGtnhLib;
             } else {
-                shouldApply = isClient && isModPresent("GTNHLib");
-                debugReason = "isClient=" + isClient + ", GTNHLib=" + isModPresent("GTNHLib");
+                shouldApply = isClient && hasGtnhLib;
+                debugReason = "isClient=" + isClient + ", GTNHLib=" + hasGtnhLib;
             }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.kaizpatch.")) {
+            boolean hasMcte = isModPresent("MCTE");
+            boolean hasAngelicaGlsm = isModPresent("AngelicaGlsm");
+            boolean hasKaizPatch = isModPresent("KaizPatch");
+            boolean hasNgtScriptUtil = isModPresent("NGTScriptUtil");
+            boolean hasRtm = isModPresent("RTM");
+            boolean hasRailMapCustom = isModPresent("RailMapCustom");
+            
             if (mixinClassName.endsWith(".McteWorldSetBlockDiffMixin")) {
-                shouldApply = isModPresent("MCTE");
-                debugReason = "MCTE=" + isModPresent("MCTE");
+                shouldApply = hasMcte;
+                debugReason = "MCTE=" + hasMcte;
             } else if (mixinClassName.endsWith(".RenderMiniatureDynamicLightMixin")) {
-                shouldApply = isClient && isModPresent("MCTE");
-                debugReason = "isClient=" + isClient + ", MCTE=" + isModPresent("MCTE");
+                shouldApply = isClient && hasMcte;
+                debugReason = "isClient=" + isClient + ", MCTE=" + hasMcte;
             } else if (mixinClassName.endsWith(".RenderItemMiniatureDynamicLightMixin")) {
-                shouldApply = isClient && isModPresent("MCTE");
-                debugReason = "isClient=" + isClient + ", MCTE=" + isModPresent("MCTE");
+                shouldApply = isClient && hasMcte;
+                debugReason = "isClient=" + isClient + ", MCTE=" + hasMcte;
             } else if (mixinClassName.endsWith(".AngelicaScriptTransformCacheMixin")) {
-                shouldApply = isClient && isModPresent("AngelicaGlsm") && isModPresent("KaizPatch")
-                        && isModPresent("NGTScriptUtil");
-                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + isModPresent("AngelicaGlsm") + ", KaizPatch="
-                        + isModPresent("KaizPatch") + ", NGTScriptUtil=" + isModPresent("NGTScriptUtil");
+                shouldApply = isClient && hasAngelicaGlsm && hasKaizPatch && hasNgtScriptUtil;
+                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm + ", KaizPatch="
+                        + hasKaizPatch + ", NGTScriptUtil=" + hasNgtScriptUtil;
             } else if (mixinClassName.endsWith(".ModelPackManagerScriptRedirectMixin")) {
-                shouldApply = isClient && isModPresent("AngelicaGlsm") && isModPresent("RTM")
-                        && isModPresent("NGTScriptUtil");
-                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + isModPresent("AngelicaGlsm") + ", RTM="
-                        + isModPresent("RTM") + ", NGTScriptUtil=" + isModPresent("NGTScriptUtil");
+                shouldApply = isClient && hasAngelicaGlsm && hasRtm && hasNgtScriptUtil;
+                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm + ", RTM="
+                        + hasRtm + ", NGTScriptUtil=" + hasNgtScriptUtil;
             } else if (mixinClassName.endsWith(".RailMapCustomCacheMixin")) {
-                shouldApply = isModPresent("RailMapCustom");
-                debugReason = "RailMapCustom=" + isModPresent("RailMapCustom");
+                shouldApply = hasRailMapCustom;
+                debugReason = "RailMapCustom=" + hasRailMapCustom;
             } else if (mixinClassName.endsWith(".ScriptUtilInvocableCacheMixin")) {
-                shouldApply = isModPresent("NGTScriptUtil");
-                debugReason = "NGTScriptUtil=" + isModPresent("NGTScriptUtil");
+                shouldApply = hasNgtScriptUtil;
+                debugReason = "NGTScriptUtil=" + hasNgtScriptUtil;
             } else if (mixinClassName.endsWith(".ModelLoaderKtFallbackMixin")) {
-                shouldApply = isModPresent("KaizPatch");
-                debugReason = "KaizPatch=" + isModPresent("KaizPatch");
+                shouldApply = hasKaizPatch;
+                debugReason = "KaizPatch=" + hasKaizPatch;
             } else {
-                shouldApply = isModPresent("NGTScriptUtil");
-                debugReason = "NGTScriptUtil=" + isModPresent("NGTScriptUtil");
+                shouldApply = hasNgtScriptUtil;
+                debugReason = "NGTScriptUtil=" + hasNgtScriptUtil;
             }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.angelica.")) {
+            boolean hasAngelicaGlsm = isModPresent("AngelicaGlsm");
+            boolean hasAngelica = isModPresent("Angelica");
+            boolean hasAnyAngelica = hasAngelica || hasAngelicaGlsm;
+            
             if (mixinClassName.endsWith(".AngelicaRenderGlobalDisplayListCrashMixin")) {
-                shouldApply = isClient && isModPresent("AngelicaGlsm");
-                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + isModPresent("AngelicaGlsm")
+                shouldApply = isClient && hasAngelicaGlsm;
+                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm
                         + ", nativeLists=forced_for_rtm_parts";
             } else if (mixinClassName.endsWith(".IdMapOrderFixMixin")
                     || mixinClassName.endsWith(".AngelicaBlockMaterialMappingCaseFixMixin")
                     || mixinClassName.endsWith(".AngelicaItemMaterialHelperCaseFixMixin")) {
-                shouldApply = isClient && (isModPresent("Angelica") || isModPresent("AngelicaGlsm"));
-                debugReason = "isClient=" + isClient + ", Angelica(GLSM)?=" + (isModPresent("Angelica") || isModPresent("AngelicaGlsm"));
+                shouldApply = isClient && hasAnyAngelica;
+                debugReason = "isClient=" + isClient + ", Angelica(GLSM)?=" + hasAnyAngelica;
             } else {
-                shouldApply = isClient && (isModPresent("Angelica") || isModPresent("AngelicaGlsm"));
-                debugReason = "isClient=" + isClient + ", Angelica(GLSM)?=" + (isModPresent("Angelica") || isModPresent("AngelicaGlsm"));
+                shouldApply = isClient && hasAnyAngelica;
+                debugReason = "isClient=" + isClient + ", Angelica(GLSM)?=" + hasAnyAngelica;
             }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.rtm.")) {
+            boolean hasAngelicaGlsm = isModPresent("AngelicaGlsm");
+            boolean hasRtm = isModPresent("RTM");
             if (mixinClassName.endsWith(".RtmPartsDisplayListBypassMixin")) {
-                shouldApply = isClient && isModPresent("AngelicaGlsm");
-                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + isModPresent("AngelicaGlsm");
+                shouldApply = isClient && hasAngelicaGlsm;
+                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm;
             } else if (mixinClassName.endsWith(".PolygonRendererMixin")) {
-                shouldApply = isClient && isModPresent("AngelicaGlsm");
-                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + isModPresent("AngelicaGlsm");
+                shouldApply = isClient && hasAngelicaGlsm;
+                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm;
             } else {
-                shouldApply = isModPresent("RTM");
-                debugReason = "RTM=" + isModPresent("RTM");
+                shouldApply = hasRtm;
+                debugReason = "RTM=" + hasRtm;
             }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.liteloader.")) {
-            shouldApply = isModPresent("LiteLoader") || isModPresent("MacroMod");
-            debugReason = "LiteLoader=" + isModPresent("LiteLoader") + ", MacroMod=" + isModPresent("MacroMod");
+            boolean hasLiteLoader = isModPresent("LiteLoader");
+            boolean hasMacroMod = isModPresent("MacroMod");
+            shouldApply = hasLiteLoader || hasMacroMod;
+            debugReason = "LiteLoader=" + hasLiteLoader + ", MacroMod=" + hasMacroMod;
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.optifine.")) {
+            boolean hasOptiFine = isModPresent("OptiFine");
+            boolean hasFastCraft = isModPresent("FastCraft");
+            boolean hasAngelicaGlsm = isModPresent("AngelicaGlsm");
             // Angelicaがある場合は絶対に適用しない（二重安全網）
-            shouldApply = (isModPresent("OptiFine") || isModPresent("FastCraft")) && !isModPresent("AngelicaGlsm");
-            debugReason = "OptiFine=" + isModPresent("OptiFine") + ", FastCraft=" + isModPresent("FastCraft")
-                    + ", AngelicaGlsm=" + isModPresent("AngelicaGlsm");
+            shouldApply = (hasOptiFine || hasFastCraft) && !hasAngelicaGlsm;
+            debugReason = "OptiFine=" + hasOptiFine + ", FastCraft=" + hasFastCraft
+                    + ", AngelicaGlsm=" + hasAngelicaGlsm;
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.minecraft.")) {
-            shouldApply = isClient && isModPresent("GTNHLib");
-            debugReason = "isClient=" + isClient + ", GTNHLib=" + isModPresent("GTNHLib");
+            boolean hasGtnhLib = isModPresent("GTNHLib");
+            shouldApply = isClient && hasGtnhLib;
+            debugReason = "isClient=" + isClient + ", GTNHLib=" + hasGtnhLib;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.worldedit.")) {
+            boolean hasWorldEdit = isModPresent("WorldEdit");
+            shouldApply = hasWorldEdit;
+            debugReason = "WorldEdit=" + hasWorldEdit;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.projectred.")) {
+            boolean hasProjectRed = isModPresent("ProjectRed");
+            shouldApply = hasProjectRed;
+            debugReason = "ProjectRed=" + hasProjectRed;
         } else {
             shouldApply = true;
             debugReason = "default=true";
@@ -197,10 +224,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.MixinSoundAPIEntityTrainBase");
         }
 
-        // ATSAssistMod
-        if (isModPresent("ATSAssistMod")) {
-            mixins.add("atsassist.MixinSoundAPIATSAssistJS");
-        }
+
 
         // KaizPatch / NGTScriptUtil
         if (isModPresent("NGTScriptUtil")) {
@@ -274,6 +298,13 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.GuiSelectTexturePagingMixin");
                 mixins.add("rtm.RtmPartsMatrixPushMixin");
                 mixins.add("rtm.BasicVehiclePartsRendererMixin");
+
+                // 1.12.2マーカーUIのマウスピッキング修正:
+                // AngelicaやOptiFine環境ではGL_SELECTモードが無視されて画面に描画されてしまうため、
+                // ピッキング中の描画はカラー/深度バッファへの書き込みをマスクして防ぐ。
+                if (isModPresent("AngelicaGlsm") || isModPresent("OptiFine") || isModPresent("FastCraft")) {
+                    mixins.add("ngtlib.GLHelperMousePickingFixMixin");
+                }
             }
 
             // MCTE client
@@ -281,6 +312,18 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("kaizpatch.RenderMiniatureDynamicLightMixin");
                 mixins.add("kaizpatch.RenderItemMiniatureDynamicLightMixin");
             }
+        }
+
+        // WorldEdit
+        if (isModPresent("WorldEdit")) {
+            mixins.add("worldedit.MixinBaseBlock");
+            mixins.add("worldedit.MixinSchematicWriter");
+            mixins.add("worldedit.MixinSchematicReader");
+        }
+
+        // ProjectRed
+        if (isModPresent("ProjectRed")) {
+            mixins.add("projectred.TileLampMixin");
         }
 
         System.out.println(

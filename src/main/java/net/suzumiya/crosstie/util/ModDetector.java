@@ -44,6 +44,9 @@ public class ModDetector {
         MOD_PATTERNS.put("KaizPatch", new String[] { "kaizpatch" });
         MOD_PATTERNS.put("RailMapCustom", new String[] { "rtm", "kaizpatch" });
 
+        // ProjectRed
+        MOD_PATTERNS.put("ProjectRed", new String[] { "projectred" });
+
         // Incompatible mods
         MOD_PATTERNS.put("MinFo", new String[] { "minfo" });
 
@@ -173,35 +176,25 @@ public class ModDetector {
         File jarModsDir = null;
         try {
             java.net.URL location = ModDetector.class.getProtectionDomain().getCodeSource().getLocation();
-            System.out.println(
-                    "[CrossTie] ModDetector location URL: " + (location != null ? location.toString() : "null"));
             if (location != null) {
                 File file = resolveLocationToFile(location);
                 if (file != null) {
-                    System.out.println("[CrossTie] ModDetector location file: " + file.getAbsolutePath());
                     if (file.isFile() && (file.getName().endsWith(".jar") || file.getName().endsWith(".zip"))) {
                         jarModsDir = file.getParentFile();
-                        System.out.println("[CrossTie] Resolved jarModsDir (JAR): "
-                                + (jarModsDir != null ? jarModsDir.getAbsolutePath() : "null"));
                     } else if (file.isDirectory()) {
                         // Dev environment fallback, e.g. build/classes/java/main/
-                        // We can check if there's a "run/mods" or "mods" folder nearby
                         File projectDir = file.getParentFile().getParentFile().getParentFile().getParentFile();
                         if (projectDir != null && projectDir.isDirectory()) {
                             File runMods = new File(projectDir, "run/mods");
                             if (runMods.isDirectory()) {
                                 jarModsDir = runMods;
-                                System.out.println("[CrossTie] Resolved jarModsDir (Dev): " + jarModsDir.getAbsolutePath());
                             }
                         }
                     }
-                } else {
-                    System.out.println("[CrossTie] Failed to resolve jar location to File (location=" + location + ")");
                 }
             }
-        } catch (Exception e) {
-            System.out.println("[CrossTie] Failed to resolve jar location: " + e.getMessage());
-            e.printStackTrace();
+        } catch (Exception ignored) {
+            // jar location resolution failed; rely on mcDataDir fallback
         }
 
         return new File[] { modsDir, modsVersionDir, parentModsDir, jarModsDir };

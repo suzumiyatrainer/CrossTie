@@ -32,6 +32,45 @@ public abstract class NGTTessellatorMixin {
     @Shadow
     public abstract void reset();
 
+    @Shadow
+    private boolean isDrawing;
+
+    @Shadow
+    private int drawVertexArray() {
+        return 0;
+    }
+
+    private boolean crosstie$isShaderEnabled() {
+        if (jp.ngt.ngtlib.util.NGTUtilClient.usingShader()) {
+            return true;
+        }
+        try {
+            Class<?> clazz = Class.forName("shadersmod.client.Shaders");
+            java.lang.reflect.Field field = clazz.getDeclaredField("shaderPackLoaded");
+            return field.getBoolean(null);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /**
+     * @author Suzumiya
+     * @reason Shader有効時にもMinecraftのTessellatorを使用して描画を正常化する。
+     */
+    @Overwrite
+    public int draw() {
+        if (!this.isDrawing) {
+            throw new IllegalStateException("Not tesselating!");
+        }
+        this.isDrawing = false;
+
+        if (jp.kaiz.kaizpatch.compat.AngelicaCompat.isAvailable() || crosstie$isShaderEnabled()) {
+            return drawWithMinecraftTessellator();
+        } else {
+            return drawVertexArray();
+        }
+    }
+
     /**
      * @author Suzumiya
      * @reason Angelica環境下で巨大な頂点数を一度にTessellatorに流すとバッファ溢れで描画が消えるバグを、分割描画（9600頂点ごと）を行うことで解決する。
