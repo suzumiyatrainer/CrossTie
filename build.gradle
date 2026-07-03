@@ -93,6 +93,8 @@ configurations.configureEach {
         force 'com.google.code.gson:gson:2.14.0'
         force 'org.apache.commons:commons-compress:1.28.0'
         force 'commons-io:commons-io:2.22.0'
+        force 'org.yaml:snakeyaml:2.2'
+        force 'junit:junit:4.13.2'
 
         // Log4j: Force to 2.17.2 (last Java-8-compatible patched release) to close all Log4j CVEs.
         // Log4Shell (JNDI) is also blocked at runtime via the JVM flags in the minecraft block above.

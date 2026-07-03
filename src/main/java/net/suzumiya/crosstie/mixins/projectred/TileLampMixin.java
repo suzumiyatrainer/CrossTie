@@ -2,7 +2,9 @@ package net.suzumiya.crosstie.mixins.projectred;
 
 import mrtjp.projectred.illumination.TileLamp;
 import org.spongepowered.asm.mixin.Mixin;
+import com.gtnewhorizon.gtnhmixins.LateMixin;
 
+@LateMixin
 @Mixin(value = TileLamp.class, remap = false)
 public class TileLampMixin {
     
