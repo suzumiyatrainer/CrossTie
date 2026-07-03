@@ -71,6 +71,10 @@ repositories {
         name = 'JitPack'
         url = 'https://jitpack.io'
     }
+    maven {
+        name = 'EngineHub'
+        url = 'https://maven.enginehub.org/repo/'
+    }
     if (usePrivateMaven) {
         maven {
             name = 'Private Maven'
@@ -108,7 +112,7 @@ configurations.configureEach {
 
         // These upgrades can affect legacy 1.7.10 runtime behavior, so they are opt-in.
         if (forceSafeNetty) {
-            force 'io.netty:netty-all:4.2.15.Final'
+            force 'io.netty:netty-all:4.1.42.Final'
         }
         if (forceSafeScala) {
             force 'org.scala-lang:scala-library:3.8.4'
@@ -172,6 +176,10 @@ dependencies {
     // ProjectRed
     implementation rfg.deobf("curse.maven:project-red-core-228702:2280728")
     implementation rfg.deobf("curse.maven:project-red-illumination-229046:2280733")
+
+    // WorldEdit
+    compileOnly 'com.sk89q.worldedit:worldedit-core:6.1.4-SNAPSHOT'
+    compileOnly 'com.sk89q.worldedit:worldedit-forge-mc1.7.10:6.1.1-SNAPSHOT'
 
     // Optional: any extra jars dropped in libs/ are still picked up for local-only testing
     // (e.g. a target mod you want to test against but that isn't declared as a dependency above).
