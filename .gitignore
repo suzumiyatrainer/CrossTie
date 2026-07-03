@@ -81,7 +81,7 @@ IDE_SETUP.md
 TOOLCHAIN_SOLUTION.md
 
 # libs
-libs
+libs/
 libs/*
 
 # Other

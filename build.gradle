@@ -170,8 +170,8 @@ dependencies {
     compileOnly("com.github.GTNewHorizons:Hodgepodge:${hodgepodgeVersion}")
 
     // ProjectRed
-    compileOnly rfg.deobf("curse.maven:project-red-core-228702:2280728")
-    compileOnly rfg.deobf("curse.maven:project-red-illumination-229046:2280733")
+    implementation rfg.deobf("curse.maven:project-red-core-228702:2280728")
+    implementation rfg.deobf("curse.maven:project-red-illumination-229046:2280733")
 
     // Optional: any extra jars dropped in libs/ are still picked up for local-only testing
     // (e.g. a target mod you want to test against but that isn't declared as a dependency above).
