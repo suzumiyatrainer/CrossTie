@@ -89,9 +89,9 @@ configurations.configureEach {
         // Log4j: Force to 2.17.2 (last Java-8-compatible patched release) to close all Log4j CVEs.
         // Log4Shell (JNDI) is also blocked at runtime via the JVM flags in the minecraft block above.
         // Note: these libs are provided by Minecraft/Forge at runtime and are NOT shipped in the mod JAR.
-        force 'org.apache.logging.log4j:log4j-core:2.26.0'
-        force 'org.apache.logging.log4j:log4j-api:2.26.0'
-        force 'org.apache.logging.log4j:log4j-slf4j-impl:2.26.0'
+        force 'org.apache.logging.log4j:log4j-core:2.26.1'
+        force 'org.apache.logging.log4j:log4j-api:2.26.1'
+        force 'org.apache.logging.log4j:log4j-slf4j-impl:2.26.1'
 
         // Guava: CANNOT be forced globally. Minecraft 1.7.10 decompiled source uses Guava 14.x APIs
         // (e.g. Objects.firstNonNull) that were removed in Guava 21+. Forcing 32.x causes compilation
