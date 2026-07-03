@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "net.suzumiya.crosstie.mixins",
+  "plugin": "net.suzumiya.crosstie.mixins.CrossTieLateMixinPlugin",
+  "refmap": "mixins.crosstie.refmap.json",
+  "target": "@env(DEFAULT)",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+  ],
+  "client": [
+  ],
+  "server": [
+  ]
+}

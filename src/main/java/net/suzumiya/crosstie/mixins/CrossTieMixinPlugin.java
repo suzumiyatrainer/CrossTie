@@ -321,10 +321,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("worldedit.MixinSchematicReader");
         }
 
-        // ProjectRed
-        if (isModPresent("ProjectRed")) {
-            mixins.add("projectred.TileLampMixin");
-        }
+        // ProjectRed mixins are handled in CrossTieLateMixinLoader to prevent early classloading crashes
 
         System.out.println(
                 "[CrossTieMixin] Dynamic mixin count: " + mixins.size() + " / " + (isClient ? "CLIENT" : "SERVER"));
