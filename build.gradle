@@ -112,8 +112,10 @@ configurations.configureEach {
         force 'org.apache.httpcomponents:httpclient:4.5.14'
         force 'org.apache.httpcomponents:httpcore:4.4.16'
 
-        // These upgrades can affect legacy 1.7.10 runtime behavior, but are forced to resolve CVEs.
-        force 'io.netty:netty-all:4.1.42.Final'
+        // These upgrades can affect legacy 1.7.10 runtime behavior, so they are opt-in.
+        if (forceSafeNetty) {
+            force 'io.netty:netty-all:4.1.42.Final'
+        }
         if (forceSafeScala) {
             force 'org.scala-lang:scala-library:3.8.4'
             force 'org.scala-lang:scala-compiler:3.8.4'
