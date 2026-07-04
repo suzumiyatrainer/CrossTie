@@ -21,7 +21,7 @@ public class CrossTieLateMixinLoader implements io.github.tox1cozz.mixinbooterle
     @Override
     public List<String> getMixins(Set<String> loadedMods) {
         if (loadedMods.contains("ProjRed|Illumination")) {
-            return Collections.singletonList("projectred.TileLampMixin");
+            return Collections.singletonList("projectred.RenderHaloMixin");
         }
         return Collections.emptyList();
     }

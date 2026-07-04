@@ -22,6 +22,19 @@ public class CrossTieLateMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (mixinClassName.equals("net.suzumiya.crosstie.mixins.projectred.RenderHaloMixin")) {
+            ModDetector detector = CrossTieCorePlugin.getModDetector();
+            if (detector != null && detector.isModPresent("ProjectRed")) {
+                return true;
+            }
+            try {
+                Class.forName("mrtjp.projectred.core.RenderHalo$", false, this.getClass().getClassLoader());
+                System.out.println("[CrossTie] ProjectRed RenderHalo$ class detected via Class.forName. Applying RenderHaloMixin.");
+                return true;
+            } catch (ClassNotFoundException e) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -32,17 +45,6 @@ public class CrossTieLateMixinPlugin implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
-        
-        // At this point ModDetector can be used because we're in LATE phase
-        ModDetector detector = CrossTieCorePlugin.getModDetector();
-        if (detector != null && detector.isModPresent("ProjectRed")) {
-            mixins.add("projectred.TileLampMixin");
-        } else if (detector == null) {
-            // Fallback just in case
-            mixins.add("projectred.TileLampMixin");
-        }
-        
-        System.out.println("[CrossTieLateMixin] Registered late mixins: " + mixins.size());
         return mixins;
     }
 

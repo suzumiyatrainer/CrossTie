@@ -303,7 +303,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 // AngelicaやOptiFine環境ではGL_SELECTモードが無視されて画面に描画されてしまうため、
                 // ピッキング中の描画はカラー/深度バッファへの書き込みをマスクして防ぐ。
                 if (isModPresent("AngelicaGlsm") || isModPresent("OptiFine") || isModPresent("FastCraft")) {
-                    mixins.add("ngtlib.GLHelperMousePickingFixMixin");
+                    // mixins.add("ngtlib.GLHelperMousePickingFixMixin");
+                    // mixins.add("ngtlib.NGTTessellatorSelectModeFixMixin");
                 }
             }
 

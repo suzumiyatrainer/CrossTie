@@ -210,10 +210,14 @@ tasks.named('jar') {
     // FML's JarDiscoverer cannot parse Java 9 class files and marks the JAR as "corrupt zip",
     // which prevents proper @Mod discovery and causes loading screen issues.
     exclude 'module-info.class'
-    // Exclude Nashorn / META-INF service files that trigger early ServiceLoader
-    // initialization during FML jar scanning. This can interfere with SplashProgress
-    // (the loading screen) and cause a black screen during startup.
-    exclude 'META-INF/services/'
+    exclude { details ->
+        if (details.relativePath.pathString.startsWith('META-INF/services/')) {
+            String name = details.name
+            return !name.equals('com.gtnewhorizon.gtnhmixins.ILateMixinLoader') &&
+                   !name.equals('io.github.tox1cozz.mixinbooterlegacy.ILateMixinLoader')
+        }
+        return false;
+    }
     exclude 'META-INF/versions/'
     // org.openjdk.nashorn (nashorn-core standalone port) contains class files compiled for Java 11+
     // (class version 55+) which ASM 5.0.3 bundled with FML 1.7.10 cannot parse.
