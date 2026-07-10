@@ -321,8 +321,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("worldedit.MixinSchematicReader");
         }
 
-        // DiscordSRV
-        mixins.add("discordsrv.NMSUtilMixin");
+
 
         // ProjectRed mixins are handled in CrossTieLateMixinLoader to prevent early
         // classloading crashes
