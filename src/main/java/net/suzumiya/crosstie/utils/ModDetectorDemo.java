@@ -1,4 +1,4 @@
-package net.suzumiya.crosstie.util;
+package net.suzumiya.crosstie.utils;
 
 /**
  * Simple demonstration class to manually test {@link ModDetector}.

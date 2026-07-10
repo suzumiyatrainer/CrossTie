@@ -1,10 +1,11 @@
 package net.suzumiya.crosstie.mixins.kaizpatch;
 
-import net.suzumiya.crosstie.util.ScriptGlRedirector;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import net.suzumiya.crosstie.utils.ScriptGlRedirector;
 
 @Mixin(targets = "jp.ngt.rtm.modelpack.ModelPackManager", remap = false)
 public abstract class ModelPackManagerScriptRedirectMixin {

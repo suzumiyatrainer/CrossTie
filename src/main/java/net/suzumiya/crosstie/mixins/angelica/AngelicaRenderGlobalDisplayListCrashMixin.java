@@ -3,7 +3,7 @@ package net.suzumiya.crosstie.mixins.angelica;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import net.suzumiya.crosstie.util.CrossTiePartsRenderContext;
+
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -11,32 +11,37 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.suzumiya.crosstie.utils.CrossTiePartsRenderContext;
+
 @Mixin(targets = "com.gtnewhorizons.angelica.glsm.GLStateManager", remap = false)
 public abstract class AngelicaRenderGlobalDisplayListCrashMixin {
 
     /**
      * Opt-IN flag (default: disabled).
      *
-     * <p>This workaround bypasses Angelica's GLStateManager for display lists created in
-     * {@code RenderGlobal.<init>}. With Angelica 2.1.21+ the ImmediateModeRecorder switched to
-     * attrib-based vertex reading; calling GL11 directly while Angelica's attrib state is live
-     * corrupts the buffer position and causes an IndexOutOfBoundsException on the next
-     * non-list draw call.</p>
+     * <p>
+     * This workaround bypasses Angelica's GLStateManager for display lists created
+     * in {@code RenderGlobal.<init>}. With Angelica 2.1.21+ the
+     * ImmediateModeRecorder switched to attrib-based vertex reading; calling GL11
+     * directly while Angelica's attrib state is live corrupts the buffer position
+     * and causes an IndexOutOfBoundsException on the next non-list draw call.
+     * </p>
      *
-     * <p>Enable only if using an older Angelica that crashes without this workaround:
-     * {@code -Dcrosstie.enableNativeRenderGlobalDisplayLists=true}</p>
+     * <p>
+     * Enable only if using an older Angelica that crashes without this workaround:
+     * {@code -Dcrosstie.enableNativeRenderGlobalDisplayLists=true}
+     * </p>
      */
     @Unique
-    private static final boolean crosstie$nativeRenderGlobalListsEnabled =
-            Boolean.getBoolean("crosstie.enableNativeRenderGlobalDisplayLists");
+    private static final boolean crosstie$nativeRenderGlobalListsEnabled = Boolean
+            .getBoolean("crosstie.enableNativeRenderGlobalDisplayLists");
 
     @Unique
-    private static final Set<Integer> crosstie$nativeRenderGlobalLists =
-            Collections.synchronizedSet(new HashSet<Integer>());
+    private static final Set<Integer> crosstie$nativeRenderGlobalLists = Collections
+            .synchronizedSet(new HashSet<Integer>());
 
     @Unique
-    private static final ThreadLocal<Boolean> crosstie$compilingNativeRenderGlobalList =
-            new ThreadLocal<Boolean>();
+    private static final ThreadLocal<Boolean> crosstie$compilingNativeRenderGlobalList = new ThreadLocal<Boolean>();
 
     @Inject(method = "glNewList", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private static void crosstie$useNativeRenderGlobalList(int list, int mode, CallbackInfo ci) {
@@ -88,13 +93,15 @@ public abstract class AngelicaRenderGlobalDisplayListCrashMixin {
     /**
      * ネイティブ DisplayList のターゲットかどうかを判定する。
      *
-     * <p>以前はスタックトレースウォーキング ({@code Thread.currentThread().getStackTrace()})
-     * でコールスタックを走査していたが、これは JVM で最も重い操作のひとつで
-     * {@code glNewList} が呼ばれるたびに実行されるため深刻なパフォーマンス問題だった。
+     * <p>
+     * 以前はスタックトレースウォーキング ({@code Thread.currentThread().getStackTrace()})
+     * でコールスタックを走査していたが、これは JVM で最も重い操作のひとつで {@code glNewList}
+     * が呼ばれるたびに実行されるため深刻なパフォーマンス問題だった。
      *
-     * <p>代わりに {@link CrossTiePartsRenderContext#isInsidePartsRender()} を使用する。
-     * これは {@code Parts.render()} の HEAD/RETURN に注入した Mixin によって
-     * {@link ThreadLocal} ベースで管理されるため、スタック走査が不要。
+     * <p>
+     * 代わりに {@link CrossTiePartsRenderContext#isInsidePartsRender()} を使用する。 これは
+     * {@code Parts.render()} の HEAD/RETURN に注入した Mixin によって {@link ThreadLocal}
+     * ベースで管理されるため、スタック走査が不要。
      */
     @Unique
     private static boolean crosstie$isNativeDisplayListTarget() {
@@ -103,14 +110,14 @@ public abstract class AngelicaRenderGlobalDisplayListCrashMixin {
             return true;
         }
         // RenderGlobal.<init> からの呼び出しは opt-in フラグで制御
-        return crosstie$nativeRenderGlobalListsEnabled
-                && crosstie$isCalledFromRenderGlobalInit();
+        return crosstie$nativeRenderGlobalListsEnabled && crosstie$isCalledFromRenderGlobalInit();
     }
 
     /**
      * RenderGlobal.&lt;init&gt; から呼ばれているかをスタックで確認する。
      *
-     * <p>これは起動時に1〜2回しか呼ばれないため、パフォーマンス上の問題はない。
+     * <p>
+     * これは起動時に1〜2回しか呼ばれないため、パフォーマンス上の問題はない。
      */
     @Unique
     private static boolean crosstie$isCalledFromRenderGlobalInit() {

@@ -19,7 +19,8 @@ public class ATSAssistReflectionHelper {
     private static boolean failed = false;
 
     public static synchronized void init() {
-        if (initialized || failed) return;
+        if (initialized || failed)
+            return;
         try {
             Block block = Block.getBlockFromName("ATSAssistMod:groundUnit");
             if (block == null) {
@@ -30,12 +31,15 @@ public class ATSAssistReflectionHelper {
             }
             atsClassLoader = block.getClass().getClassLoader();
 
-            trainControllerManagerClass = Class.forName("jp.kaiz.atsassistmod.controller.TrainControllerManager", true, atsClassLoader);
-            getTrainControllerMethod = trainControllerManagerClass.getMethod("getTrainController", jp.ngt.rtm.entity.train.EntityTrainBase.class);
-            
-            trainControllerClass = Class.forName("jp.kaiz.atsassistmod.controller.TrainController", true, atsClassLoader);
+            trainControllerManagerClass = Class.forName("jp.kaiz.atsassistmod.controller.TrainControllerManager", true,
+                    atsClassLoader);
+            getTrainControllerMethod = trainControllerManagerClass.getMethod("getTrainController",
+                    jp.ngt.rtm.entity.train.EntityTrainBase.class);
+
+            trainControllerClass = Class.forName("jp.kaiz.atsassistmod.controller.TrainController", true,
+                    atsClassLoader);
             tascControllerField = trainControllerClass.getField("tascController");
-            
+
             tascControllerClass = Class.forName("jp.kaiz.atsassistmod.controller.TASCController", true, atsClassLoader);
             getStopDistanceMethod = tascControllerClass.getMethod("getStopDistance");
             isStopPositionMethod = tascControllerClass.getMethod("isStopPosition");
@@ -52,7 +56,8 @@ public class ATSAssistReflectionHelper {
 
     public static Object getTrainController(jp.ngt.rtm.entity.train.EntityTrainBase train) {
         init();
-        if (!initialized) return null;
+        if (!initialized)
+            return null;
         try {
             return getTrainControllerMethod.invoke(null, train);
         } catch (Exception e) {
@@ -61,7 +66,8 @@ public class ATSAssistReflectionHelper {
     }
 
     public static Object getTASCController(Object trainController) {
-        if (trainController == null) return null;
+        if (trainController == null)
+            return null;
         try {
             return tascControllerField.get(trainController);
         } catch (Exception e) {
@@ -70,7 +76,8 @@ public class ATSAssistReflectionHelper {
     }
 
     public static boolean isTASCEnabled(Object tascController) {
-        if (tascController == null) return false;
+        if (tascController == null)
+            return false;
         try {
             return (Boolean) isEnableMethod.invoke(tascController);
         } catch (Exception e) {
@@ -79,7 +86,8 @@ public class ATSAssistReflectionHelper {
     }
 
     public static double getStopDistance(Object tascController) {
-        if (tascController == null) return -1.0;
+        if (tascController == null)
+            return -1.0;
         try {
             return (Double) getStopDistanceMethod.invoke(tascController);
         } catch (Exception e) {
@@ -88,7 +96,8 @@ public class ATSAssistReflectionHelper {
     }
 
     public static boolean isStopPosition(Object tascController) {
-        if (tascController == null) return false;
+        if (tascController == null)
+            return false;
         try {
             return (Boolean) isStopPositionMethod.invoke(tascController);
         } catch (Exception e) {
@@ -97,7 +106,8 @@ public class ATSAssistReflectionHelper {
     }
 
     public static boolean isBreaking(Object tascController) {
-        if (tascController == null) return false;
+        if (tascController == null)
+            return false;
         try {
             return (Boolean) isBreakingMethod.invoke(tascController);
         } catch (Exception e) {
@@ -106,7 +116,8 @@ public class ATSAssistReflectionHelper {
     }
 
     public static void setBraking(Object tascController, boolean braking) {
-        if (tascController == null) return;
+        if (tascController == null)
+            return;
         try {
             setBrakingMethod.invoke(tascController, braking);
         } catch (Exception e) {

@@ -3,13 +3,14 @@ package net.suzumiya.crosstie.mixins.ngtlib;
 import jp.ngt.ngtlib.renderer.GLHelper;
 import jp.ngt.ngtlib.util.NGTUtilClient;
 import net.minecraft.util.MathHelper;
+import net.suzumiya.crosstie.utils.TrueGL;
+
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import net.suzumiya.crosstie.util.TrueGL;
 
 import java.nio.IntBuffer;
 
@@ -20,9 +21,12 @@ import java.nio.IntBuffer;
 @Mixin(value = GLHelper.class, remap = false)
 public abstract class GLHelperSelectBypassMixin {
 
-    @Shadow private static IntBuffer VIEWPORT_BUF;
-    @Shadow private static IntBuffer SELECT_BUF;
-    @Shadow private static double DEPTH_RANGE;
+    @Shadow
+    private static IntBuffer VIEWPORT_BUF;
+    @Shadow
+    private static IntBuffer SELECT_BUF;
+    @Shadow
+    private static double DEPTH_RANGE;
 
     /**
      * @author Suzumiya
@@ -37,19 +41,20 @@ public abstract class GLHelperSelectBypassMixin {
         SELECT_BUF.clear();
 
         GL11.glGetInteger(GL11.GL_VIEWPORT, VIEWPORT_BUF);
-        
+
         // Angelicaのバイトコード置換を回避するためリフレクションで呼ぶ
         TrueGL.glSelectBuffer(SELECT_BUF);
         TrueGL.glRenderMode(GL11.GL_SELECT);
         TrueGL.glInitNames();
         TrueGL.glPushName(0);
-        
+
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glPushMatrix();
         Project.gluPickMatrix(mouseX, VIEWPORT_BUF.get(3) - mouseY, range, range, VIEWPORT_BUF);
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
 
-        DEPTH_RANGE = ((double) NGTUtilClient.getMinecraft().gameSettings.renderDistanceChunks * 16.0D * MathHelper.sqrt_float(2.0F)) - 0.05D;
+        DEPTH_RANGE = ((double) NGTUtilClient.getMinecraft().gameSettings.renderDistanceChunks * 16.0D
+                * MathHelper.sqrt_float(2.0F)) - 0.05D;
     }
 
     /**
@@ -60,10 +65,10 @@ public abstract class GLHelperSelectBypassMixin {
     public static int finishMousePicking() {
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glPopMatrix();
-        
+
         // Angelicaのバイトコード置換を回避するためリフレクションで呼ぶ
         int hits = TrueGL.glRenderMode(GL11.GL_RENDER);
-        
+
         GL11.glMatrixMode(GL11.GL_MODELVIEW);
         return hits;
     }

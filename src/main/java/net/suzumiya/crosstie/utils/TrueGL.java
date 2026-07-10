@@ -1,4 +1,4 @@
-package net.suzumiya.crosstie.util;
+package net.suzumiya.crosstie.utils;
 
 import java.lang.reflect.Method;
 import java.nio.IntBuffer;
@@ -6,8 +6,7 @@ import java.nio.FloatBuffer;
 
 /**
  * Angelica/GLSM によってスタブ化(無効化)された GL_SELECT 関連のメソッドを
- * リフレクション経由で強制的に呼び出すためのユーティリティ。
- * ASMによるバイトコード置換(GLSMRedirector)を回避し、グラフィックドライバの
+ * リフレクション経由で強制的に呼び出すためのユーティリティ。 ASMによるバイトコード置換(GLSMRedirector)を回避し、グラフィックドライバの
  * ネイティブ機能へ直接アクセスする。
  */
 public class TrueGL {
@@ -36,8 +35,10 @@ public class TrueGL {
 
     public static void glSelectBuffer(IntBuffer buffer) {
         try {
-            if (m_glSelectBuffer != null) m_glSelectBuffer.invoke(null, buffer);
-        } catch (Exception ignored) {}
+            if (m_glSelectBuffer != null)
+                m_glSelectBuffer.invoke(null, buffer);
+        } catch (Exception ignored) {
+        }
     }
 
     private static boolean isSelectMode = false;
@@ -49,14 +50,15 @@ public class TrueGL {
     public static int glRenderMode(int mode) {
         isSelectMode = (mode == 7170); // GL11.GL_SELECT is 7170 (0x1C02)
         try {
-            if (m_glRenderMode != null) return (int) m_glRenderMode.invoke(null, mode);
-        } catch (Exception ignored) {}
+            if (m_glRenderMode != null)
+                return (int) m_glRenderMode.invoke(null, mode);
+        } catch (Exception ignored) {
+        }
         return 0;
     }
 
     /**
-     * Angelicaが管理するソフトウェア行列(モデルビュー、プロジェクション)を
-     * NATIVEドライバ側の行列スタックへ強制的に同期させます。
+     * Angelicaが管理するソフトウェア行列(モデルビュー、プロジェクション)を NATIVEドライバ側の行列スタックへ強制的に同期させます。
      * AngelicaのTessellatorをバイパスして、GL_SELECTなどのNATIVEモードで
      * 即時描画(glBegin/glEnd)を行う際に必須となります。
      */
@@ -84,32 +86,42 @@ public class TrueGL {
 
     public static void glInitNames() {
         try {
-            if (m_glInitNames != null) m_glInitNames.invoke(null);
-        } catch (Exception ignored) {}
+            if (m_glInitNames != null)
+                m_glInitNames.invoke(null);
+        } catch (Exception ignored) {
+        }
     }
 
     public static void glPushName(int name) {
         try {
-            if (m_glPushName != null) m_glPushName.invoke(null, name);
-        } catch (Exception ignored) {}
+            if (m_glPushName != null)
+                m_glPushName.invoke(null, name);
+        } catch (Exception ignored) {
+        }
     }
 
     public static void glLoadName(int name) {
         try {
-            if (m_glLoadName != null) m_glLoadName.invoke(null, name);
-        } catch (Exception ignored) {}
+            if (m_glLoadName != null)
+                m_glLoadName.invoke(null, name);
+        } catch (Exception ignored) {
+        }
     }
 
     public static void glPopName() {
         try {
-            if (m_glPopName != null) m_glPopName.invoke(null);
-        } catch (Exception ignored) {}
+            if (m_glPopName != null)
+                m_glPopName.invoke(null);
+        } catch (Exception ignored) {
+        }
     }
 
     public static int glGetInteger(int pname) {
         try {
-            if (m_glGetInteger != null) return (int) m_glGetInteger.invoke(null, pname);
-        } catch (Exception ignored) {}
+            if (m_glGetInteger != null)
+                return (int) m_glGetInteger.invoke(null, pname);
+        } catch (Exception ignored) {
+        }
         return 0;
     }
 }

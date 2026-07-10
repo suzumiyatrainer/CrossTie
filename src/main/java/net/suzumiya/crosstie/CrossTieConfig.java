@@ -25,7 +25,7 @@ import java.util.Set;
  */
 public final class CrossTieConfig {
 
-    private static final Logger LOGGER = LogManager.getLogger(Tags.MODID + "Config");
+    private static final Logger LOGGER = LogManager.getLogger("CrossTie-Config");
 
     /**
      * CrossTie の設定ディレクトリ名。 config/CrossTie/ 以下に各種設定ファイルが配置される。
@@ -51,11 +51,9 @@ public final class CrossTieConfig {
             "enableNativeRenderGlobalDisplayLists", "enableDiagnostics", "enableSoundDebug", "config_version",
             // Performance
             "trainDistantCullingEnabled", "trainSpeedSyncEnabled", "railTesrThrottleEnabled", "largeRailCullingEnabled",
-            "railTessellateOptimizationEnabled",
-            "connectionCacheEnabled", "signboardGuiPagingEnabled",
-            "installedObjectCullingEnabled",
-            "decorativeWireOptimizationEnabled",
-            "detectorThrottlingEnabled", "detectorThrottleInterval",
+            "railTessellateOptimizationEnabled", "connectionCacheEnabled", "signboardGuiPagingEnabled",
+            "installedObjectCullingEnabled", "decorativeWireOptimizationEnabled", "detectorThrottlingEnabled",
+            "detectorThrottleInterval",
             // Fixes
             "fixAngelicaCloudRendering", "fixAngelicaRebuildSync", "fixAngelicaWaterRenderDistance",
             "disableSignalCulling", "fixOptiFineRailBrightness", "fixOptiFineWireNormalize",
@@ -302,19 +300,16 @@ public final class CrossTieConfig {
                 "サインボード選択 GUI を仮想スクロール方式にし、テクスチャ数が多い環境での" + " GUI 開き遅延を改善します。");
 
         installedObjectCullingEnabled = config.getBoolean("installedObjectCullingEnabled", CAT_PERFORMANCE, true,
-                "車止め（EntityBumpingPost）の描画距離カリングとフラストラムカリングを有効にします。"
-                + " 描画距離はバニラの Render Distance 設定を使用します。");
+                "車止め（EntityBumpingPost）の描画距離カリングとフラストラムカリングを有効にします。" + " 描画距離はバニラの Render Distance 設定を使用します。");
 
-        decorativeWireOptimizationEnabled = config.getBoolean("decorativeWireOptimizationEnabled", CAT_PERFORMANCE, true,
-                "電力供給に関与しないお飾り架線のネットワークを信号伝播処理から除外し、MSPT を低減します。");
+        decorativeWireOptimizationEnabled = config.getBoolean("decorativeWireOptimizationEnabled", CAT_PERFORMANCE,
+                true, "電力供給に関与しないお飾り架線のネットワークを信号伝播処理から除外し、MSPT を低減します。");
 
         detectorThrottlingEnabled = config.getBoolean("detectorThrottlingEnabled", CAT_PERFORMANCE, true,
-                "EntityTrainDetector の在線確認処理をスロットリングし、MSPT を低減します。"
-                + " ATC および信号連動設備には適用されません。");
+                "EntityTrainDetector の在線確認処理をスロットリングし、MSPT を低減します。" + " ATC および信号連動設備には適用されません。");
 
         detectorThrottleInterval = config.getInt("detectorThrottleInterval", CAT_PERFORMANCE, 4, 1, 20,
-                "EntityTrainDetector のスロットリング間隔（tick単位）。デフォルト: 4。"
-                + " 320km/h列車でも1ブロック未満の移動量なので安全です。");
+                "EntityTrainDetector のスロットリング間隔（tick単位）。デフォルト: 4。" + " 320km/h列車でも1ブロック未満の移動量なので安全です。");
 
         // ---- 3. Fixes カテゴリ ---- //
         fixAngelicaCloudRendering = config.getBoolean("fixAngelicaCloudRendering", CAT_FIXES, true,

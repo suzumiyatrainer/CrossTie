@@ -6,8 +6,9 @@ import org.spongepowered.asm.lib.tree.ClassNode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import net.suzumiya.crosstie.util.ModDetector;
+
 import net.suzumiya.crosstie.asm.CrossTieCorePlugin;
+import net.suzumiya.crosstie.utils.ModDetector;
 
 public class CrossTieLateMixinPlugin implements IMixinConfigPlugin {
 
@@ -29,7 +30,8 @@ public class CrossTieLateMixinPlugin implements IMixinConfigPlugin {
             }
             try {
                 Class.forName("mrtjp.projectred.core.RenderHalo$", false, this.getClass().getClassLoader());
-                System.out.println("[CrossTie] ProjectRed RenderHalo$ class detected via Class.forName. Applying RenderHaloMixin.");
+                System.out.println(
+                        "[CrossTie] ProjectRed RenderHalo$ class detected via Class.forName. Applying RenderHaloMixin.");
                 return true;
             } catch (ClassNotFoundException e) {
                 return false;
