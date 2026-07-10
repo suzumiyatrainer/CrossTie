@@ -18,10 +18,9 @@ public class CrossTieClassTransformer implements IClassTransformer {
      * GTNHLib 0.9.x で使用されていた {@code MixinBlock_IconWrapper} のクラス名。
      *
      * <p>
-     * GTNHLib 0.10.0 ではこの Mixin が廃止され、{@code BlockIconTransformer} が
-     * {@code Block} クラスに直接 ASM でフックを注入する方式に変わりました。
-     * パッチ対象の {@code nhlib$getParticleIcon} メソッドはもはや存在しないため、
-     * この定数は互換性チェック用に残しています。
+     * GTNHLib 0.10.0 ではこの Mixin が廃止され、{@code BlockIconTransformer} が {@code Block}
+     * クラスに直接 ASM でフックを注入する方式に変わりました。 パッチ対象の {@code nhlib$getParticleIcon}
+     * メソッドはもはや存在しないため、 この定数は互換性チェック用に残しています。
      *
      * @deprecated GTNHLib 0.10.0 以降は不要
      */
@@ -34,14 +33,13 @@ public class CrossTieClassTransformer implements IClassTransformer {
     private static final String MCPATCHER_GLASS_PANE_RENDERER = "com.prupe.mcpatcher.ctm.GlassPaneRenderer";
 
     /**
-     * SplashProgress$3 (スプラッシュ画面の描画ループ) のクラス名。
-     * enableFontRenderer=false 時に Angelica の GL リダイレクターが GL11.glEnable() を
-     * キャッシュ更新のみの GLStateManager.glEnable() に書き換えてしまい、
-     * テクスチャが描画されず画面が真っ黒になる問題を修正する。
+     * SplashProgress$3 (スプラッシュ画面の描画ループ) のクラス名。 enableFontRenderer=false 時に Angelica
+     * の GL リダイレクターが GL11.glEnable() を キャッシュ更新のみの GLStateManager.glEnable()
+     * に書き換えてしまい、 テクスチャが描画されず画面が真っ黒になる問題を修正する。
      *
      * <p>
-     * このクラスは Angelica より先に実行される CorePlugin ASM トランスフォーマで
-     * 直接パッチするため、Angelica のバイトコードリダイレクターの影響を受けない。
+     * このクラスは Angelica より先に実行される CorePlugin ASM トランスフォーマで 直接パッチするため、Angelica
+     * のバイトコードリダイレクターの影響を受けない。
      * </p>
      */
     private static final String SPLASH_PROGRESS_3 = "cpw.mods.fml.client.SplashProgress$3";
@@ -51,38 +49,22 @@ public class CrossTieClassTransformer implements IClassTransformer {
      *
      * <p>
      * Hodgepodge の {@code NBTTagCompoundHashMapTransformer} が
-     * {@code NBTTagCompound} を
-     * 早期変換する際に {@code StringPooler$GuavaPooler} がロードされます。
-     * これにより Mixin フェーズより前にクラスがロード済みとなり、
-     * {@code MixinTargetAlreadyLoadedException} が発生します。
-     * そのため Mixin ではなく ASM トランスフォーマーで対処します。
+     * {@code NBTTagCompound} を 早期変換する際に {@code StringPooler$GuavaPooler} がロードされます。
+     * これにより Mixin フェーズより前にクラスがロード済みとなり、 {@code MixinTargetAlreadyLoadedException}
+     * が発生します。 そのため Mixin ではなく ASM トランスフォーマーで対処します。
      */
     private static final String HODGEPODGE_GUAVA_POOLER = "com.mitchej123.hodgepodge.util.StringPooler$GuavaPooler";
 
     /**
-     * NGTLib/RTM の {@code ScriptUtil} クラス名。
-     * NashornScriptEngineFactory が利用不可な環境で {@code ScriptUtil.doScript(String)}
-     * を {@link net.suzumiya.crosstie.compat.ScriptUtilFallback} にリダイレクトする。
+     * NGTLib/RTM の {@code ScriptUtil} クラス名。 NashornScriptEngineFactory が利用不可な環境で
+     * {@code ScriptUtil.doScript(String)} を
+     * {@link net.suzumiya.crosstie.compat.ScriptUtilFallback} にリダイレクトする。
      */
     private static final String SCRIPT_UTIL_CLASS = "jp.ngt.ngtlib.io.ScriptUtil";
 
     /**
-     * Macro/Keybind Mod の {@code MacroModPermissions} クラス名。
-     * 各メソッドから tamperCheck() 呼び出しを削除して、
-     * パーミッションシステムを正常に動作させつつクラッシュを回避する。
-     */
-    private static final String MACRO_MOD_PERMISSIONS = "net.eq2online.macros.permissions.MacroModPermissions";
-
-    /**
-     * LiteLoader の {@code PermissionsManagerClient} クラス名。
-     * tamperCheck() を no-op にして Macro / Keybind Mod のクラッシュを回避する。
-     */
-    private static final String PERMISSIONS_MANAGER_CLIENT = "com.mumfrey.liteloader.permissions.PermissionsManagerClient";
-
-    /**
-     * DiscordSRV NMSUtil クラス名。
-     * class_ResolvableProfile が null の場合に isInstance 呼び出しで発生する
-     * NullPointerException を回避するためにパッチを適用します。
+     * DiscordSRV NMSUtil クラス名。 class_ResolvableProfile が null の場合に isInstance
+     * 呼び出しで発生する NullPointerException を回避するためにパッチを適用します。
      */
     private static final String DISCORDSRV_NMS_UTIL = "github.scarsz.discordsrv.util.NMSUtil";
 
@@ -93,7 +75,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
 
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
-        if (transformedName != null && "org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory".equals(transformedName)) {
+        if (transformedName != null
+                && "org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory".equals(transformedName)) {
             boolean shouldBlock = false;
             try {
                 String classVerStr = System.getProperty("java.class.version");
@@ -105,12 +88,14 @@ public class CrossTieClassTransformer implements IClassTransformer {
                 }
             } catch (NumberFormatException e) {
                 String javaVer = System.getProperty("java.version");
-                if (javaVer != null && (javaVer.startsWith("1.8") || javaVer.startsWith("1.7") || javaVer.startsWith("1.6"))) {
+                if (javaVer != null
+                        && (javaVer.startsWith("1.8") || javaVer.startsWith("1.7") || javaVer.startsWith("1.6"))) {
                     shouldBlock = true;
                 }
             }
             if (shouldBlock) {
-                System.out.println("[CrossTie] Replacing NashornScriptEngineFactory with a dummy Java 8 class to prevent UnsupportedClassVersionError in ServiceLoader.");
+                System.out.println(
+                        "[CrossTie] Replacing NashornScriptEngineFactory with a dummy Java 8 class to prevent UnsupportedClassVersionError in ServiceLoader.");
                 return provideDummyNashornFactory();
             }
         }
@@ -153,17 +138,6 @@ public class CrossTieClassTransformer implements IClassTransformer {
             return patchScriptUtil(basicClass);
         }
 
-        // Macro/Keybind Mod MacroModPermissions: tamperCheck() 呼び出しを削除
-        // パーミッションシステムを正常に動作させつつクラッシュを回避する
-        if (isClass(transformedName, name, MACRO_MOD_PERMISSIONS, null)) {
-            return patchMacroModPermissions(basicClass);
-        }
-
-        // LiteLoader PermissionsManagerClient: tamperCheck() を no-op にする
-        if (isClass(transformedName, name, PERMISSIONS_MANAGER_CLIENT, null)) {
-            return patchPermissionsManagerClientTamperCheck(basicClass);
-        }
-
         // SplashProgress$3 (スプラッシュ描画スレッド): Angelica の GL リダイレクターによる
         // テクスチャ状態のキャッシュ問題を回避するため、ASM で run() の先頭に
         // リフレクション経由の glEnable(GL_TEXTURE_2D) + glColor4f(1,1,1,1) を注入する
@@ -180,10 +154,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
     }
 
     private boolean isClass(String transformedName, String name, String dottedName, String internalName) {
-        return dottedName.equals(transformedName)
-                || dottedName.equals(name)
-                || dottedName.replace('.', '/').equals(transformedName)
-                || dottedName.replace('.', '/').equals(name)
+        return dottedName.equals(transformedName) || dottedName.equals(name)
+                || dottedName.replace('.', '/').equals(transformedName) || dottedName.replace('.', '/').equals(name)
                 || (internalName != null && (internalName.equals(transformedName) || internalName.equals(name)));
     }
 
@@ -193,8 +165,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
      * にリダイレクト。
      *
      * <p>
-     * GTNHLib 0.10.0 以降ではこのメソッドが呼ばれることはありません
-     * ({@code MixinBlock_IconWrapper} クラス自体が存在しないため)。
+     * GTNHLib 0.10.0 以降ではこのメソッドが呼ばれることはありません ({@code MixinBlock_IconWrapper}
+     * クラス自体が存在しないため)。
      */
     private byte[] patchGtnhLibBlockIconMixin(byte[] basicClass) {
         ClassNode classNode = new ClassNode();
@@ -259,8 +231,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
      *
      * <p>
      * Hodgepodge の GuavaPooler は {@code com.google.common.collect.Interner} を使って
-     * 文字列をインターンします。Guava が複数のクラスローダー (例: LaunchClassLoader と
-     * AppClassLoader) でロードされると次のような {@code LinkageError} が発生します:
+     * 文字列をインターンします。Guava が複数のクラスローダー (例: LaunchClassLoader と AppClassLoader)
+     * でロードされると次のような {@code LinkageError} が発生します:
      * 
      * <pre>
      *   loader constraint violation: loader previously initiated loading
@@ -268,18 +240,16 @@ public class CrossTieClassTransformer implements IClassTransformer {
      * </pre>
      *
      * <p>
-     * このパッチは {@code getString(String)} の本体を {@code s.intern()} に差し替えて
-     * Guava の {@code Interner} を完全に回避します。
+     * このパッチは {@code getString(String)} の本体を {@code s.intern()} に差し替えて Guava の
+     * {@code Interner} を完全に回避します。
      *
      * <p>
      * <b>なぜ Mixin ではなく ASM トランスフォーマーを使うのか:</b><br>
      * Hodgepodge の {@code NBTTagCompoundHashMapTransformer} が
-     * {@code NBTTagCompound} を
-     * 早期変換する過程で {@code StringPooler$GuavaPooler} が Mixin フェーズより前に
-     * ロードされます。その結果 Mixin で介入しようとすると
-     * {@code MixinTargetAlreadyLoadedException} が発生して適用に失敗します。
-     * ASM トランスフォーマーはクラスローダーがクラスを読み込む時点で動作するため、
-     * このタイミング問題を回避できます。
+     * {@code NBTTagCompound} を 早期変換する過程で {@code StringPooler$GuavaPooler} が Mixin
+     * フェーズより前に ロードされます。その結果 Mixin で介入しようとすると
+     * {@code MixinTargetAlreadyLoadedException} が発生して適用に失敗します。 ASM
+     * トランスフォーマーはクラスローダーがクラスを読み込む時点で動作するため、 このタイミング問題を回避できます。
      */
     private byte[] patchHodgepodgeGuavaPooler(byte[] basicClass) {
         ClassNode classNode = new ClassNode();
@@ -288,17 +258,15 @@ public class CrossTieClassTransformer implements IClassTransformer {
         boolean changed = false;
         for (Object methodObject : classNode.methods) {
             MethodNode method = (MethodNode) methodObject;
-            if ("getString".equals(method.name)
-                    && "(Ljava/lang/String;)Ljava/lang/String;".equals(method.desc)) {
+            if ("getString".equals(method.name) && "(Ljava/lang/String;)Ljava/lang/String;".equals(method.desc)) {
                 replaceMethodBody(method, stringInternBody());
                 changed = true;
             }
         }
 
         if (changed) {
-            System.out.println(
-                    "[CrossTie] Patched StringPooler$GuavaPooler.getString() -> String.intern()"
-                            + " (Guava Interner loader constraint workaround)");
+            System.out.println("[CrossTie] Patched StringPooler$GuavaPooler.getString() -> String.intern()"
+                    + " (Guava Interner loader constraint workaround)");
         }
         return changed ? writeClass(classNode) : basicClass;
     }
@@ -310,15 +278,13 @@ public class CrossTieClassTransformer implements IClassTransformer {
      *
      * <p>
      * 元の実装は直接 {@code jdk.nashorn.api.scripting.NashornScriptEngineFactory}
-     * を参照するが、このクラスが存在しない環境でも動作するよう、
-     * ASM でメソッド本体を差し替える。
+     * を参照するが、このクラスが存在しない環境でも動作するよう、 ASM でメソッド本体を差し替える。
      *
      * <p>
      * <b>なぜ Mixin ではなく ASM トランスフォーマーを使うのか:</b><br>
      * Mixin は {@code shouldApplyMixin} で条件判定されるが、CrossTieMixinPlugin
      * が正しくロードされない場合がある。ASM トランスフォーマーは
-     * {@link net.suzumiya.crosstie.asm.CrossTieCorePlugin} で
-     * 登録されているため、必ず動作する。
+     * {@link net.suzumiya.crosstie.asm.CrossTieCorePlugin} で 登録されているため、必ず動作する。
      */
     private byte[] patchScriptUtil(byte[] basicClass) {
         ClassNode classNode = new ClassNode();
@@ -345,76 +311,10 @@ public class CrossTieClassTransformer implements IClassTransformer {
      *
      * <p>
      * 元の実装は、パーミッション操作時に {@code PermissionsManagerClient.tamperCheck()}
-     * を呼び出します。サーバー接続時に60秒間 tick されていない場合に
-     * {@code IllegalStateException} がスローされます。
-     *
-     * <p>
-     * {@code refreshPermissions} は try/catch を含む複雑なバイトコードのため、
-     * {@code tamperCheck()} 呼び出しだけを削除すると stack map と不整合になり
-     * {@code VerifyError} が発生します。そのためメソッド全体を no-op に置き換えます。
-     * 他メソッドでは {@code tamperCheck()} 呼び出しのみを削除します。
-     */
-    private byte[] patchMacroModPermissions(byte[] basicClass) {
-        ClassNode classNode = new ClassNode();
-        new ClassReader(basicClass).accept(classNode, 0);
-
-        int removedCalls = 0;
-        for (Object methodObject : classNode.methods) {
-            MethodNode method = (MethodNode) methodObject;
-
-            // メソッド名（refreshPermissions）の縛りを消去し、全メソッドを対象にします。
-            // これにより、registerPermission 等に含まれる tamperCheck も確実に捕まえられます。
-            for (int i = 0; i < method.instructions.size(); i++) {
-                if (method.instructions.get(i) instanceof MethodInsnNode) {
-                    MethodInsnNode insn = (MethodInsnNode) method.instructions.get(i);
-
-                    if ("tamperCheck".equals(insn.name)
-                            && "com/mumfrey/liteloader/permissions/PermissionsManagerClient".equals(insn.owner)) {
-
-                        // 呼び出し命令（INVOKEVIRTUAL）を POP に置き換える
-                        method.instructions.set(insn, new InsnNode(Opcodes.POP));
-                        removedCalls++;
-                    }
-                }
-            }
-        }
-
-        if (removedCalls > 0) {
-            System.out.println(
-                    "[CrossTie] Patched MacroModPermissions -> removed " + removedCalls + " tamperCheck() call(s)");
-            return writeClass(classNode);
-        }
-        return basicClass;
-    }
-
-    /**
-     * LiteLoader {@code PermissionsManagerClient.tamperCheck()} を no-op にする。
-     *
-     * <p>
-     * Mixin が ModDetector 判定の都合で適用されない場合の保険として、
-     * coremod ASM でも tamperCheck を無効化します。
-     */
-    private byte[] patchPermissionsManagerClientTamperCheck(byte[] basicClass) {
-        ClassNode classNode = new ClassNode();
-        new ClassReader(basicClass).accept(classNode, 0);
-
-        boolean changed = false;
-        for (Object methodObject : classNode.methods) {
-            MethodNode method = (MethodNode) methodObject;
-            if ("tamperCheck".equals(method.name) && "()V".equals(method.desc)) {
-                replaceMethodBody(method, emptyVoidReturnBody());
-                changed = true;
-            }
-        }
-
-        if (changed) {
-            System.out.println("[CrossTie] Patched PermissionsManagerClient.tamperCheck() -> no-op");
-        }
-        return changed ? writeClass(classNode) : basicClass;
-    }
-
-    /**
-     * {@code ScriptUtilFallback.doScript(String)} を呼ぶだけのメソッド本体を生成します。
+     * を呼び出します。サーバー接続時に60秒間 tick されていない場合に {@code IllegalStateException} がスローされます。
+     * 
+     * 
+     * /** {@code ScriptUtilFallback.doScript(String)} を呼ぶだけのメソッド本体を生成します。
      *
      * <pre>
      *   ALOAD_0   // パラメータ script (String)
@@ -425,12 +325,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
     private InsnList scriptUtilFallbackBody() {
         InsnList instructions = new InsnList();
         instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
-        instructions.add(new MethodInsnNode(
-                Opcodes.INVOKESTATIC,
-                "net/suzumiya/crosstie/compat/ScriptUtilFallback",
-                "doScript",
-                "(Ljava/lang/String;)Ljavax/script/ScriptEngine;",
-                false));
+        instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/suzumiya/crosstie/compat/ScriptUtilFallback",
+                "doScript", "(Ljava/lang/String;)Ljavax/script/ScriptEngine;", false));
         instructions.add(new InsnNode(Opcodes.ARETURN));
         return instructions;
     }
@@ -443,12 +339,9 @@ public class CrossTieClassTransformer implements IClassTransformer {
         instructions.add(new VarInsnNode(Opcodes.ILOAD, 3));
         instructions.add(new VarInsnNode(Opcodes.ILOAD, 4));
         instructions.add(new VarInsnNode(Opcodes.ILOAD, 5));
-        instructions.add(new MethodInsnNode(
-                Opcodes.INVOKESTATIC,
-                "net/suzumiya/crosstie/compat/GtnhLibIconCompat",
+        instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/suzumiya/crosstie/compat/GtnhLibIconCompat",
                 "getParticleIcon",
-                "(Ljava/lang/Object;Lnet/minecraft/world/IBlockAccess;IIII)Lnet/minecraft/util/IIcon;",
-                false));
+                "(Ljava/lang/Object;Lnet/minecraft/world/IBlockAccess;IIII)Lnet/minecraft/util/IIcon;", false));
         instructions.add(new InsnNode(Opcodes.ARETURN));
         return instructions;
     }
@@ -460,22 +353,16 @@ public class CrossTieClassTransformer implements IClassTransformer {
             instructions.add(new VarInsnNode(Opcodes.ALOAD, 2));
             instructions.add(new VarInsnNode(Opcodes.ILOAD, 3));
             instructions.add(new VarInsnNode(Opcodes.ILOAD, 4));
-            instructions.add(new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    "net/suzumiya/crosstie/compat/AngelicaPaneIconCompat",
-                    "getPaneIcon",
-                    "(Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;",
-                    false));
+            instructions
+                    .add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/suzumiya/crosstie/compat/AngelicaPaneIconCompat",
+                            "getPaneIcon", "(Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;", false));
         } else if ("(Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;".equals(methodDesc)) {
             instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
             instructions.add(new VarInsnNode(Opcodes.ILOAD, 2));
             instructions.add(new VarInsnNode(Opcodes.ILOAD, 3));
-            instructions.add(new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    "net/suzumiya/crosstie/compat/AngelicaPaneIconCompat",
-                    "getPaneIcon",
-                    "(Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;",
-                    false));
+            instructions
+                    .add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/suzumiya/crosstie/compat/AngelicaPaneIconCompat",
+                            "getPaneIcon", "(Lnet/minecraft/block/Block;II)Lnet/minecraft/util/IIcon;", false));
         } else if ("(Lnet/minecraft/block/Block;Lnet/minecraft/world/IBlockAccess;IIII)Lnet/minecraft/util/IIcon;"
                 .equals(methodDesc)) {
             instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
@@ -484,21 +371,16 @@ public class CrossTieClassTransformer implements IClassTransformer {
             instructions.add(new VarInsnNode(Opcodes.ILOAD, 4));
             instructions.add(new VarInsnNode(Opcodes.ILOAD, 5));
             instructions.add(new VarInsnNode(Opcodes.ILOAD, 6));
-            instructions.add(new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    "net/suzumiya/crosstie/compat/AngelicaPaneIconCompat",
-                    "getPaneIcon",
+            instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
+                    "net/suzumiya/crosstie/compat/AngelicaPaneIconCompat", "getPaneIcon",
                     "(Lnet/minecraft/block/Block;Lnet/minecraft/world/IBlockAccess;IIII)Lnet/minecraft/util/IIcon;",
                     false));
         } else {
             instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
             instructions.add(new VarInsnNode(Opcodes.ILOAD, 2));
-            instructions.add(new MethodInsnNode(
-                    Opcodes.INVOKESTATIC,
-                    "net/suzumiya/crosstie/compat/AngelicaPaneIconCompat",
-                    "getPaneIcon",
-                    "(Lnet/minecraft/block/Block;I)Lnet/minecraft/util/IIcon;",
-                    false));
+            instructions
+                    .add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/suzumiya/crosstie/compat/AngelicaPaneIconCompat",
+                            "getPaneIcon", "(Lnet/minecraft/block/Block;I)Lnet/minecraft/util/IIcon;", false));
         }
         instructions.add(new InsnNode(Opcodes.ARETURN));
         return instructions;
@@ -529,12 +411,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
     private InsnList stringInternBody() {
         InsnList instructions = new InsnList();
         instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
-        instructions.add(new MethodInsnNode(
-                Opcodes.INVOKEVIRTUAL,
-                "java/lang/String",
-                "intern",
-                "()Ljava/lang/String;",
-                false));
+        instructions.add(
+                new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "intern", "()Ljava/lang/String;", false));
         instructions.add(new InsnNode(Opcodes.ARETURN));
         return instructions;
     }
@@ -543,9 +421,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
      * SplashProgress$3 の run() メソッド先頭にリフレクション経由の GL 状態リセットを注入する。
      *
      * <p>
-     * Angelica のバイトコードリダイレクターは GL11.glEnable() の呼び出しを
-     * GLStateManager.glEnable() に書き換える。このパッチは {@link SplashGLFix} を
-     * 介してリフレクションで GL11 を呼び出すため、リダイレクターの影響を受けない。
+     * Angelica のバイトコードリダイレクターは GL11.glEnable() の呼び出しを GLStateManager.glEnable()
+     * に書き換える。このパッチは {@link SplashGLFix} を 介してリフレクションで GL11 を呼び出すため、リダイレクターの影響を受けない。
      * </p>
      */
     private byte[] patchSplashProgress3(byte[] basicClass) {
@@ -565,27 +442,23 @@ public class CrossTieClassTransformer implements IClassTransformer {
                 boolean isMakeCurrent = "org/lwjgl/opengl/Drawable".equals(minsn.owner)
                         && "makeCurrent".equals(minsn.name);
                 // run(): Display.update() の直後にも注入（毎フレーム先頭）
-                boolean isUpdate = "org/lwjgl/opengl/Display".equals(minsn.owner)
-                        && "update".equals(minsn.name)
+                boolean isUpdate = "org/lwjgl/opengl/Display".equals(minsn.owner) && "update".equals(minsn.name)
                         && "()V".equals(minsn.desc);
                 // setGL(): glClearColor() の直前に clear color cache を dirty にする
-                boolean isClearColor = "org/lwjgl/opengl/GL11".equals(minsn.owner)
-                        && "glClearColor".equals(minsn.name)
+                boolean isClearColor = "org/lwjgl/opengl/GL11".equals(minsn.owner) && "glClearColor".equals(minsn.name)
                         && "(FFFF)V".equals(minsn.desc);
-                // drawBar()/Angelica memory bar: text drawing just before binding the splash font texture
-                boolean isDrawString = "drawString".equals(minsn.name)
-                        && "(Ljava/lang/String;III)I".equals(minsn.desc);
-                // run(): logo/forge texture bind can also be skipped by Angelica's cached binding
+                // drawBar()/Angelica memory bar: text drawing just before binding the splash
+                // font texture
+                boolean isDrawString = "drawString".equals(minsn.name) && "(Ljava/lang/String;III)I".equals(minsn.desc);
+                // run(): logo/forge texture bind can also be skipped by Angelica's cached
+                // binding
                 boolean isSplashTextureBind = "cpw/mods/fml/client/SplashProgress$Texture".equals(minsn.owner)
-                        && "bind".equals(minsn.name)
-                        && "()V".equals(minsn.desc);
+                        && "bind".equals(minsn.name) && "()V".equals(minsn.desc);
 
                 if (isMakeCurrent || isUpdate || isClearColor || isDrawString || isSplashTextureBind) {
                     InsnList patch = new InsnList();
-                    patch.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
-                            "net/suzumiya/crosstie/util/SplashGLFix",
-                            isClearColor || isUpdate ? "markSplashStateDirty" : "prepareTexturedSplashDraw",
-                            "()V",
+                    patch.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/suzumiya/crosstie/util/SplashGLFix",
+                            isClearColor || isUpdate ? "markSplashStateDirty" : "prepareTexturedSplashDraw", "()V",
                             false));
                     if (isClearColor || isDrawString || isSplashTextureBind) {
                         method.instructions.insertBefore(insn, patch);
@@ -594,8 +467,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
                     }
                     changed = true;
                     System.out.println("[CrossTie] SplashProgress$3." + method.name + "() patched "
-                            + (isClearColor || isDrawString || isSplashTextureBind ? "before " : "after ")
-                            + minsn.name + "()");
+                            + (isClearColor || isDrawString || isSplashTextureBind ? "before " : "after ") + minsn.name
+                            + "()");
                 }
             }
         }
@@ -632,8 +505,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
                     // クラスローダーの都合で解決できないMOD/ゲームクラスが
                     // 含まれる場合に ClassNotFoundException 等で失敗することがある。
                     // その場合は安全側に倒して Object を共通の親クラスとして返す。
-                    System.err.println("[CrossTie] getCommonSuperClass fallback for "
-                            + type1 + " / " + type2 + ": " + t);
+                    System.err
+                            .println("[CrossTie] getCommonSuperClass fallback for " + type1 + " / " + type2 + ": " + t);
                     return "java/lang/Object";
                 }
             }
@@ -647,9 +520,10 @@ public class CrossTieClassTransformer implements IClassTransformer {
         }
         return writer.toByteArray();
     }
+
     /**
-     * DiscordSRV NMSUtil.getTexture() の isInstance をリダイレクトする ASM パッチ。
-     * Mixin が Bukkit プラグインに適用されない環境向けの実装。
+     * DiscordSRV NMSUtil.getTexture() の isInstance をリダイレクトする ASM パッチ。 Mixin が
+     * Bukkit プラグインに適用されない環境向けの実装。
      */
     private byte[] patchDiscordSRVNMSUtil(byte[] basicClass) {
         ClassNode classNode = new ClassNode();
@@ -658,23 +532,19 @@ public class CrossTieClassTransformer implements IClassTransformer {
         boolean changed = false;
         for (Object methodObject : classNode.methods) {
             MethodNode method = (MethodNode) methodObject;
-            if ("getTexture".equals(method.name) && "(Lorg/bukkit/entity/Player;)Ljava/lang/String;".equals(method.desc)) {
+            if ("getTexture".equals(method.name)
+                    && "(Lorg/bukkit/entity/Player;)Ljava/lang/String;".equals(method.desc)) {
                 for (int i = 0; i < method.instructions.size(); i++) {
                     org.objectweb.asm.tree.AbstractInsnNode insn = method.instructions.get(i);
                     if (insn instanceof MethodInsnNode) {
                         MethodInsnNode minsn = (MethodInsnNode) insn;
-                        if (minsn.getOpcode() == Opcodes.INVOKEVIRTUAL
-                                && "java/lang/Class".equals(minsn.owner)
-                                && "isInstance".equals(minsn.name)
-                                && "(Ljava/lang/Object;)Z".equals(minsn.desc)) {
-                            
-                            method.instructions.set(minsn, new MethodInsnNode(
-                                Opcodes.INVOKESTATIC,
-                                "net/suzumiya/crosstie/compat/DiscordSRVCompat",
-                                "safeIsInstance",
-                                "(Ljava/lang/Class;Ljava/lang/Object;)Z",
-                                false
-                            ));
+                        if (minsn.getOpcode() == Opcodes.INVOKEVIRTUAL && "java/lang/Class".equals(minsn.owner)
+                                && "isInstance".equals(minsn.name) && "(Ljava/lang/Object;)Z".equals(minsn.desc)) {
+
+                            method.instructions.set(minsn,
+                                    new MethodInsnNode(Opcodes.INVOKESTATIC,
+                                            "net/suzumiya/crosstie/compat/DiscordSRVCompat", "safeIsInstance",
+                                            "(Ljava/lang/Class;Ljava/lang/Object;)Z", false));
                             changed = true;
                         }
                     }
@@ -689,17 +559,16 @@ public class CrossTieClassTransformer implements IClassTransformer {
     }
 
     /**
-     * ServiceLoader のクラッシュを回避するためのダミーの ScriptEngineFactory クラスを生成します。
-     * Java 8 環境で Java 11 向けにコンパイルされた NashornScriptEngineFactory がロードされると
-     * UnsupportedClassVersionError となりサーバーがクラッシュするため、
-     * 代わりに Java 8 向けの空のクラスを ASM で生成して返します。
+     * ServiceLoader のクラッシュを回避するためのダミーの ScriptEngineFactory クラスを生成します。 Java 8 環境で
+     * Java 11 向けにコンパイルされた NashornScriptEngineFactory がロードされると
+     * UnsupportedClassVersionError となりサーバーがクラッシュするため、 代わりに Java 8 向けの空のクラスを ASM
+     * で生成して返します。
      */
     private byte[] provideDummyNashornFactory() {
         ClassWriter cw = new ClassWriter(0);
         cw.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER,
-                "org/openjdk/nashorn/api/scripting/NashornScriptEngineFactory",
-                null, "java/lang/Object",
-                new String[]{"javax/script/ScriptEngineFactory"});
+                "org/openjdk/nashorn/api/scripting/NashornScriptEngineFactory", null, "java/lang/Object",
+                new String[] { "javax/script/ScriptEngineFactory" });
 
         // Constructor
         org.objectweb.asm.MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
@@ -711,7 +580,7 @@ public class CrossTieClassTransformer implements IClassTransformer {
         mv.visitEnd();
 
         // One string returning methods
-        String[] stringMethods = {"getEngineName", "getEngineVersion", "getLanguageName", "getLanguageVersion"};
+        String[] stringMethods = { "getEngineName", "getEngineVersion", "getLanguageName", "getLanguageVersion" };
         for (String m : stringMethods) {
             mv = cw.visitMethod(Opcodes.ACC_PUBLIC, m, "()Ljava/lang/String;", null, null);
             mv.visitCode();
@@ -722,7 +591,7 @@ public class CrossTieClassTransformer implements IClassTransformer {
         }
 
         // List returning methods
-        String[] listMethods = {"getExtensions", "getMimeTypes", "getNames"};
+        String[] listMethods = { "getExtensions", "getMimeTypes", "getNames" };
         for (String m : listMethods) {
             mv = cw.visitMethod(Opcodes.ACC_PUBLIC, m, "()Ljava/util/List;", null, null);
             mv.visitCode();
@@ -741,7 +610,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
         mv.visitEnd();
 
         // String getMethodCallSyntax(String, String, String...)
-        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getMethodCallSyntax", "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)Ljava/lang/String;", null, null);
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getMethodCallSyntax",
+                "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)Ljava/lang/String;", null, null);
         mv.visitCode();
         mv.visitLdcInsn("");
         mv.visitInsn(Opcodes.ARETURN);
@@ -749,7 +619,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
         mv.visitEnd();
 
         // String getOutputStatement(String)
-        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getOutputStatement", "(Ljava/lang/String;)Ljava/lang/String;", null, null);
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getOutputStatement", "(Ljava/lang/String;)Ljava/lang/String;", null,
+                null);
         mv.visitCode();
         mv.visitLdcInsn("");
         mv.visitInsn(Opcodes.ARETURN);

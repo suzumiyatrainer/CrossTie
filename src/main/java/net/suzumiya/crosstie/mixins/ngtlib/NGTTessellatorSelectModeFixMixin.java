@@ -1,6 +1,8 @@
 package net.suzumiya.crosstie.mixins.ngtlib;
 
 import jp.ngt.ngtlib.renderer.NGTTessellator;
+import net.suzumiya.crosstie.utils.TrueGL;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
@@ -9,25 +11,29 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import net.suzumiya.crosstie.util.TrueGL;
 
 /**
  * AngelicaやOptiFine環境で、TessellatorがVBOやシェーダー描画に置き換わると、
  * 3D空間上の矢印や線などのGL_SELECTによるマウスピッキングが動作しなくなる問題。
  *
- * 【修正内容】
- * GL_SELECTモード中のみ、AngelicaのVBOやシェーダーを一時的に無効化し、
+ * 【修正内容】 GL_SELECTモード中のみ、AngelicaのVBOやシェーダーを一時的に無効化し、
  * 完全な互換モードの即時描画（glBegin/glEnd）で頂点を送り出す。
  */
 @Mixin(value = NGTTessellator.class, remap = false)
 public abstract class NGTTessellatorSelectModeFixMixin {
 
-    @Shadow private boolean isDrawing;
-    @Shadow private int drawMode;
-    @Shadow private int vertexCount;
-    @Shadow private int[] rawBuffer;
-    @Shadow private int rawBufferIndex;
-    @Shadow private int rawBufferSize;
+    @Shadow
+    private boolean isDrawing;
+    @Shadow
+    private int drawMode;
+    @Shadow
+    private int vertexCount;
+    @Shadow
+    private int[] rawBuffer;
+    @Shadow
+    private int rawBufferIndex;
+    @Shadow
+    private int rawBufferSize;
 
     @Shadow
     private void reset() {
@@ -41,7 +47,8 @@ public abstract class NGTTessellatorSelectModeFixMixin {
                 throw new IllegalStateException("Not tesselating!");
             }
             this.isDrawing = false;
-            System.out.println("[CrossTie] NGTTessellator draw intercepted in SELECT mode! Vertices: " + this.vertexCount + ", Mode: " + this.drawMode);
+            System.out.println("[CrossTie] NGTTessellator draw intercepted in SELECT mode! Vertices: "
+                    + this.vertexCount + ", Mode: " + this.drawMode);
 
             boolean hasVAO = org.lwjgl.opengl.GLContext.getCapabilities().OpenGL30;
             boolean hasVBO = org.lwjgl.opengl.GLContext.getCapabilities().OpenGL15;
@@ -70,7 +77,7 @@ public abstract class NGTTessellatorSelectModeFixMixin {
             if (this.vertexCount > 0) {
                 // Angelicaのソフトウェア行列スタックをドライバに同期させる
                 TrueGL.syncMatricesToDriver();
-                
+
                 GL11.glBegin(this.drawMode);
                 for (int i = 0; i < this.vertexCount; i++) {
                     int index = i * 8;

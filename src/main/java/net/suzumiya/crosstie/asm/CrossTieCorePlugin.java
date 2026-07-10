@@ -1,13 +1,14 @@
 package net.suzumiya.crosstie.asm;
 
 import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
+import net.suzumiya.crosstie.utils.ModDetector;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import net.suzumiya.crosstie.util.ModDetector;
 
 @IFMLLoadingPlugin.MCVersion("1.7.10")
 @IFMLLoadingPlugin.Name("CrossTieCore")

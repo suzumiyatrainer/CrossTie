@@ -1,4 +1,4 @@
-package net.suzumiya.crosstie.util;
+package net.suzumiya.crosstie.utils;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -10,13 +10,12 @@ import java.util.regex.Pattern;
 public final class ScriptGlRedirector {
 
     private static final int MAX_SCRIPT_CACHE_SIZE = 512;
-    private static final String GLSM_IMPORT =
-            "importPackage(Packages.com.gtnewhorizons.angelica.glsm);\n";
-    private static final Pattern QUALIFIED_GL_METHOD =
-            Pattern.compile("\\b(?:Packages\\.)?org\\.lwjgl\\.opengl\\.(GL\\w+)\\.(\\w+)\\b");
+    private static final String GLSM_IMPORT = "importPackage(Packages.com.gtnewhorizons.angelica.glsm);\n";
+    private static final Pattern QUALIFIED_GL_METHOD = Pattern
+            .compile("\\b(?:Packages\\.)?org\\.lwjgl\\.opengl\\.(GL\\w+)\\.(\\w+)\\b");
 
-    private static final Map<String, String> TRANSFORMED_SCRIPTS = Collections.synchronizedMap(
-            new LinkedHashMap<String, String>(64, 0.75F, true) {
+    private static final Map<String, String> TRANSFORMED_SCRIPTS = Collections
+            .synchronizedMap(new LinkedHashMap<String, String>(64, 0.75F, true) {
                 @Override
                 protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
                     return size() > MAX_SCRIPT_CACHE_SIZE;

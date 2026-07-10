@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import net.suzumiya.crosstie.asm.CrossTieCorePlugin;
-import net.suzumiya.crosstie.util.ModDetector;
+import net.suzumiya.crosstie.utils.ModDetector;
 import org.spongepowered.asm.lib.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -251,11 +251,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("kaizpatch.McteWorldSetBlockDiffMixin");
         }
 
-        // LiteLoader / Macro / Keybind Mod
-        if (isModPresent("LiteLoader") || isModPresent("MacroMod")) {
-            mixins.add("liteloader.MixinPermissionsManagerClient");
-        }
-
         // Client-side mixins
         if (isClient) {
             // OptiFine / FastCraft - LargeRail brightness fix (Angelicaがある場合は追加しない)
@@ -320,8 +315,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("worldedit.MixinSchematicWriter");
             mixins.add("worldedit.MixinSchematicReader");
         }
-
-
 
         // ProjectRed mixins are handled in CrossTieLateMixinLoader to prevent early
         // classloading crashes

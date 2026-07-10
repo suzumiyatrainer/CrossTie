@@ -1,4 +1,4 @@
-package net.suzumiya.crosstie.util;
+package net.suzumiya.crosstie.utils;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.world.ChunkCoordIntPair;
@@ -9,18 +9,19 @@ import net.minecraftforge.common.ForgeChunkManager.Type;
 import net.suzumiya.crosstie.CrossTie;
 
 /**
- * Helper class to decouple Mixins from Forge Chunk Manager classes.
- * This prevents NoClassDefFoundErrors during early Mixin transformation.
+ * Helper class to decouple Mixins from Forge Chunk Manager classes. This
+ * prevents NoClassDefFoundErrors during early Mixin transformation.
  */
 public class ChunkLoaderHelper {
 
     /**
-     * Requests a chunk ticket for the given entity.
-     * Uses Object for the return type to avoid Forge class dependencies in calling Mixins.
+     * Requests a chunk ticket for the given entity. Uses Object for the return type
+     * to avoid Forge class dependencies in calling Mixins.
      */
     public static Object requestTicket(Entity entity) {
-        if (entity == null || entity.worldObj == null) return null;
-        
+        if (entity == null || entity.worldObj == null)
+            return null;
+
         try {
             World world = entity.worldObj;
             Ticket ticket = ForgeChunkManager.requestTicket(CrossTie.instance, world, Type.ENTITY);
@@ -38,7 +39,8 @@ public class ChunkLoaderHelper {
         if (ticketObj instanceof Ticket) {
             try {
                 ForgeChunkManager.forceChunk((Ticket) ticketObj, new ChunkCoordIntPair(x, z));
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
     }
 
@@ -46,7 +48,8 @@ public class ChunkLoaderHelper {
         if (ticketObj instanceof Ticket) {
             try {
                 ForgeChunkManager.unforceChunk((Ticket) ticketObj, new ChunkCoordIntPair(x, z));
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
     }
 
@@ -54,7 +57,8 @@ public class ChunkLoaderHelper {
         if (ticketObj instanceof Ticket) {
             try {
                 ForgeChunkManager.releaseTicket((Ticket) ticketObj);
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
         }
     }
 }
