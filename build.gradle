@@ -168,25 +168,26 @@ dependencies {
 
     // Angelica + Iris (for mixin compilation) via JitPack.
     // Iris classes are bundled inside the Angelica jar.
-    def angelicaVersion = (findProperty('angelicaVersion') ?: '2.1.49').toString().trim()
+    def angelicaVersion = (findProperty('angelicaVersion') ?: '2.1.51').toString().trim()
     compileOnly("com.github.GTNewHorizons:Angelica:${angelicaVersion}")
 
     // Hodgepodge via JitPack
-    def hodgepodgeVersion = (findProperty('hodgepodgeVersion') ?: '2.7.166').toString().trim()
+    def hodgepodgeVersion = (findProperty('hodgepodgeVersion') ?: '2.7.171').toString().trim()
     compileOnly("com.github.GTNewHorizons:Hodgepodge:${hodgepodgeVersion}")
-
-    // ProjectRed
-    implementation rfg.deobf("curse.maven:project-red-core-228702:2280728")
-    implementation rfg.deobf("curse.maven:project-red-illumination-229046:2280733")
 
     // WorldEdit
     compileOnly 'com.sk89q.worldedit:worldedit-core:6.1.4-SNAPSHOT'
     compileOnly 'com.sk89q.worldedit:worldedit-forge-mc1.7.10:6.1.1-SNAPSHOT'
 
     // Optional: any extra jars dropped in libs/ are still picked up for local-only testing
-    // (e.g. a target mod you want to test against but that isn't declared as a dependency above).
+    // (e.g. a target mod you want to test against but that isn't declared as a dependency above)
     // libs/ is gitignored and does not need to contain anything for a normal build to succeed.
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    // CustomNPC+ (compileOnly: Mixin target, not shipped in CrossTie JAR)
+    // Resolved from JitPack.
+    def customNpcVersion = (findProperty('customNpcVersion') ?: 'master-SNAPSHOT').toString().trim()
+    compileOnly rfg.deobf("com.github.KAMKEEL:CustomNPC-Plus:${customNpcVersion}")
 
 }
 

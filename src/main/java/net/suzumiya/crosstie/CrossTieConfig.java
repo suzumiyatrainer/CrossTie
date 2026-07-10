@@ -51,8 +51,11 @@ public final class CrossTieConfig {
             "enableNativeRenderGlobalDisplayLists", "enableDiagnostics", "enableSoundDebug", "config_version",
             // Performance
             "trainDistantCullingEnabled", "trainSpeedSyncEnabled", "railTesrThrottleEnabled", "largeRailCullingEnabled",
-            "largeRailChunkBatchingEnabled", "railTessellateOptimizationEnabled", "trainGetBlockCacheEnabled",
+            "railTessellateOptimizationEnabled",
             "connectionCacheEnabled", "signboardGuiPagingEnabled",
+            "installedObjectCullingEnabled",
+            "decorativeWireOptimizationEnabled",
+            "detectorThrottlingEnabled", "detectorThrottleInterval",
             // Fixes
             "fixAngelicaCloudRendering", "fixAngelicaRebuildSync", "fixAngelicaWaterRenderDistance",
             "disableSignalCulling", "fixOptiFineRailBrightness", "fixOptiFineWireNormalize",
@@ -114,17 +117,23 @@ public final class CrossTieConfig {
     /** LargeRailの距離/フラストラムカリング */
     public static boolean largeRailCullingEnabled;
 
-    /** LargeRailのチャンク単位レンダリング集約 */
-    public static boolean largeRailChunkBatchingEnabled;
-
     /** レールテッセレーションループ最適化。再起動必須。 */
     public static boolean railTessellateOptimizationEnabled;
 
-    /** Train onUpdateのgetBlockキャッシュ */
-    public static boolean trainGetBlockCacheEnabled;
-
     /** 配線/支柱の接続キャッシュ */
     public static boolean connectionCacheEnabled;
+
+    /** 設置物エンティティ（車止め）のカリング有効化 */
+    public static boolean installedObjectCullingEnabled;
+
+    /** お飾り架線（電力供給に関与しない架線）の信号伝播除外 */
+    public static boolean decorativeWireOptimizationEnabled;
+
+    /** EntityTrainDetector の更新スロットリング有効化 */
+    public static boolean detectorThrottlingEnabled;
+
+    /** EntityTrainDetector のスロットリング間隔（tick毎）。デフォルト4。 */
+    public static int detectorThrottleInterval;
 
     /**
      * サインボード選択 GUI の仮想スクロールを有効にするかどうか。 有効時は画面に表示される行数分のボタンのみ生成するため、 テクスチャ数が多い環境での
@@ -281,22 +290,31 @@ public final class CrossTieConfig {
         largeRailCullingEnabled = config.getBoolean("largeRailCullingEnabled", CAT_PERFORMANCE, true,
                 "LargeRail の距離カリングとフラストラムカリングを有効にします。");
 
-        largeRailChunkBatchingEnabled = config.getBoolean("largeRailChunkBatchingEnabled", CAT_PERFORMANCE, true,
-                "LargeRail のチャンク単位レンダリング集約を有効にします。");
-
         prop = config.get(CAT_PERFORMANCE, "railTessellateOptimizationEnabled", true);
         prop.comment = "レールテッセレーションループの最適化を有効にします。 [再起動必須]";
         prop.setRequiresMcRestart(true);
         railTessellateOptimizationEnabled = prop.getBoolean(true);
-
-        trainGetBlockCacheEnabled = config.getBoolean("trainGetBlockCacheEnabled", CAT_PERFORMANCE, true,
-                "Train onUpdate 内の重複 getBlock() 呼び出しをキャッシュします。");
 
         connectionCacheEnabled = config.getBoolean("connectionCacheEnabled", CAT_PERFORMANCE, true,
                 "配線/支柱の接続判定結果をキャッシュし、パフォーマンスを向上します。");
 
         signboardGuiPagingEnabled = config.getBoolean("signboardGuiPagingEnabled", CAT_PERFORMANCE, true,
                 "サインボード選択 GUI を仮想スクロール方式にし、テクスチャ数が多い環境での" + " GUI 開き遅延を改善します。");
+
+        installedObjectCullingEnabled = config.getBoolean("installedObjectCullingEnabled", CAT_PERFORMANCE, true,
+                "車止め（EntityBumpingPost）の描画距離カリングとフラストラムカリングを有効にします。"
+                + " 描画距離はバニラの Render Distance 設定を使用します。");
+
+        decorativeWireOptimizationEnabled = config.getBoolean("decorativeWireOptimizationEnabled", CAT_PERFORMANCE, true,
+                "電力供給に関与しないお飾り架線のネットワークを信号伝播処理から除外し、MSPT を低減します。");
+
+        detectorThrottlingEnabled = config.getBoolean("detectorThrottlingEnabled", CAT_PERFORMANCE, true,
+                "EntityTrainDetector の在線確認処理をスロットリングし、MSPT を低減します。"
+                + " ATC および信号連動設備には適用されません。");
+
+        detectorThrottleInterval = config.getInt("detectorThrottleInterval", CAT_PERFORMANCE, 4, 1, 20,
+                "EntityTrainDetector のスロットリング間隔（tick単位）。デフォルト: 4。"
+                + " 320km/h列車でも1ブロック未満の移動量なので安全です。");
 
         // ---- 3. Fixes カテゴリ ---- //
         fixAngelicaCloudRendering = config.getBoolean("fixAngelicaCloudRendering", CAT_FIXES, true,
@@ -335,11 +353,13 @@ public final class CrossTieConfig {
         trainSpeedSyncEnabled = true;
         railTesrThrottleEnabled = true;
         largeRailCullingEnabled = true;
-        largeRailChunkBatchingEnabled = true;
         railTessellateOptimizationEnabled = true;
-        trainGetBlockCacheEnabled = true;
         connectionCacheEnabled = true;
         signboardGuiPagingEnabled = true;
+        installedObjectCullingEnabled = true;
+        decorativeWireOptimizationEnabled = true;
+        detectorThrottlingEnabled = true;
+        detectorThrottleInterval = 4;
         fixAngelicaCloudRendering = true;
         fixAngelicaRebuildSync = true;
         fixAngelicaWaterRenderDistance = true;

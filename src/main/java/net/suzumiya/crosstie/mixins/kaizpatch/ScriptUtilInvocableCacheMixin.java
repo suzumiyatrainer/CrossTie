@@ -39,7 +39,7 @@ public abstract class ScriptUtilInvocableCacheMixin {
             try {
                 for (javax.script.ScriptEngineFactory factory : java.util.ServiceLoader
                         .load(javax.script.ScriptEngineFactory.class, loader)) {
-                    if (factory == null) {
+                    if (factory == null || "DummyNashorn (Blocked by CrossTie)".equals(factory.getEngineName())) {
                         continue;
                     }
                     String factoryClassName = factory.getClass().getName();
@@ -57,7 +57,11 @@ public abstract class ScriptUtilInvocableCacheMixin {
             for (String candidate : candidates) {
                 try {
                     Class<?> factoryClass = Class.forName(candidate, true, loader);
-                    crosstie$engineFactory = factoryClass.getDeclaredConstructor().newInstance();
+                    javax.script.ScriptEngineFactory factory = (javax.script.ScriptEngineFactory) factoryClass.getDeclaredConstructor().newInstance();
+                    if ("DummyNashorn (Blocked by CrossTie)".equals(factory.getEngineName())) {
+                        continue;
+                    }
+                    crosstie$engineFactory = factory;
                     return crosstie$engineFactory;
                 } catch (Throwable ignored) {
                     // try next candidate or loader

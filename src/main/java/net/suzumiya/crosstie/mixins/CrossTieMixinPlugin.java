@@ -94,7 +94,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasNgtScriptUtil = isModPresent("NGTScriptUtil");
             boolean hasRtm = isModPresent("RTM");
             boolean hasRailMapCustom = isModPresent("RailMapCustom");
-            
+
             if (mixinClassName.endsWith(".McteWorldSetBlockDiffMixin")) {
                 shouldApply = hasMcte;
                 debugReason = "MCTE=" + hasMcte;
@@ -110,8 +110,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                         + hasKaizPatch + ", NGTScriptUtil=" + hasNgtScriptUtil;
             } else if (mixinClassName.endsWith(".ModelPackManagerScriptRedirectMixin")) {
                 shouldApply = isClient && hasAngelicaGlsm && hasRtm && hasNgtScriptUtil;
-                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm + ", RTM="
-                        + hasRtm + ", NGTScriptUtil=" + hasNgtScriptUtil;
+                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm + ", RTM=" + hasRtm
+                        + ", NGTScriptUtil=" + hasNgtScriptUtil;
             } else if (mixinClassName.endsWith(".RailMapCustomCacheMixin")) {
                 shouldApply = hasRailMapCustom;
                 debugReason = "RailMapCustom=" + hasRailMapCustom;
@@ -129,7 +129,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasAngelicaGlsm = isModPresent("AngelicaGlsm");
             boolean hasAngelica = isModPresent("Angelica");
             boolean hasAnyAngelica = hasAngelica || hasAngelicaGlsm;
-            
+
             if (mixinClassName.endsWith(".AngelicaRenderGlobalDisplayListCrashMixin")) {
                 shouldApply = isClient && hasAngelicaGlsm;
                 debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm
@@ -146,10 +146,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.rtm.")) {
             boolean hasAngelicaGlsm = isModPresent("AngelicaGlsm");
             boolean hasRtm = isModPresent("RTM");
-            if (mixinClassName.endsWith(".RtmPartsDisplayListBypassMixin")) {
-                shouldApply = isClient && hasAngelicaGlsm;
-                debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm;
-            } else if (mixinClassName.endsWith(".PolygonRendererMixin")) {
+            if (mixinClassName.endsWith(".PolygonRendererMixin")) {
                 shouldApply = isClient && hasAngelicaGlsm;
                 debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm;
             } else {
@@ -167,8 +164,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasAngelicaGlsm = isModPresent("AngelicaGlsm");
             // Angelicaがある場合は絶対に適用しない（二重安全網）
             shouldApply = (hasOptiFine || hasFastCraft) && !hasAngelicaGlsm;
-            debugReason = "OptiFine=" + hasOptiFine + ", FastCraft=" + hasFastCraft
-                    + ", AngelicaGlsm=" + hasAngelicaGlsm;
+            debugReason = "OptiFine=" + hasOptiFine + ", FastCraft=" + hasFastCraft + ", AngelicaGlsm="
+                    + hasAngelicaGlsm;
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.minecraft.")) {
             boolean hasGtnhLib = isModPresent("GTNHLib");
             shouldApply = isClient && hasGtnhLib;
@@ -181,6 +178,13 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasProjectRed = isModPresent("ProjectRed");
             shouldApply = hasProjectRed;
             debugReason = "ProjectRed=" + hasProjectRed;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.customnpc.")) {
+            boolean hasCustomNpc = isModPresent("CustomNpc");
+            shouldApply = hasCustomNpc;
+            debugReason = "CustomNpc=" + hasCustomNpc;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.discordsrv.")) {
+            shouldApply = true;
+            debugReason = "DiscordSRV=always_true";
         } else {
             shouldApply = true;
             debugReason = "default=true";
@@ -224,8 +228,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.MixinSoundAPIEntityTrainBase");
         }
 
-
-
         // KaizPatch / NGTScriptUtil
         if (isModPresent("NGTScriptUtil")) {
             mixins.add("kaizpatch.ScriptUtilInvocableCacheMixin");
@@ -236,7 +238,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 }
             }
         }
-        
+
         if (isModPresent("KaizPatch")) {
             mixins.add("kaizpatch.ModelLoaderKtFallbackMixin");
         }
@@ -269,16 +271,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("angelica.AngelicaRenderGlobalDisplayListCrashMixin");
             }
 
-            // Angelica splash screen blackout fix
-            if (isModPresent("AngelicaGlsm")) {
-                if (!isAngelicaFontRendererEnabled()) {
-                    System.out.println(
-                            "[CrossTieMixin] Angelica FontRenderer is disabled. Applying Splash Screen Blackout Fix.");
-                    mixins.add("splash.MixinSplashProgressEarlyGLStateManagerLoad");
-                    mixins.add("splash.MixinGLStateManagerFallbackDraw");
-                }
-            }
-
             // GTNHLib client icons
             if (isModPresent("GTNHLib")) {
                 mixins.add("gtnhlib.MixinBlockPaneIconFallback");
@@ -290,21 +282,22 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.RenderElectricalWiringConnectionCacheMixin");
                 mixins.add("rtm.BlockLinePoleConnectionCacheMixin");
                 mixins.add("rtm.RenderLargeRailOptimizationMixin");
-                mixins.add("rtm.RenderLargeRailChunkBatchMixin");
-                mixins.add("rtm.RTMRailTESRThrottleMixin");
                 mixins.add("rtm.RailTessellateOptimizationMixin");
                 mixins.add("rtm.TileEntitySignalNoCullingMixin");
                 mixins.add("rtm.TileEntityCrossingGateNoCullingMixin");
+                mixins.add("rtm.RenderEntityInstalledObjectCullingMixin");
                 mixins.add("rtm.GuiSelectTexturePagingMixin");
                 mixins.add("rtm.RtmPartsMatrixPushMixin");
                 mixins.add("rtm.BasicVehiclePartsRendererMixin");
 
-                // 1.12.2マーカーUIのマウスピッキング修正:
-                // AngelicaやOptiFine環境ではGL_SELECTモードが無視されて画面に描画されてしまうため、
-                // ピッキング中の描画はカラー/深度バッファへの書き込みをマスクして防ぐ。
-                if (isModPresent("AngelicaGlsm") || isModPresent("OptiFine") || isModPresent("FastCraft")) {
-                    // mixins.add("ngtlib.GLHelperMousePickingFixMixin");
-                    // mixins.add("ngtlib.NGTTessellatorSelectModeFixMixin");
+                // Angelica
+                if (isModPresent("AngelicaGlsm")) {
+                    mixins.add("ngtlib.InternalButtonAccessor");
+                    mixins.add("ngtlib.InternalGUIMathPickingMixin");
+                    mixins.add("ngtlib.NGTTessellatorSelectModeFixMixin");
+                    mixins.add("ngtlib.GLHelperSelectBypassMixin");
+                    mixins.add("ngtlib.RenderMarkerBlock1122MathPickingMixin");
+                    mixins.add("ngtlib.ActionPartsLoadNameMixin");
                 }
             }
 
@@ -315,6 +308,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             }
         }
 
+        // RTM サーバー側 Mixin（クライアント・サーバー共通）
+        if (isModPresent("RTM")) {
+            mixins.add("rtm.ElectricalWiringDecorativeMixin");
+            mixins.add("rtm.EntityTrainDetectorThrottleMixin");
+        }
+
         // WorldEdit
         if (isModPresent("WorldEdit")) {
             mixins.add("worldedit.MixinBaseBlock");
@@ -322,50 +321,15 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("worldedit.MixinSchematicReader");
         }
 
-        // ProjectRed mixins are handled in CrossTieLateMixinLoader to prevent early classloading crashes
+        // DiscordSRV
+        mixins.add("discordsrv.NMSUtilMixin");
+
+        // ProjectRed mixins are handled in CrossTieLateMixinLoader to prevent early
+        // classloading crashes
 
         System.out.println(
                 "[CrossTieMixin] Dynamic mixin count: " + mixins.size() + " / " + (isClient ? "CLIENT" : "SERVER"));
         return mixins;
-    }
-
-    /**
-     * Angelica の enableFontRenderer 設定が有効かどうかを判定する。
-     */
-    private boolean isAngelicaFontRendererEnabled() {
-        java.io.File mcDataDir = CrossTieCorePlugin.getMcDataDir();
-        if (mcDataDir == null) {
-            // CorePluginから取得できない場合はカレントディレクトリ(.minecraft)をフォールバックに
-            mcDataDir = new java.io.File(".");
-        }
-
-        java.io.File configFile = new java.io.File(mcDataDir, "config/angelica-modules.cfg");
-        if (!configFile.exists()) {
-            return true; // ファイルがない場合はAngelicaのデフォルト値（有効）とみなす
-        }
-
-        try {
-            for (String line : java.nio.file.Files.readAllLines(configFile.toPath())) {
-                String trimmed = line.trim();
-                // コメントアウトされている行をスキップ
-                if (trimmed.startsWith("#")) {
-                    continue;
-                }
-
-                // 設定行のパースを堅牢にするため、全ての空白文字（スペースやインデント）を除去
-                String cleanLine = line.replaceAll("\\s+", "");
-
-                if (cleanLine.startsWith("B:enableFontRenderer=")) {
-                    // "B:enableFontRenderer=false" と完全一致する場合のみ false と判定
-                    return !cleanLine.equals("B:enableFontRenderer=false");
-                }
-            }
-        } catch (java.io.IOException e) {
-            System.err.println("[CrossTieMixin] Failed to read angelica-modules.cfg: " + e.getMessage());
-        }
-
-        // 設定項目自体が見つからない場合はデフォルトの true
-        return true;
     }
 
     @Override

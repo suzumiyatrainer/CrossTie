@@ -79,6 +79,13 @@ public class CrossTieClassTransformer implements IClassTransformer {
      */
     private static final String PERMISSIONS_MANAGER_CLIENT = "com.mumfrey.liteloader.permissions.PermissionsManagerClient";
 
+    /**
+     * DiscordSRV NMSUtil クラス名。
+     * class_ResolvableProfile が null の場合に isInstance 呼び出しで発生する
+     * NullPointerException を回避するためにパッチを適用します。
+     */
+    private static final String DISCORDSRV_NMS_UTIL = "github.scarsz.discordsrv.util.NMSUtil";
+
     // AngelicaConfig の ASM パッチは行わない。
     // GTNHLib の config システムが static フィールドを初期化時にリセットするため、
     // クラスロード時のフィールド書き換えは効果がありません。
@@ -86,8 +93,35 @@ public class CrossTieClassTransformer implements IClassTransformer {
 
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
+        if (transformedName != null && "org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory".equals(transformedName)) {
+            boolean shouldBlock = false;
+            try {
+                String classVerStr = System.getProperty("java.class.version");
+                if (classVerStr != null) {
+                    double classVersion = Double.parseDouble(classVerStr);
+                    if (classVersion < 55.0) { // Java 11 is 55.0. Java 8 is 52.0.
+                        shouldBlock = true;
+                    }
+                }
+            } catch (NumberFormatException e) {
+                String javaVer = System.getProperty("java.version");
+                if (javaVer != null && (javaVer.startsWith("1.8") || javaVer.startsWith("1.7") || javaVer.startsWith("1.6"))) {
+                    shouldBlock = true;
+                }
+            }
+            if (shouldBlock) {
+                System.out.println("[CrossTie] Replacing NashornScriptEngineFactory with a dummy Java 8 class to prevent UnsupportedClassVersionError in ServiceLoader.");
+                return provideDummyNashornFactory();
+            }
+        }
+
         if (basicClass == null) {
             return basicClass;
+        }
+
+        // DiscordSRV NMSUtil: 1.7.10 環境での getTexture の NPE 回避
+        if (isClass(transformedName, name, DISCORDSRV_NMS_UTIL, null)) {
+            return patchDiscordSRVNMSUtil(basicClass);
         }
 
         // GTNHLib 0.9.x: MixinBlock_IconWrapper へのパッチ
@@ -612,5 +646,133 @@ public class CrossTieClassTransformer implements IClassTransformer {
             return null;
         }
         return writer.toByteArray();
+    }
+    /**
+     * DiscordSRV NMSUtil.getTexture() の isInstance をリダイレクトする ASM パッチ。
+     * Mixin が Bukkit プラグインに適用されない環境向けの実装。
+     */
+    private byte[] patchDiscordSRVNMSUtil(byte[] basicClass) {
+        ClassNode classNode = new ClassNode();
+        new ClassReader(basicClass).accept(classNode, 0);
+
+        boolean changed = false;
+        for (Object methodObject : classNode.methods) {
+            MethodNode method = (MethodNode) methodObject;
+            if ("getTexture".equals(method.name) && "(Lorg/bukkit/entity/Player;)Ljava/lang/String;".equals(method.desc)) {
+                for (int i = 0; i < method.instructions.size(); i++) {
+                    org.objectweb.asm.tree.AbstractInsnNode insn = method.instructions.get(i);
+                    if (insn instanceof MethodInsnNode) {
+                        MethodInsnNode minsn = (MethodInsnNode) insn;
+                        if (minsn.getOpcode() == Opcodes.INVOKEVIRTUAL
+                                && "java/lang/Class".equals(minsn.owner)
+                                && "isInstance".equals(minsn.name)
+                                && "(Ljava/lang/Object;)Z".equals(minsn.desc)) {
+                            
+                            method.instructions.set(minsn, new MethodInsnNode(
+                                Opcodes.INVOKESTATIC,
+                                "net/suzumiya/crosstie/compat/DiscordSRVCompat",
+                                "safeIsInstance",
+                                "(Ljava/lang/Class;Ljava/lang/Object;)Z",
+                                false
+                            ));
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (changed) {
+            System.out.println("[CrossTie] Patched DiscordSRV NMSUtil.getTexture() -> safeIsInstance()");
+        }
+        return changed ? writeClass(classNode) : basicClass;
+    }
+
+    /**
+     * ServiceLoader のクラッシュを回避するためのダミーの ScriptEngineFactory クラスを生成します。
+     * Java 8 環境で Java 11 向けにコンパイルされた NashornScriptEngineFactory がロードされると
+     * UnsupportedClassVersionError となりサーバーがクラッシュするため、
+     * 代わりに Java 8 向けの空のクラスを ASM で生成して返します。
+     */
+    private byte[] provideDummyNashornFactory() {
+        ClassWriter cw = new ClassWriter(0);
+        cw.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC | Opcodes.ACC_SUPER,
+                "org/openjdk/nashorn/api/scripting/NashornScriptEngineFactory",
+                null, "java/lang/Object",
+                new String[]{"javax/script/ScriptEngineFactory"});
+
+        // Constructor
+        org.objectweb.asm.MethodVisitor mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
+        mv.visitCode();
+        mv.visitVarInsn(Opcodes.ALOAD, 0);
+        mv.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+        mv.visitInsn(Opcodes.RETURN);
+        mv.visitMaxs(1, 1);
+        mv.visitEnd();
+
+        // One string returning methods
+        String[] stringMethods = {"getEngineName", "getEngineVersion", "getLanguageName", "getLanguageVersion"};
+        for (String m : stringMethods) {
+            mv = cw.visitMethod(Opcodes.ACC_PUBLIC, m, "()Ljava/lang/String;", null, null);
+            mv.visitCode();
+            mv.visitLdcInsn("DummyNashorn (Blocked by CrossTie)");
+            mv.visitInsn(Opcodes.ARETURN);
+            mv.visitMaxs(1, 1);
+            mv.visitEnd();
+        }
+
+        // List returning methods
+        String[] listMethods = {"getExtensions", "getMimeTypes", "getNames"};
+        for (String m : listMethods) {
+            mv = cw.visitMethod(Opcodes.ACC_PUBLIC, m, "()Ljava/util/List;", null, null);
+            mv.visitCode();
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Collections", "emptyList", "()Ljava/util/List;", false);
+            mv.visitInsn(Opcodes.ARETURN);
+            mv.visitMaxs(1, 1);
+            mv.visitEnd();
+        }
+
+        // Object getParameter(String)
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getParameter", "(Ljava/lang/String;)Ljava/lang/Object;", null, null);
+        mv.visitCode();
+        mv.visitInsn(Opcodes.ACONST_NULL);
+        mv.visitInsn(Opcodes.ARETURN);
+        mv.visitMaxs(1, 2);
+        mv.visitEnd();
+
+        // String getMethodCallSyntax(String, String, String...)
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getMethodCallSyntax", "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)Ljava/lang/String;", null, null);
+        mv.visitCode();
+        mv.visitLdcInsn("");
+        mv.visitInsn(Opcodes.ARETURN);
+        mv.visitMaxs(1, 4);
+        mv.visitEnd();
+
+        // String getOutputStatement(String)
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getOutputStatement", "(Ljava/lang/String;)Ljava/lang/String;", null, null);
+        mv.visitCode();
+        mv.visitLdcInsn("");
+        mv.visitInsn(Opcodes.ARETURN);
+        mv.visitMaxs(1, 2);
+        mv.visitEnd();
+
+        // String getProgram(String...)
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getProgram", "([Ljava/lang/String;)Ljava/lang/String;", null, null);
+        mv.visitCode();
+        mv.visitLdcInsn("");
+        mv.visitInsn(Opcodes.ARETURN);
+        mv.visitMaxs(1, 2);
+        mv.visitEnd();
+
+        // ScriptEngine getScriptEngine()
+        mv = cw.visitMethod(Opcodes.ACC_PUBLIC, "getScriptEngine", "()Ljavax/script/ScriptEngine;", null, null);
+        mv.visitCode();
+        mv.visitInsn(Opcodes.ACONST_NULL);
+        mv.visitInsn(Opcodes.ARETURN);
+        mv.visitMaxs(1, 1);
+        mv.visitEnd();
+
+        cw.visitEnd();
+        return cw.toByteArray();
     }
 }

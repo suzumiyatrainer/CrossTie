@@ -134,7 +134,7 @@ public abstract class NGTTessellatorMixin {
         int result = mc.draw();
 
         // バッファサイズの縮小（メモリ節約）
-        if (this.rawBufferSize > 0x20000 && this.rawBufferIndex < (this.rawBufferSize << 3)) {
+        if (this.rawBufferSize > 0x20000 && this.rawBufferIndex < (this.rawBufferSize >> 3)) {
             this.rawBufferSize = 0x10000;
             this.rawBuffer = new int[this.rawBufferSize];
         }

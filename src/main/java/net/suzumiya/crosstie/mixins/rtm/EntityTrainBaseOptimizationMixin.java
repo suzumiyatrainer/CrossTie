@@ -1,24 +1,27 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
-import net.minecraft.world.World;
 import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * EntityTrainBase の総合最適化:
  *
  * <ul>
- *   <li><b>P3 (遠距離間引き)</b> - クライアント側でプレイヤーから 256m 以上離れた車両の更新頻度を低減</li>
- *   <li><b>P4 (onUpdate軽量化)</b> - onUpdate 内での重複 getBlock() 呼び出しを簡易キャッシュ</li>
+ *   <li><b>遠距離間引き</b> - クライアント側でプレイヤーから 256m 以上離れた車両の更新頻度を低減</li>
  * </ul>
+ *
+ * <p>
+ * 旧バージョンに存在した {@code getBlock()} キャッシュ (@Redirect) は、
+ * {@code EntityTrainBase} に {@code onUpdate()} が定義されていないため
+ * （実際は {@code EntityVehicleBase.onVehicleUpdate()} で処理される）、
+ * {@code require = 0} のためサイレントスルーとなり一切機能していなかった。
+ * このため当該コードは削除した。
  */
 @Mixin(targets = "jp.ngt.rtm.entity.train.EntityTrainBase", remap = false)
 public abstract class EntityTrainBaseOptimizationMixin {
@@ -31,10 +34,6 @@ public abstract class EntityTrainBaseOptimizationMixin {
 
     @Unique
     private int crosstie$distantSkipCounter = 0;
-
-    // ========================
-    // P3: 遠距離間引き (Client only)
-    // ========================
 
     /**
      * クライアント側でプレイヤーから 256m 以上離れた車両の onUpdate を
@@ -62,39 +61,5 @@ public abstract class EntityTrainBaseOptimizationMixin {
         } else {
             this.crosstie$distantSkipCounter = 0;
         }
-    }
-
-    @Unique
-    private int crosstie$lastBX = Integer.MIN_VALUE;
-
-    @Unique
-    private int crosstie$lastBY = Integer.MIN_VALUE;
-
-    @Unique
-    private int crosstie$lastBZ = Integer.MIN_VALUE;
-
-    @Unique
-    private Block crosstie$cachedBlock = null;
-
-    // ========================
-    // P4: onUpdate 内の getBlock() 呼び出しキャッシュ
-    // ========================
-
-    @Redirect(method = "onUpdate",
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/World;getBlock(III)Lnet/minecraft/block/Block;"),
-            require = 0)
-    private Block crosstie$cachedGetBlock(World world, int x, int y, int z) {
-        if (!CrossTieConfig.trainGetBlockCacheEnabled) {
-            return world.getBlock(x, y, z);
-        }
-        if (x == crosstie$lastBX && y == crosstie$lastBY && z == crosstie$lastBZ && crosstie$cachedBlock != null) {
-            return crosstie$cachedBlock;
-        }
-        crosstie$lastBX = x;
-        crosstie$lastBY = y;
-        crosstie$lastBZ = z;
-        crosstie$cachedBlock = world.getBlock(x, y, z);
-        return crosstie$cachedBlock;
     }
 }

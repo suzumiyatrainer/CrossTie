@@ -27,6 +27,9 @@ public class ModDetector {
     private static final Map<String, String[]> MOD_PATTERNS = new HashMap<>();
 
     static {
+        // ATSAssistMod
+        MOD_PATTERNS.put("ATSAssistMod", new String[] { "atsassist" });
+
         // Performance mods (Angelica ecosystem)
         MOD_PATTERNS.put("Angelica", new String[] { "angelica" });
         MOD_PATTERNS.put("AngelicaGlsm", new String[] { "angelica" });
@@ -57,6 +60,9 @@ public class ModDetector {
         // LiteLoader ecosystem (Macro / Keybind Mod ships as .litemod)
         MOD_PATTERNS.put("LiteLoader", new String[] { "liteloader", "macro", "keybind" });
         MOD_PATTERNS.put("MacroMod", new String[] { "macro", "keybind" });
+
+        // CustomNPC+
+        MOD_PATTERNS.put("CustomNpc", new String[] { "customnpc" });
     }
 
     private final File mcDataDir;
