@@ -189,6 +189,9 @@ dependencies {
     def customNpcVersion = (findProperty('customNpcVersion') ?: 'master-SNAPSHOT').toString().trim()
     compileOnly rfg.deobf("com.github.KAMKEEL:CustomNPC-Plus:${customNpcVersion}")
 
+    // ATSAssistMod (compileOnly: Mixin target)
+    // Resolved from JitPack.
+    compileOnly rfg.deobf("com.github.Kai-Z-JP:ATSAssistMod:1.8.0-rc.2")
 }
 
 tasks.withType(JavaCompile) {
