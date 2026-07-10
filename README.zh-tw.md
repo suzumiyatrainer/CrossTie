@@ -2,6 +2,10 @@
 
 專為 Minecraft 1.7.10 提供的 RTM (RealTrainMod) 相關模組綜合最佳化與相容性修補模組。
 
+> ⚠️ **構建與開發注意事項**:
+> `src/main/java/jp/kaiz/atsassistmod/block/tileentity/TileEntityIFTTT.java` 是一個**僅用於編譯的虛構類（Stub）**，用於防止在 CI 環境（如 GitHub Actions 等）下發生編譯錯誤。
+> 該類在構建最終發布 JAR 檔案時會自動被排除（exclude），因此不會影響遊戲運行時的行為。
+
 [![日本語](README.md)](/README.md)
 [![English](README.en.md)](/README.en.md)
 [![한국어](README.ko.md)](/README.ko.md)

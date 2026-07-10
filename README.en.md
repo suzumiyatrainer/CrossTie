@@ -2,6 +2,10 @@
 
 A comprehensive optimization and compatibility patch mod for RTM (RealTrainMod) related mods on Minecraft 1.7.10.
 
+> ⚠️ **Build & Development Notice**:
+> `src/main/java/jp/kaiz/atsassistmod/block/tileentity/TileEntityIFTTT.java` is a **compile-only dummy class (stub)** used to prevent compilation errors in CI environments (such as GitHub Actions).
+> Since it is automatically excluded from the final production JAR during the build process, it does not affect game execution.
+
 [![日本語](README.md)](/README.md)
 [![English](README.en.md)](/README.en.md)
 [![한국어](README.ko.md)](/README.ko.md)

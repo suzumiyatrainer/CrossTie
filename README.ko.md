@@ -2,6 +2,10 @@
 
 Minecraft 1.7.10용 RTM(RealTrainMod) 관련 모드 종합 최적화 및 호환성 패치 모드입니다.
 
+> ⚠️ **빌드 및 개발 시 주의 사항**:
+> `src/main/java/jp/kaiz/atsassistmod/block/tileentity/TileEntityIFTTT.java`는 CI 환경(GitHub Actions 등)에서의 컴파일 오류를 방지하기 위한 **컴파일 전용 더미 클래스(스텁)**입니다.
+> 빌드 시 최종 배포 JAR 파일에서는 자동으로 제외(exclude)되므로, 게임 실행 시 동작에는 영향을 주지 않습니다.
+
 [![日本語](README.md)](/README.md)
 [![English](README.en.md)](/README.en.md)
 [![한국어](README.ko.md)](/README.ko.md)
