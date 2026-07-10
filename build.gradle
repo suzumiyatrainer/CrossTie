@@ -188,10 +188,6 @@ dependencies {
     // Resolved from JitPack.
     def customNpcVersion = (findProperty('customNpcVersion') ?: 'master-SNAPSHOT').toString().trim()
     compileOnly rfg.deobf("com.github.KAMKEEL:CustomNPC-Plus:${customNpcVersion}")
-
-    // ATSAssistMod (compileOnly: Mixin target)
-    // Resolved from JitPack.
-    compileOnly rfg.deobf("com.github.Kai-Z-JP:ATSAssistMod:1.8.0-rc.2")
 }
 
 tasks.withType(JavaCompile) {
@@ -231,6 +227,8 @@ tasks.named('jar') {
     // so this standalone Nashorn package is entirely unnecessary at runtime.
     // On Java 11+, these classes must be provided via a different mechanism (e.g. JVM modules).
     exclude 'org/openjdk/nashorn/'
+    // Exclude ATSAssistMod compile-only stub classes from the final JAR
+    exclude 'jp/kaiz/atsassistmod/'
 }
 
 jar {
