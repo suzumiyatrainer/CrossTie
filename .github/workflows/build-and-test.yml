@@ -41,7 +41,7 @@ jobs:
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: build-jars-${{ github.sha }}  # コミットごとに名前を分ける
+        name: CrossTie-autobuild-${{ github.sha }}  # コミットごとに名前を分ける
         path: |
           build/libs/*.jar
           !build/libs/*-sources.jar
