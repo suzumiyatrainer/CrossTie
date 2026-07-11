@@ -38,3 +38,11 @@ jobs:
 
     - name: Build with Gradle
       run: ./gradlew build --no-daemon --no-configuration-cache
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-jars-${{ github.sha }}  # コミットごとに名前を分ける
+        path: |
+          build/libs/*.jar
+          !build/libs/*-sources.jar
+          !build/libs/*-javadoc.jar
