@@ -182,9 +182,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasCustomNpc = isModPresent("CustomNpc");
             shouldApply = hasCustomNpc;
             debugReason = "CustomNpc=" + hasCustomNpc;
-        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.discordsrv.")) {
-            shouldApply = true;
-            debugReason = "DiscordSRV=always_true";
         } else {
             shouldApply = true;
             debugReason = "default=true";

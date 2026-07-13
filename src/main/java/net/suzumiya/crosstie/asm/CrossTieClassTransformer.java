@@ -33,18 +33,6 @@ public class CrossTieClassTransformer implements IClassTransformer {
     private static final String MCPATCHER_GLASS_PANE_RENDERER = "com.prupe.mcpatcher.ctm.GlassPaneRenderer";
 
     /**
-     * SplashProgress$3 (スプラッシュ画面の描画ループ) のクラス名。 enableFontRenderer=false 時に Angelica
-     * の GL リダイレクターが GL11.glEnable() を キャッシュ更新のみの GLStateManager.glEnable()
-     * に書き換えてしまい、 テクスチャが描画されず画面が真っ黒になる問題を修正する。
-     *
-     * <p>
-     * このクラスは Angelica より先に実行される CorePlugin ASM トランスフォーマで 直接パッチするため、Angelica
-     * のバイトコードリダイレクターの影響を受けない。
-     * </p>
-     */
-    private static final String SPLASH_PROGRESS_3 = "cpw.mods.fml.client.SplashProgress$3";
-
-    /**
      * Hodgepodge の GuavaPooler クラス名。
      *
      * <p>
@@ -61,12 +49,6 @@ public class CrossTieClassTransformer implements IClassTransformer {
      * {@link net.suzumiya.crosstie.compat.ScriptUtilFallback} にリダイレクトする。
      */
     private static final String SCRIPT_UTIL_CLASS = "jp.ngt.ngtlib.io.ScriptUtil";
-
-    /**
-     * DiscordSRV NMSUtil クラス名。 class_ResolvableProfile が null の場合に isInstance
-     * 呼び出しで発生する NullPointerException を回避するためにパッチを適用します。
-     */
-    private static final String DISCORDSRV_NMS_UTIL = "github.scarsz.discordsrv.util.NMSUtil";
 
     // AngelicaConfig の ASM パッチは行わない。
     // GTNHLib の config システムが static フィールドを初期化時にリセットするため、
@@ -104,11 +86,6 @@ public class CrossTieClassTransformer implements IClassTransformer {
             return basicClass;
         }
 
-        // DiscordSRV NMSUtil: 1.7.10 環境での getTexture の NPE 回避
-        if (isClass(transformedName, name, DISCORDSRV_NMS_UTIL, null)) {
-            return patchDiscordSRVNMSUtil(basicClass);
-        }
-
         // GTNHLib 0.9.x: MixinBlock_IconWrapper へのパッチ
         // GTNHLib 0.10.0 以降では MixinBlock_IconWrapper が廃止されたため、
         // クラスが見つからなければ isClass が false を返すので安全にスキップされる。
@@ -136,13 +113,6 @@ public class CrossTieClassTransformer implements IClassTransformer {
         // ScriptUtil.doScript(String) を ScriptUtilFallback にリダイレクト
         if (isClass(transformedName, name, SCRIPT_UTIL_CLASS, null)) {
             return patchScriptUtil(basicClass);
-        }
-
-        // SplashProgress$3 (スプラッシュ描画スレッド): Angelica の GL リダイレクターによる
-        // テクスチャ状態のキャッシュ問題を回避するため、ASM で run() の先頭に
-        // リフレクション経由の glEnable(GL_TEXTURE_2D) + glColor4f(1,1,1,1) を注入する
-        if (isClass(transformedName, name, SPLASH_PROGRESS_3, null)) {
-            return patchSplashProgress3(basicClass);
         }
 
         // AngelicaConfig は ASM パッチしない。
@@ -392,13 +362,6 @@ public class CrossTieClassTransformer implements IClassTransformer {
         instructions.add(new InsnNode(Opcodes.IRETURN));
         return instructions;
     }
-
-    private InsnList emptyVoidReturnBody() {
-        InsnList instructions = new InsnList();
-        instructions.add(new InsnNode(Opcodes.RETURN));
-        return instructions;
-    }
-
     /**
      * {@code String.intern()} を呼ぶだけのメソッド本体を生成します。
      *
@@ -415,64 +378,6 @@ public class CrossTieClassTransformer implements IClassTransformer {
                 new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "java/lang/String", "intern", "()Ljava/lang/String;", false));
         instructions.add(new InsnNode(Opcodes.ARETURN));
         return instructions;
-    }
-
-    /**
-     * SplashProgress$3 の run() メソッド先頭にリフレクション経由の GL 状態リセットを注入する。
-     *
-     * <p>
-     * Angelica のバイトコードリダイレクターは GL11.glEnable() の呼び出しを GLStateManager.glEnable()
-     * に書き換える。このパッチは {@link SplashGLFix} を 介してリフレクションで GL11 を呼び出すため、リダイレクターの影響を受けない。
-     * </p>
-     */
-    private byte[] patchSplashProgress3(byte[] basicClass) {
-        ClassNode classNode = new ClassNode();
-        new ClassReader(basicClass).accept(classNode, 0);
-
-        boolean changed = false;
-        for (Object methodObject : classNode.methods) {
-            MethodNode method = (MethodNode) methodObject;
-            org.objectweb.asm.tree.AbstractInsnNode[] instructions = method.instructions.toArray();
-            for (org.objectweb.asm.tree.AbstractInsnNode insn : instructions) {
-                if (!(insn instanceof MethodInsnNode))
-                    continue;
-                MethodInsnNode minsn = (MethodInsnNode) insn;
-
-                // setGL(): Display.getDrawable().makeCurrent() の直後に注入（GLコンテキスト確立後）
-                boolean isMakeCurrent = "org/lwjgl/opengl/Drawable".equals(minsn.owner)
-                        && "makeCurrent".equals(minsn.name);
-                // run(): Display.update() の直後にも注入（毎フレーム先頭）
-                boolean isUpdate = "org/lwjgl/opengl/Display".equals(minsn.owner) && "update".equals(minsn.name)
-                        && "()V".equals(minsn.desc);
-                // setGL(): glClearColor() の直前に clear color cache を dirty にする
-                boolean isClearColor = "org/lwjgl/opengl/GL11".equals(minsn.owner) && "glClearColor".equals(minsn.name)
-                        && "(FFFF)V".equals(minsn.desc);
-                // drawBar()/Angelica memory bar: text drawing just before binding the splash
-                // font texture
-                boolean isDrawString = "drawString".equals(minsn.name) && "(Ljava/lang/String;III)I".equals(minsn.desc);
-                // run(): logo/forge texture bind can also be skipped by Angelica's cached
-                // binding
-                boolean isSplashTextureBind = "cpw/mods/fml/client/SplashProgress$Texture".equals(minsn.owner)
-                        && "bind".equals(minsn.name) && "()V".equals(minsn.desc);
-
-                if (isMakeCurrent || isUpdate || isClearColor || isDrawString || isSplashTextureBind) {
-                    InsnList patch = new InsnList();
-                    patch.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/suzumiya/crosstie/util/SplashGLFix",
-                            isClearColor || isUpdate ? "markSplashStateDirty" : "prepareTexturedSplashDraw", "()V",
-                            false));
-                    if (isClearColor || isDrawString || isSplashTextureBind) {
-                        method.instructions.insertBefore(insn, patch);
-                    } else {
-                        method.instructions.insert(insn, patch);
-                    }
-                    changed = true;
-                    System.out.println("[CrossTie] SplashProgress$3." + method.name + "() patched "
-                            + (isClearColor || isDrawString || isSplashTextureBind ? "before " : "after ") + minsn.name
-                            + "()");
-                }
-            }
-        }
-        return changed ? writeClass(classNode) : basicClass;
     }
 
     private void replaceMethodBody(MethodNode method, InsnList instructions) {
@@ -519,43 +424,6 @@ public class CrossTieClassTransformer implements IClassTransformer {
             return null;
         }
         return writer.toByteArray();
-    }
-
-    /**
-     * DiscordSRV NMSUtil.getTexture() の isInstance をリダイレクトする ASM パッチ。 Mixin が
-     * Bukkit プラグインに適用されない環境向けの実装。
-     */
-    private byte[] patchDiscordSRVNMSUtil(byte[] basicClass) {
-        ClassNode classNode = new ClassNode();
-        new ClassReader(basicClass).accept(classNode, 0);
-
-        boolean changed = false;
-        for (Object methodObject : classNode.methods) {
-            MethodNode method = (MethodNode) methodObject;
-            if ("getTexture".equals(method.name)
-                    && "(Lorg/bukkit/entity/Player;)Ljava/lang/String;".equals(method.desc)) {
-                for (int i = 0; i < method.instructions.size(); i++) {
-                    org.objectweb.asm.tree.AbstractInsnNode insn = method.instructions.get(i);
-                    if (insn instanceof MethodInsnNode) {
-                        MethodInsnNode minsn = (MethodInsnNode) insn;
-                        if (minsn.getOpcode() == Opcodes.INVOKEVIRTUAL && "java/lang/Class".equals(minsn.owner)
-                                && "isInstance".equals(minsn.name) && "(Ljava/lang/Object;)Z".equals(minsn.desc)) {
-
-                            method.instructions.set(minsn,
-                                    new MethodInsnNode(Opcodes.INVOKESTATIC,
-                                            "net/suzumiya/crosstie/compat/DiscordSRVCompat", "safeIsInstance",
-                                            "(Ljava/lang/Class;Ljava/lang/Object;)Z", false));
-                            changed = true;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (changed) {
-            System.out.println("[CrossTie] Patched DiscordSRV NMSUtil.getTexture() -> safeIsInstance()");
-        }
-        return changed ? writeClass(classNode) : basicClass;
     }
 
     /**
