@@ -16,6 +16,10 @@
                    "angelica.IdMapOrderFixMixin",
                    "angelica.AngelicaBlockMaterialMappingCaseFixMixin",
                    "angelica.AngelicaItemMaterialHelperCaseFixMixin",
-                   "optifine.WireColorShaderFixMixin"
+                   "optifine.WireColorShaderFixMixin",
+                   "rtm.EntityVehicleBaseModelSetGuardMixin",
+                   "rtm.RenderVehicleBaseContextMixin",
+                   "rtm.PartsRendererCheckMouseActionGuardMixin",
+                   "rtm.PartsRendererPickPassGuardMixin"
                ]
 }

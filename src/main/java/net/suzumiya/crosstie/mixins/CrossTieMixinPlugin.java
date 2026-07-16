@@ -25,6 +25,21 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         modDetector = CrossTieCorePlugin.getModDetector();
 
         logDetectedCompatMods();
+
+        // Prevent Nashorn compiled classes from going through LaunchClassLoader's ASM transformers
+        try {
+            if (net.minecraft.launchwrapper.Launch.classLoader != null) {
+                Object classLoader = net.minecraft.launchwrapper.Launch.classLoader;
+                java.lang.reflect.Method regTransEx = classLoader.getClass().getMethod("registerTransformerException", String.class);
+
+                regTransEx.invoke(classLoader, "jdk.nashorn.internal.");
+                regTransEx.invoke(classLoader, "jdk.nashorn.api.scripting.");
+                regTransEx.invoke(classLoader, "org.openjdk.nashorn.");
+                System.out.println("[CrossTie] Registered Nashorn transformer exceptions in LaunchClassLoader via reflection");
+            }
+        } catch (Throwable t) {
+            System.err.println("[CrossTie] Failed to register Nashorn exceptions in LaunchClassLoader: " + t.getMessage());
+        }
     }
 
     /**
@@ -149,6 +164,13 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             if (mixinClassName.endsWith(".PolygonRendererMixin")) {
                 shouldApply = isClient && hasAngelicaGlsm;
                 debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm;
+            } else if (mixinClassName.endsWith(".EntityVehicleBaseModelSetGuardMixin")
+                    || mixinClassName.endsWith(".RenderVehicleBaseContextMixin")
+                    || mixinClassName.endsWith(".PartsRendererCheckMouseActionGuardMixin")
+                    || mixinClassName.endsWith(".PartsRendererPickPassGuardMixin")) {
+                // ホバー時モデルデータ混線防止: クライアントかつRTM存在時のみ適用
+                shouldApply = isClient && hasRtm;
+                debugReason = "isClient=" + isClient + ", RTM=" + hasRtm;
             } else {
                 shouldApply = hasRtm;
                 debugReason = "RTM=" + hasRtm;

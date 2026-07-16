@@ -54,7 +54,7 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 | **CrossTie** | `1.0.0-Alpha7` | **코어** |
 | **UniMixins** | `0.3.1` | **필수** |
 | **KaizPatchX** | `1.10.0` | 권장 |
-| **Angelica** | `2.1.51` | 권장 |
+| **Angelica** | `2.1.49` | 권장 |
 | **GTNHLib** | `0.11.23+` | 권장 |
 | **Hodgepodge** | `2.7.171+` | 선택 |
 | **ArchaicFix** | `0.8.0+` | 선택 |
@@ -107,9 +107,6 @@ Mixin 단계 이전 클래스 로드 시에 바이트 코드를 직접 재작성
 | **MCPatcher** `GlassPaneRenderer` | `setupIcons`를 `return false`로 치환 |
 | **Hodgepodge** `StringPooler$GuavaPooler` | `getString(s)` → `s.intern()`으로 치환 (Guava 클래스 로더 충돌 회피) |
 | **NGTLib/RTM** `ScriptUtil` | `doScript(String)` → `ScriptUtilFallback.doScript(String)` (Nashorn 부재 환경 대응) |
-| **MacroMod** `MacroModPermissions` | 모든 메서드에서 `tamperCheck()` 호출 제거 |
-| **LiteLoader** `PermissionsManagerClient` | `tamperCheck()` → no-op 처리 |
-| **SplashProgress$3** (`SplashProgress$3`) | `run()` 시작 부분에 리플렉션을 통한 GL 상태 리셋(`GL_TEXTURE_2D` + `glColor4f`) 주입 |
 
 ### 3. Mixin (동적 적용)
 `CrossTieMixinPlugin`이 감지된 설치 모드에 따라 필요한 Mixin만을 동적으로 적용합니다.

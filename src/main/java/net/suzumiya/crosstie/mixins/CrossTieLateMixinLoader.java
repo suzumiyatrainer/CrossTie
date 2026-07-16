@@ -4,7 +4,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class CrossTieLateMixinLoader implements io.github.tox1cozz.mixinbooterlegacy.ILateMixinLoader, com.gtnewhorizon.gtnhmixins.ILateMixinLoader {
+public class CrossTieLateMixinLoader
+        implements io.github.tox1cozz.mixinbooterlegacy.ILateMixinLoader, com.gtnewhorizon.gtnhmixins.ILateMixinLoader {
     // For mixinbooterlegacy
     @Override
     public List<String> getMixinConfigs() {
@@ -20,9 +21,10 @@ public class CrossTieLateMixinLoader implements io.github.tox1cozz.mixinbooterle
     @SuppressWarnings("null")
     @Override
     public List<String> getMixins(Set<String> loadedMods) {
-        if (loadedMods.contains("ProjRed|Illumination")) {
-            return Collections.singletonList("projectred.RenderHaloMixin");
+        java.util.List<String> mixins = new java.util.ArrayList<>();
+        if (loadedMods.contains("ATSAssistMod")) {
+            mixins.add("atsassist.IFTTTUtilMixin");
         }
-        return Collections.emptyList();
+        return mixins;
     }
 }

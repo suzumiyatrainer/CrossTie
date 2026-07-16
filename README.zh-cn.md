@@ -54,7 +54,7 @@ CrossTie 将跨越多个模组（如 RTM / NGTLib / MCTE (KaizPatchX)、Angelica
 | **CrossTie** | `1.0.0-Alpha7` | **核心** |
 | **UniMixins** | `0.3.1` | **必装** |
 | **KaizPatchX** | `1.10.0` | 推荐 |
-| **Angelica** | `2.1.51` | 推荐 |
+| **Angelica** | `2.1.49` | 推荐 |
 | **GTNHLib** | `0.11.23+` | 推荐 |
 | **Hodgepodge** | `2.7.171+` | 可选 |
 | **ArchaicFix** | `0.8.0+` | 可选 |
@@ -107,9 +107,6 @@ CrossTie 具有 **3 层补丁机制**，在合适的阶段安全地介入。
 | **MCPatcher** `GlassPaneRenderer` | 将 `setupIcons` 替换为 `return false` |
 | **Hodgepodge** `StringPooler$GuavaPooler` | 将 `getString(s)` 替换为 `s.intern()`（避免 Guava 类加载器冲突） |
 | **NGTLib/RTM** `ScriptUtil` | `doScript(String)` → `ScriptUtilFallback.doScript(String)`（适配缺失 Nashorn 的环境） |
-| **MacroMod** `MacroModPermissions` | 移除所有方法中的 `tamperCheck()` 调用 |
-| **LiteLoader** `PermissionsManagerClient` | 使 `tamperCheck()` 变为空操作 |
-| **SplashProgress$3** (`SplashProgress$3`) | 在 `run()` 开头通过反射注入 GL 状态重置代码 (`GL_TEXTURE_2D` + `glColor4f`) |
 
 ### 3. Mixin (动态应用)
 `CrossTieMixinPlugin` 会根据检测到的已安装模组，动态应用所需的 Mixin。

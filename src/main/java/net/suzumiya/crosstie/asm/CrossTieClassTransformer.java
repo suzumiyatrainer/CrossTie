@@ -277,14 +277,7 @@ public class CrossTieClassTransformer implements IClassTransformer {
     }
 
     /**
-     * Macro/Keybind Mod {@code MacroModPermissions} をパッチ。
-     *
-     * <p>
-     * 元の実装は、パーミッション操作時に {@code PermissionsManagerClient.tamperCheck()}
-     * を呼び出します。サーバー接続時に60秒間 tick されていない場合に {@code IllegalStateException} がスローされます。
-     * 
-     * 
-     * /** {@code ScriptUtilFallback.doScript(String)} を呼ぶだけのメソッド本体を生成します。
+     * {@code ScriptUtilFallback.doScript(String)} を呼ぶだけのメソッド本体を生成します。
      *
      * <pre>
      *   ALOAD_0   // パラメータ script (String)

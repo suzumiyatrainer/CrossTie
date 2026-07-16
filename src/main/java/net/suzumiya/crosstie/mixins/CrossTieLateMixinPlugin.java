@@ -23,6 +23,9 @@ public class CrossTieLateMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.atsassist.")) {
+            return true;
+        }
         if (mixinClassName.equals("net.suzumiya.crosstie.mixins.projectred.RenderHaloMixin")) {
             ModDetector detector = CrossTieCorePlugin.getModDetector();
             if (detector != null && detector.isModPresent("ProjectRed")) {

@@ -54,7 +54,7 @@ Recommended mod versions for a smooth experience.
 | **CrossTie** | `1.0.0-Alpha7` | **Core** |
 | **UniMixins** | `0.3.1` | **Required** |
 | **KaizPatchX** | `1.10.0` | Recommended |
-| **Angelica** | `2.1.51` | Recommended |
+| **Angelica** | `2.1.49` | Recommended |
 | **GTNHLib** | `0.11.23+` | Recommended |
 | **Hodgepodge** | `2.7.171+` | Optional |
 | **ArchaicFix** | `0.8.0+` | Optional |
@@ -107,9 +107,6 @@ Directly rewrites bytecodes at class loading, before the Mixin phase. It complet
 | **MCPatcher** `GlassPaneRenderer` | Replaces `setupIcons` with `return false` |
 | **Hodgepodge** `StringPooler$GuavaPooler` | Replaces `getString(s)` with `s.intern()` to avoid Guava classloader conflicts |
 | **NGTLib/RTM** `ScriptUtil` | Replaces `doScript(String)` with `ScriptUtilFallback.doScript(String)` (for environments without Nashorn) |
-| **MacroMod** `MacroModPermissions` | Removes `tamperCheck()` calls from all methods |
-| **LiteLoader** `PermissionsManagerClient` | Makes `tamperCheck()` a no-op |
-| **SplashProgress$3** (`SplashProgress$3`) | Injects GL state reset (`GL_TEXTURE_2D` + `glColor4f`) via reflection at the beginning of `run()` |
 
 ### 3. Mixin (Dynamic Application)
 `CrossTieMixinPlugin` dynamically applies only the necessary Mixins based on the detected installed mods.
