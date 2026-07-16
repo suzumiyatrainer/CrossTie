@@ -31,6 +31,7 @@ public class RenderMarkerBlock1122MathPickingMixin {
 
     @Inject(method = "renderAnchorLine", at = @At("HEAD"))
     private void onRenderAnchorLineHead(TileEntityMarker marker, boolean isPickMode, MarkerElement hoveredElement, CallbackInfoReturnable<MarkerElement> cir) {
+        net.suzumiya.crosstie.utils.MarkerRenderState.isMarkerRendering = true;
         currentPickMode = isPickMode;
         if (isPickMode) {
             closestName = -1;
@@ -64,6 +65,44 @@ public class RenderMarkerBlock1122MathPickingMixin {
     @Redirect(method = "renderAnchorLine", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glLoadName(I)V", remap = false))
     private void redirectGlLoadName(int name) {
         lastLoadedName = name;
+    }
+
+    private static int crosstie$savedTextureId = 0;
+    private static boolean crosstie$textureStateRedirected = false;
+
+    private static boolean crosstie$isShaderEnabled() {
+        if (jp.ngt.ngtlib.util.NGTUtilClient.usingShader()) {
+            return true;
+        }
+        try {
+            Class<?> clazz = Class.forName("shadersmod.client.Shaders");
+            java.lang.reflect.Field field = clazz.getDeclaredField("shaderPackLoaded");
+            return field.getBoolean(null);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    @Redirect(method = "renderAnchorLine", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glDisable(I)V", remap = false))
+    private void redirectGlDisable(int cap) {
+        if (cap == GL11.GL_TEXTURE_2D && !currentPickMode && crosstie$isShaderEnabled()) {
+            crosstie$savedTextureId = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, net.suzumiya.crosstie.utils.MarkerRenderState.getWhiteTexture());
+            crosstie$textureStateRedirected = true;
+        } else {
+            GL11.glDisable(cap);
+        }
+    }
+
+    @Redirect(method = "renderAnchorLine", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glEnable(I)V", remap = false))
+    private void redirectGlEnable(int cap) {
+        if (cap == GL11.GL_TEXTURE_2D && crosstie$textureStateRedirected) {
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, crosstie$savedTextureId);
+            crosstie$textureStateRedirected = false;
+        } else {
+            GL11.glEnable(cap);
+        }
     }
 
     @Inject(method = "renderLine", at = @At("HEAD"), cancellable = true)
@@ -121,6 +160,7 @@ public class RenderMarkerBlock1122MathPickingMixin {
 
     @Inject(method = "renderAnchorLine", at = @At("RETURN"), cancellable = true)
     private void onRenderAnchorLineReturn(TileEntityMarker marker, boolean isPickMode, MarkerElement hoveredElement, CallbackInfoReturnable<MarkerElement> cir) {
+        net.suzumiya.crosstie.utils.MarkerRenderState.isMarkerRendering = false;
         if (isPickMode) {
             if (closestName != -1) {
                 cir.setReturnValue(MarkerElement.values()[closestName]);

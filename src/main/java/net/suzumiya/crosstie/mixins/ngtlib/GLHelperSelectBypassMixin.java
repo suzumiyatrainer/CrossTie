@@ -28,12 +28,28 @@ public abstract class GLHelperSelectBypassMixin {
     @Shadow
     private static double DEPTH_RANGE;
 
+    private static boolean crosstie$isOptiFineShadersActive() {
+        try {
+            Class<?> shadersClass = Class.forName("shadersmod.client.Shaders");
+            java.lang.reflect.Field field = shadersClass.getDeclaredField("shaderPackLoaded");
+            field.setAccessible(true);
+            return field.getBoolean(null);
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     /**
      * @author Suzumiya
      * @reason AngelicaによるGL_SELECTのスタブ化を回避するため。
+     *         また、OptiFine Shaders環境下ではGL_SELECTにより行列が破壊され文字が巨大化するため、完全にバイパスする。
      */
     @Overwrite
     public static void startMousePicking(float range) {
+        if (crosstie$isOptiFineShadersActive()) {
+            return;
+        }
+
         float mouseX = (float) Display.getWidth() / 2.0F;
         float mouseY = (float) Display.getHeight() / 2.0F;
 
@@ -60,9 +76,14 @@ public abstract class GLHelperSelectBypassMixin {
     /**
      * @author Suzumiya
      * @reason AngelicaによるGL_SELECTのスタブ化を回避するため。
+     *         また、OptiFine Shaders環境下ではGL_SELECTにより行列が破壊され文字が巨大化するため、完全にバイパスする。
      */
     @Overwrite
     public static int finishMousePicking() {
+        if (crosstie$isOptiFineShadersActive()) {
+            return 0;
+        }
+
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glPopMatrix();
 

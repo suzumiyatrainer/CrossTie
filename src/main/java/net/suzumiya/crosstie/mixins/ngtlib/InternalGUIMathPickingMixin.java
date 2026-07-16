@@ -50,7 +50,26 @@ public abstract class InternalGUIMathPickingMixin {
     @Overwrite
     public void render() {
         GL11.glPushMatrix();
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
+
+        boolean useShaderCompat = false;
+        int savedTex = 0;
+        try {
+            Class<?> shadersClass = Class.forName("shadersmod.client.Shaders");
+            java.lang.reflect.Field field = shadersClass.getDeclaredField("shaderPackLoaded");
+            field.setAccessible(true);
+            if (field.getBoolean(null)) {
+                useShaderCompat = true;
+            }
+        } catch (Throwable ignored) {}
+
+        if (useShaderCompat) {
+            savedTex = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, net.suzumiya.crosstie.utils.MarkerRenderState.getWhiteTexture());
+        } else {
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+        }
+
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
@@ -59,7 +78,6 @@ public abstract class InternalGUIMathPickingMixin {
         tessellator.setColorRGBA_I(this.color, 176);
         NGTRenderHelper.addQuadGuiFaceWithSize(this.startX, this.startY, this.width, this.height, 0.0F);
         tessellator.draw();
-
         GL11.glDisable(GL11.GL_BLEND);
 
         FloatBuffer modelMatrix = BufferUtils.createFloatBuffer(16);
@@ -125,8 +143,19 @@ public abstract class InternalGUIMathPickingMixin {
                 button.hovered = false;
             }
 
+            // ボタンの内部レンダリング(button.render)がGL_TEXTURE_2Dを無効化して終了するため、
+            // 毎回のループ直前で強制的に有効化・再バインドを行う
+            if (useShaderCompat) {
+                GL11.glEnable(GL11.GL_TEXTURE_2D);
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, net.suzumiya.crosstie.utils.MarkerRenderState.getWhiteTexture());
+            }
+
             // 本来のGL_SELECT用パスを省略し、通常の描画パスのみ実行
             button.render(false);
+        }
+
+        if (useShaderCompat) {
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, savedTex);
         }
 
         GL11.glPopMatrix();

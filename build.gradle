@@ -114,7 +114,7 @@ configurations.configureEach {
 
         // These upgrades can affect legacy 1.7.10 runtime behavior, so they are opt-in.
         if (forceSafeNetty) {
-            force 'io.netty:netty-all:4.2.16.Final'
+            force 'io.netty:netty-all:4.0.56.Final'
         }
         if (forceSafeScala) {
             force 'org.scala-lang:scala-library:3.8.4'

@@ -1,4 +1,4 @@
-package net.suzumiya.crosstie.mixins.kaizpatch;
+package net.suzumiya.crosstie.mixins.mcte;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(targets = "jp.ngt.mcte.block.RenderMiniature", remap = false)
-public abstract class RenderMiniatureDynamicLightMixin {
+public abstract class RenderMiniatureAngelicaLightMixin {
 
     @Unique
     private static final Map<TileEntity, Integer> crosstie$lastLightByTile = new WeakHashMap<TileEntity, Integer>();

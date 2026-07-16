@@ -1,4 +1,4 @@
-package net.suzumiya.crosstie.mixins.kaizpatch;
+package net.suzumiya.crosstie.mixins.mcte;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(targets = "jp.ngt.mcte.item.RenderItemMiniature", remap = false)
-public abstract class RenderItemMiniatureDynamicLightMixin {
+public abstract class RenderItemMiniatureOptifineLightMixin {
 
     @Shadow
     @Final
@@ -43,6 +43,9 @@ public abstract class RenderItemMiniatureDynamicLightMixin {
     private static Method crosstie$deleteGlListMethod;
 
     @Unique
+    private static Method crosstie$setBrightnessMethod;
+
+    @Unique
     private static Field crosstie$renderPropWorldField;
 
     @Unique
@@ -51,9 +54,9 @@ public abstract class RenderItemMiniatureDynamicLightMixin {
     @Unique
     private static Field crosstie$renderPropNgtoField;
 
-    @Inject(method = "renderItem", at = @At("HEAD"), require = 0, remap = false)
-    private void crosstie$refreshHeldMiniatureLighting(
-            ItemRenderType type, ItemStack item, Object[] data, CallbackInfo ci) {
+    @Inject(method = "renderItem", at = @At("HEAD"), require = 1, remap = false)
+    private void crosstie$refreshHeldMiniatureLighting(ItemRenderType type, ItemStack item, Object[] data,
+            CallbackInfo ci) {
         if (item == null || !item.hasTagCompound() || type == ItemRenderType.INVENTORY) {
             return;
         }
@@ -75,7 +78,11 @@ public abstract class RenderItemMiniatureDynamicLightMixin {
         int x = MathHelper.floor_double(anchor.posX);
         int y = MathHelper.floor_double(anchor.posY + anchor.getEyeHeight());
         int z = MathHelper.floor_double(anchor.posZ);
-        int lightSignature = anchor.worldObj.getLightBrightnessForSkyBlocks(x, y, z, 0);
+
+        // 手持ちアイテム用も生データ(Block/Sky)を取得してパック
+        int blockLight = anchor.worldObj.getSavedLightValue(net.minecraft.world.EnumSkyBlock.Block, x, y, z);
+        int skyLight = anchor.worldObj.getSavedLightValue(net.minecraft.world.EnumSkyBlock.Sky, x, y, z);
+        int lightSignature = (blockLight << 4) | skyLight;
 
         LightState state = crosstie$getOrCreateState(renderProp);
         boolean moved = state.world != anchor.worldObj || state.x != x || state.y != y || state.z != z;
@@ -91,11 +98,28 @@ public abstract class RenderItemMiniatureDynamicLightMixin {
         if (relight) {
             crosstie$deleteDisplayLists(crosstie$getRenderPropGlLists(renderProp));
             crosstie$setRenderPropGlLists(renderProp, null);
+
+            // 【修正ポイント】再コンパイルが走る直前に、最新の明るさをOpenGL/OptiFineにバインドさせます
+            int brightness = anchor.worldObj.getLightBrightnessForSkyBlocks(x, y, z, 0);
+            crosstie$invokeSetBrightness(brightness);
+
             state.world = anchor.worldObj;
             state.x = x;
             state.y = y;
             state.z = z;
             state.lightSignature = lightSignature;
+        }
+    }
+
+    @Unique
+    private static void crosstie$invokeSetBrightness(int brightness) {
+        try {
+            if (crosstie$setBrightnessMethod == null) {
+                Class<?> glHelperClass = Class.forName("jp.ngt.ngtlib.renderer.GLHelper");
+                crosstie$setBrightnessMethod = glHelperClass.getMethod("setBrightness", int.class);
+            }
+            crosstie$setBrightnessMethod.invoke(null, brightness);
+        } catch (ReflectiveOperationException ignored) {
         }
     }
 
@@ -109,8 +133,8 @@ public abstract class RenderItemMiniatureDynamicLightMixin {
         try {
             if (crosstie$renderPropConstructor == null) {
                 Class<?> clazz = Class.forName("jp.ngt.mcte.item.RenderItemMiniature$RenderProp");
-                crosstie$renderPropConstructor =
-                        clazz.getDeclaredConstructor(Class.forName("jp.ngt.ngtlib.block.NGTObject"), ItemStack.class);
+                crosstie$renderPropConstructor = clazz
+                        .getDeclaredConstructor(Class.forName("jp.ngt.ngtlib.block.NGTObject"), ItemStack.class);
                 crosstie$renderPropConstructor.setAccessible(true);
             }
             return crosstie$renderPropConstructor.newInstance(ngto, item);
@@ -139,10 +163,9 @@ public abstract class RenderItemMiniatureDynamicLightMixin {
         }
         try {
             if (crosstie$ngtWorldConstructor == null) {
-                crosstie$ngtWorldConstructor = Class.forName("jp.ngt.ngtlib.world.NGTWorld")
-                        .getConstructor(net.minecraft.world.World.class,
-                                Class.forName("jp.ngt.ngtlib.block.NGTObject"),
-                                Integer.TYPE, Integer.TYPE, Integer.TYPE);
+                crosstie$ngtWorldConstructor = Class.forName("jp.ngt.ngtlib.world.NGTWorld").getConstructor(
+                        net.minecraft.world.World.class, Class.forName("jp.ngt.ngtlib.block.NGTObject"), Integer.TYPE,
+                        Integer.TYPE, Integer.TYPE);
             }
             return crosstie$ngtWorldConstructor.newInstance(world, ngto, x, y, z);
         } catch (ReflectiveOperationException ignored) {
