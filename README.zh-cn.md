@@ -34,7 +34,7 @@ CrossTie 将跨越多个模组（如 RTM / NGTLib / MCTE (KaizPatchX)、Angelica
 | **Gradle** | `9.6.1` |
 | **前置模组** | `UniMixins 0.3.1+` |
 | **构建系统** | RetroFuturaGradle 2.0.2 |
-| **最后确认** | `2026-07-10` |
+| **最后确认** | `2026-07-16` |
 
 ### 🔍 内部结构索引
 * **Mixin 控制**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -102,7 +102,7 @@ CrossTie 具有 **3 层补丁机制**，在合适的阶段安全地介入。
 
 | 目标类 / 方法 | 内容 |
 | --- | --- |
-| **GTNHLib 0.9.x** `MixinBlock_IconWrapper` | 将 `nhlib$getParticleIcon` 重定向到 `GtnhLibIconCompat` |
+| **GTNHLib 0.9.x** `MixinBlock_IconWrapper` | 将 `nhlib$getParticleIcon` 重定向到 `GtnhLibIconCompat` *(旧版本: GTNHLib 0.10.0+ 中已废弃，自动跳过)* |
 | **Angelica CTM** `MixinRenderBlocks` | 将 `tweakPaneIcons` 等玻璃板图标解析重定向到 `AngelicaPaneIconCompat` |
 | **MCPatcher** `GlassPaneRenderer` | 将 `setupIcons` 替换为 `return false` |
 | **Hodgepodge** `StringPooler$GuavaPooler` | 将 `getString(s)` 替换为 `s.intern()`（避免 Guava 类加载器冲突） |

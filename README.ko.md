@@ -34,7 +34,7 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 | **Gradle** | `9.6.1` |
 | **필수 모드** | `UniMixins 0.3.1+` |
 | **빌드 시스템** | RetroFuturaGradle 2.0.2 |
-| **최종 확인** | `2026-07-10` |
+| **최종 확인** | `2026-07-16` |
 
 ### 🔍 내부 구조 인덱스
 * **Mixin 제어**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -102,7 +102,7 @@ Mixin 단계 이전 클래스 로드 시에 바이트 코드를 직접 재작성
 
 | 대상 클래스 / 메서드 | 내용 |
 | --- | --- |
-| **GTNHLib 0.9.x** `MixinBlock_IconWrapper` | `nhlib$getParticleIcon`을 `GtnhLibIconCompat`으로 리디렉션 |
+| **GTNHLib 0.9.x** `MixinBlock_IconWrapper` | `nhlib$getParticleIcon`을 `GtnhLibIconCompat`으로 리디렉션 *(구버전: GTNHLib 0.10.0+ 에서는 폐지됨 / 자동 스킵)* |
 | **Angelica CTM** `MixinRenderBlocks` | `tweakPaneIcons` 등의 glass pane 아이콘 해결을 `AngelicaPaneIconCompat`으로 리디렉션 |
 | **MCPatcher** `GlassPaneRenderer` | `setupIcons`를 `return false`로 치환 |
 | **Hodgepodge** `StringPooler$GuavaPooler` | `getString(s)` → `s.intern()`으로 치환 (Guava 클래스 로더 충돌 회피) |

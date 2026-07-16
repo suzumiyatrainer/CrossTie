@@ -1,7 +1,7 @@
-# その他周辺Mod（MCTE, WorldEdit, ATSAssistMod, CustomNPC+等）互換性修正仕様書
+# その他周辺Mod（MCTE, WorldEdit, ATSAssistMod, CustomNPC+, Bamboo, SignPicture, ArchitectureCraft等）互換性修正仕様書
 
 ## 1. 概要
-Minecraft 1.7.10 の鉄道系・建築系環境で併用されることが多い、いくつかの周辺支援Mod（**MCTE**、**WorldEdit**、**LiteLoader/MacroMod**、**ATSAssistMod**、**CustomNPC+**）と、RTMやCrossTie環境を同時に運用した際に発生する、処理遅延（ラグ）やデータ破損、機能制限などのバグを修正するパッチ群です。
+Minecraft 1.7.10 の鉄道系・建築系環境で併用されることが多い、いくつかの周辺支援Mod（**MCTE**、**WorldEdit**、**LiteLoader/MacroMod**、**ATSAssistMod**、**CustomNPC+**、**竹Mod (Bamboo)**、**SignPicture**、**ArchitectureCraft**）と、RTMやCrossTie環境を同時に運用した際に発生する、処理遅延（ラグ）やデータ破損、機能制限などのバグを修正するパッチ群です。
 
 ---
 
@@ -73,6 +73,19 @@ ATSAssistMod（RTM向けのIFTTT信号・ATS制御補助Mod）において、特
 
 ---
 
+### 4.2 ATSAssist TASC 自動定位停止ブレーキ制御の統合
+- **対象ファイル**: `EntityTrainBaseMixin.java`
+- **概要**:
+  ATSAssistModの `TrainController` が `TASCController`（定位停止制御：TASC）を有効化している場合、列車の速度更新処理（`EntityTrainBase.updateSpeed()`）にフックして、現在速度と停止目標距離から必要減速度を計算し、適切なブレーキノッチを自動選択して設定します。
+- **技術的内容**:
+  - リフレクション経由（`ATSAssistReflectionHelper`）で `TrainController` → `TASCController` を取得し、制動中かどうか・停止目標距離を読み取ります。
+  - 列車設定（`TrainConfig.deccelerations`）から各ブレーキノッチの減速度を算出し、目標減速度以上の最小ノッチを選択します（最大常用制動段）。
+  - 停止位置判定時はホールドブレーキ（最小段）に移行します。
+- **結果**:
+  ATSAssistModのTASC機能が有効な場合に、列車が停止目標位置に対して物理的に正確なブレーキング制御を行えるようになります。
+
+---
+
 ## 5. CustomNPC+ 関連のバグ修正
 
 CustomNPC+（カスタムNPC追加Mod）において、Java 8 環境での起動時クラッシュを引き起こすバグがありました。
@@ -85,5 +98,38 @@ CustomNPC+（カスタムNPC追加Mod）において、Java 8 環境での起動
   `ScriptController` コンストラクタ内の `new ScriptEngineManager()` を Mixin でインターセプトし、CustomNPC+ の設定（`ConfigScript.ScriptingEnabled`）が `false`（デフォルト）の場合は `new ScriptEngineManager(null)` を返すように差し替えました。`null` ClassLoader を渡すと ServiceLoader はブートストラップ CL のみを使用するため、アプリケーション CL 上のサードパーティSPI実装（Java 11+ 版 Nashorn）がロードされません。スクリプトを明示的に有効化（`true`）している場合のみ通常の完全初期化を実行します。
 - **結果**:
   Java 8 環境でも CustomNPC+ を導入してサーバー・クライアントを起動できるようになります。スクリプト機能を使用しないユーザーが余分なJava 11+ 専用クラスのロードで引き起こされるクラッシュを完全に防止します。
+---
 
+## 6. 竹Mod (Bamboo) 関連のパッチ
 
+### 6.1 キャンプファイヤー描画の最適化（実装予定）
+- **対象ファイル**: `BambooRenderCampfireMixin.java`
+- **概要**:
+  竹Mod（`ruby.bamboo`）のキャンプファイヤーや和風光源ブロックのTileEntityレンダラー（`RenderCampfire`）において、プレイヤーの視界外にある場合や一定距離以上離れた場合の描画処理をスキップする最適化（フラスタムカリング・距離カリング）を実装予定のスタブが存在します。
+
+> [!NOTE]
+> 現バージョンでは、Mixin クラスは存在しますが最適化ロジックは未実装（TODO）です。将来のアップデートで実装される予定です。
+
+---
+
+## 7. SignPicture 関連のパッチ
+
+### 7.1 看板画像レンダラーの最適化（実装予定）
+- **対象ファイル**: `SignPictureRendererMixin.java`
+- **概要**:
+  SignPicture Mod（`com.kamesuta.mc.signpic`）のカスタム看板画像レンダラー（`CustomTileEntitySignRenderer`）において、画像がまだロードされていない場合や、視界から極めて遠い場合の無駄な描画コールをスキップする最適化を実装予定のスタブが存在します。
+
+> [!NOTE]
+> 現バージョンでは、Mixin クラスは存在しますが最適化ロジックは未実装（TODO）です。将来のアップデートで実装される予定です。
+
+---
+
+## 8. ArchitectureCraft 関連のパッチ
+
+### 8.1 ベースモデルレンダラーの最適化（実装予定）
+- **対象ファイル**: `BaseModelRendererMixin.java`
+- **概要**:
+  ArchitectureCraft（`gcewing.architecture`）のベースモデルレンダラー（`BaseModelRenderer`）において、ブロック描画時の不可視面計算をキャッシュして再利用したり、毎フレーム生成される`Vector3`・`Trans3`オブジェクトのアロケーションを削減する最適化を実装予定のスタブが存在します。
+
+> [!NOTE]
+> 現バージョンでは、Mixin クラスは存在しますが最適化ロジックは未実装（TODO）です。将来のアップデートで実装される予定です。

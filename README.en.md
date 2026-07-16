@@ -34,7 +34,7 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | **Gradle** | `9.6.1` |
 | **Required Mod** | `UniMixins 0.3.1+` |
 | **Build System** | RetroFuturaGradle 2.0.2 |
-| **Last Checked** | `2026-07-10` |
+| **Last Checked** | `2026-07-16` |
 
 ### 🔍 Internal Structure Index
 * **Mixin Control**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -102,7 +102,7 @@ Directly rewrites bytecodes at class loading, before the Mixin phase. It complet
 
 | Target Class / Method | Action |
 | --- | --- |
-| **GTNHLib 0.9.x** `MixinBlock_IconWrapper` | Redirects `nhlib$getParticleIcon` to `GtnhLibIconCompat` |
+| **GTNHLib 0.9.x** `MixinBlock_IconWrapper` | Redirects `nhlib$getParticleIcon` to `GtnhLibIconCompat` *(deprecated in GTNHLib 0.10.0+; auto-skipped)* |
 | **Angelica CTM** `MixinRenderBlocks` | Redirects glass pane icon resolution like `tweakPaneIcons` to `AngelicaPaneIconCompat` |
 | **MCPatcher** `GlassPaneRenderer` | Replaces `setupIcons` with `return false` |
 | **Hodgepodge** `StringPooler$GuavaPooler` | Replaces `getString(s)` with `s.intern()` to avoid Guava classloader conflicts |

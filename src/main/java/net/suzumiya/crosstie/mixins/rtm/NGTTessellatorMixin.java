@@ -2,6 +2,7 @@ package net.suzumiya.crosstie.mixins.rtm;
 
 import jp.ngt.ngtlib.renderer.NGTTessellator;
 import net.minecraft.client.renderer.Tessellator;
+import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -56,6 +57,14 @@ public abstract class NGTTessellatorMixin {
     /**
      * @author Suzumiya
      * @reason Shader有効時にもMinecraftのTessellatorを使用して描画を正常化する。
+     *
+     * <p>ただし、OptiFine+Shader環境かつAngelicaなし の場合に
+     * {@code GL_TEXTURE_2D} が無効状態でこのメソッドが呼ばれると、
+     * OptiFineがMC TessellatorをG-Bufferパスとして横取りし、
+     * テクスチャなしジオメトリをdiscardしてワイヤーが完全に消える問題が発生する
+     * （{@code RenderBasicWire.js} 等、スクリプトが {@code glDisable(GL_TEXTURE_2D)}
+     * してから描画するケースが該当）。
+     * その場合は {@code drawVertexArray()} にフォールバックして回避する。
      */
     @Overwrite
     public int draw() {
@@ -65,6 +74,15 @@ public abstract class NGTTessellatorMixin {
         this.isDrawing = false;
 
         if (jp.kaiz.kaizpatch.compat.AngelicaCompat.isAvailable() || crosstie$isShaderEnabled()) {
+            // OptiFine+Shader環境（Angelicaなし）でGL_TEXTURE_2Dが無効の場合、
+            // MC TessellatorをG-Bufferパスに通すとジオメトリがdiscardされるため
+            // drawVertexArray()にフォールバックする。
+            // （例: RenderBasicWire.jsはglDisable(GL_TEXTURE_2D)後にNGTTessellatorを使う）
+            if (crosstie$isShaderEnabled()
+                    && !jp.kaiz.kaizpatch.compat.AngelicaCompat.isAvailable()
+                    && !GL11.glIsEnabled(GL11.GL_TEXTURE_2D)) {
+                return drawVertexArray();
+            }
             return drawWithMinecraftTessellator();
         } else {
             return drawVertexArray();

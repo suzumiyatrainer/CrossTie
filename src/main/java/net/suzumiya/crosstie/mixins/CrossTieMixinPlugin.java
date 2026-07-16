@@ -278,6 +278,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("optifine.WireShadowPassRenderMixin");
                 mixins.add("optifine.WireNormalizeShaderFixMixin");
                 mixins.add("optifine.WireColorShaderFixMixin");
+                // OptiFine Shaders 有効時に NGTTessellator の描画が無視される問題を修正
+                mixins.add("optifine.NGTTessellatorShaderCompatMixin");
             }
 
             // Angelica

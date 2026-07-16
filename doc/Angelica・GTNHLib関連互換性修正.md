@@ -78,9 +78,26 @@ Angelicaは、描画パイプラインを近代的な OpenGL Core Profile ベー
 
 ---
 
+### 2.8 Angelica/シェーダー環境下での NGTTessellator 頂点バッファ描画の修正
+- **対象ファイル**: `NGTTessellatorMixin.java`（`ngtlib.NGTTessellatorSelectModeFixMixin` と連携）
+- **問題の背景**:
+  NGTLibの `NGTTessellator`（RTMが使用する独自の頂点バッファ）は、バニラの固定機能パイプラインを前提とした `drawVertexArray()` メソッドで頂点をGPUに送信します。しかし、Angelicaやシェーダー（OptiFine/shadersmod）が有効な環境では、独自の頂点配列描画がGPUステートと競合し、モデルが正しく表示されなかったり、大量の頂点データを一度に流し込んだ際にバッファ溢れで描画が消えるバグがありました。
+- **修正内容**:
+  `NGTTessellator.draw()` を `@Overwrite` で完全に上書きし、Angelica（`AngelicaCompat.isAvailable()`）またはシェーダーが有効な場合は、MinecraftのネイティブTessellatorにデータを転送して描画する `drawWithMinecraftTessellator()` に自動切り替えします。
+  `drawWithMinecraftTessellator()` では法線・ブライトネス・カラー・テクスチャUVを適切に変換して頂点を再構築します。また、大量の頂点を送った後のrawバッファが過剰に大きい場合は縮小してメモリを節約します。
+- **結果**:
+  Angelica環境・シェーダー有効環境下でRTM/NGTLibが使用する `NGTTessellator` の頂点データが正しくGPUに転送され、カスタムモデルやレール・架線等の描画が正常に表示されるようになります。
+
+---
+
 ## 3. GTNHLib 互換性修正
 
 GTNHLibはパフォーマンス向上用の内部APIを提供しますが、スレッド設計の違いなどから競合を引き起こすケースがあります。
+
+> [!NOTE]
+> **GTNHLib バージョン別の対応状況**:
+> - **GTNHLib 0.9.x**: `MixinBlock_IconWrapper` クラスを介して `nhlib$getParticleIcon` を CrossTie の `GtnhLibIconCompat` にリダイレクトする ASM パッチが適用されます。
+> - **GTNHLib 0.10.0+**: `MixinBlock_IconWrapper` が廃止され、`BlockIconTransformer` が `Block` クラスに直接 ASM フックを注入する方式に変更されました。CrossTie の対応パッチ（`@Deprecated`）は、クラス自体が存在しないため自動的にスキップされます。
 
 ### 3.1 オブジェクトプール（ObjectPooler）のスレッドセーフ化によるクラッシュ修正
 - **対象ファイル**: `ObjectPoolerThreadSafeMixin.java`

@@ -21,6 +21,7 @@ public class RenderMarkerBlock1122MathPickingMixin {
     private static int lastLoadedName = -1;
     private static int closestName = -1;
     private static float closestZ = Float.MAX_VALUE;
+    private static boolean currentPickMode = false;
 
     private static FloatBuffer modelMatrix = BufferUtils.createFloatBuffer(16);
     private static FloatBuffer projMatrix = BufferUtils.createFloatBuffer(16);
@@ -30,11 +31,11 @@ public class RenderMarkerBlock1122MathPickingMixin {
 
     @Inject(method = "renderAnchorLine", at = @At("HEAD"))
     private void onRenderAnchorLineHead(TileEntityMarker marker, boolean isPickMode, MarkerElement hoveredElement, CallbackInfoReturnable<MarkerElement> cir) {
+        currentPickMode = isPickMode;
         if (isPickMode) {
             closestName = -1;
             closestZ = Float.MAX_VALUE;
-            // 行列を取得 (AngelicaがGLStateManagerで隠蔽していても、ドライバ側に同期されている前提か、あるいはAngelicaから取得する必要がある)
-            // しかし、AngelicaのglGetFloatを使えば確実！
+            // AngelicaのGLStateManagerからの行列取得を試みる
             try {
                 Class<?> glStateManagerClass = Class.forName("com.gtnewhorizons.angelica.glsm.GLStateManager");
                 java.lang.reflect.Method glGetFloatMethod = glStateManagerClass.getMethod("glGetFloat", int.class, FloatBuffer.class);
@@ -42,7 +43,6 @@ public class RenderMarkerBlock1122MathPickingMixin {
                 projMatrix.clear();
                 glGetFloatMethod.invoke(null, GL11.GL_PROJECTION_MATRIX, projMatrix);
             } catch (Exception e) {
-                // フォールバック: ネイティブから取得
                 projMatrix.clear();
                 GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projMatrix);
             }
@@ -51,20 +51,24 @@ public class RenderMarkerBlock1122MathPickingMixin {
         }
     }
 
+    @Redirect(method = "renderAnchorLine", at = @At(value = "INVOKE", target = "Ljp/ngt/ngtlib/renderer/GLHelper;startMousePicking(F)V", remap = false))
+    private void redirectStartMousePicking(float range) {
+        // OptiFine環境で GL_SELECT や gluPickMatrix が適用されると行列が破壊され文字が巨大化するため、完全にバイパスする
+    }
+
+    @Redirect(method = "renderAnchorLine", at = @At(value = "INVOKE", target = "Ljp/ngt/ngtlib/renderer/GLHelper;finishMousePicking()I", remap = false))
+    private int redirectFinishMousePicking() {
+        return 0; // 常に0を返して元の判定ロジックをスキップさせる
+    }
+
     @Redirect(method = "renderAnchorLine", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glLoadName(I)V", remap = false))
     private void redirectGlLoadName(int name) {
         lastLoadedName = name;
-        // 本来のglLoadNameは不要になるが、一応呼んでおく
-        // GL11.glLoadName(name); // <-- 省略可能
     }
 
     @Inject(method = "renderLine", at = @At("HEAD"), cancellable = true)
     private void onRenderLine(float startX, float startY, float startZ, float endX, float endY, float endZ, int color, CallbackInfo ci) {
-        // TrueGL.isSelectMode()等を使わず、closestNameが初期化されていればPickModeと判定
-        // だが正確にはisPickModeフラグを知る必要がある。
-        // 上記HEADインジェクトで isPickMode なら closestName を -1 にしているので、
-        // renderAnchorLineの実行中かつisPickModeなら判定する。
-        if (closestZ != -1.0f && closestName != -2) { // 便宜上のフラグとして扱う
+        if (currentPickMode) { // フラグによる確実な判定
             try {
                 Class<?> glStateManagerClass = Class.forName("com.gtnewhorizons.angelica.glsm.GLStateManager");
                 java.lang.reflect.Method glGetFloatMethod = glStateManagerClass.getMethod("glGetFloat", int.class, FloatBuffer.class);
@@ -75,7 +79,6 @@ public class RenderMarkerBlock1122MathPickingMixin {
                 GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelMatrix);
             }
             
-            // 数学的ピッキング
             winPos1.clear();
             winPos2.clear();
             GLU.gluProject(startX, startY, startZ, modelMatrix, projMatrix, viewport, winPos1);
@@ -92,10 +95,7 @@ public class RenderMarkerBlock1122MathPickingMixin {
             float mouseX = (float) org.lwjgl.opengl.Display.getWidth() / 2.0F;
             float mouseY = (float) org.lwjgl.opengl.Display.getHeight() / 2.0F;
 
-            // Z値のチェック: 画面より後ろのものは除外 (0.0=Near, 1.0=Far)
-            // 少し余裕をもたせて、負のZでも近すぎればOKとするが、基本は0~1
             if ((pz1 >= -0.1f && pz1 <= 1.1f) || (pz2 >= -0.1f && pz2 <= 1.1f)) {
-                // 線分 (px1, py1) - (px2, py2) と点 (mouseX, mouseY) の最短距離を求める
                 float l2 = (px2 - px1) * (px2 - px1) + (py2 - py1) * (py2 - py1);
                 float t = 0;
                 if (l2 > 0.0001f) {
@@ -105,8 +105,7 @@ public class RenderMarkerBlock1122MathPickingMixin {
                 float projY = py1 + t * (py2 - py1);
                 float dist = (float) Math.sqrt((mouseX - projX) * (mouseX - projX) + (mouseY - projY) * (mouseY - projY));
 
-                // ヒット判定範囲 (ディスプレイの高さの一定割合)
-                float threshold = org.lwjgl.opengl.Display.getHeight() * 0.05f; // 5%の距離
+                float threshold = org.lwjgl.opengl.Display.getHeight() * 0.05f;
 
                 if (dist < threshold) {
                     float avgZ = (pz1 + pz2) / 2.0f;
@@ -123,13 +122,11 @@ public class RenderMarkerBlock1122MathPickingMixin {
     @Inject(method = "renderAnchorLine", at = @At("RETURN"), cancellable = true)
     private void onRenderAnchorLineReturn(TileEntityMarker marker, boolean isPickMode, MarkerElement hoveredElement, CallbackInfoReturnable<MarkerElement> cir) {
         if (isPickMode) {
-            if (closestName != -1 && closestName != -2) {
+            if (closestName != -1) {
                 cir.setReturnValue(MarkerElement.values()[closestName]);
             } else {
                 cir.setReturnValue(MarkerElement.NONE);
             }
-            closestName = -2; // 判定終了
-            closestZ = -1.0f;
         }
     }
 }
