@@ -188,6 +188,10 @@ dependencies {
     // Resolved from JitPack.
     def customNpcVersion = (findProperty('customNpcVersion') ?: 'master-SNAPSHOT').toString().trim()
     compileOnly rfg.deobf("com.github.KAMKEEL:CustomNPC-Plus:${customNpcVersion}")
+
+    // IFTTTUtilMixin用: ATSAssistModが実行時に提供するJacksonのDatabindを
+    // コンパイル時のみ参照する(CrossTie本体には同梱しない)
+    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
 }
 
 tasks.withType(JavaCompile) {

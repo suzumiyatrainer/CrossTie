@@ -26,19 +26,23 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         logDetectedCompatMods();
 
-        // Prevent Nashorn compiled classes from going through LaunchClassLoader's ASM transformers
+        // Prevent Nashorn compiled classes from going through LaunchClassLoader's ASM
+        // transformers
         try {
             if (net.minecraft.launchwrapper.Launch.classLoader != null) {
                 Object classLoader = net.minecraft.launchwrapper.Launch.classLoader;
-                java.lang.reflect.Method regTransEx = classLoader.getClass().getMethod("registerTransformerException", String.class);
+                java.lang.reflect.Method regTransEx = classLoader.getClass().getMethod("registerTransformerException",
+                        String.class);
 
                 regTransEx.invoke(classLoader, "jdk.nashorn.internal.");
                 regTransEx.invoke(classLoader, "jdk.nashorn.api.scripting.");
                 regTransEx.invoke(classLoader, "org.openjdk.nashorn.");
-                System.out.println("[CrossTie] Registered Nashorn transformer exceptions in LaunchClassLoader via reflection");
+                System.out.println(
+                        "[CrossTie] Registered Nashorn transformer exceptions in LaunchClassLoader via reflection");
             }
         } catch (Throwable t) {
-            System.err.println("[CrossTie] Failed to register Nashorn exceptions in LaunchClassLoader: " + t.getMessage());
+            System.err.println(
+                    "[CrossTie] Failed to register Nashorn exceptions in LaunchClassLoader: " + t.getMessage());
         }
     }
 
@@ -306,13 +310,37 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.RtmPartsMatrixPushMixin");
                 mixins.add("rtm.BasicVehiclePartsRendererMixin");
 
-                // Angelica
-                if (isModPresent("AngelicaGlsm")) {
+                // GL_SELECT (マウスピッキング) 回避パッチ
+                //
+                // 各Mixin実装のコメントが示す通り、GL_SELECTが正常に機能しない問題は
+                // Angelica(GLSMによるGL_SELECT系APIのスタブ化)だけでなく、
+                // OptiFine/FastCraft(シェーダー・高速化パイプラインがGL_SELECTパスを無視/破壊する)
+                // でも同様に発生する。
+                // 従来はAngelicaGlsm限定で適用されており、OptiFine単体環境では
+                // 1.12.2マーカーのアンカー線やbasicwireのピッキング判定描画が
+                // 崩れる問題が修正されないまま残っていたため、適用条件を拡張する。
+                boolean hasAngelicaGlsmForPicking = isModPresent("AngelicaGlsm");
+                boolean hasOptiFineForPicking = (isModPresent("OptiFine") || isModPresent("FastCraft"))
+                        && !hasAngelicaGlsmForPicking;
+
+                if (hasAngelicaGlsmForPicking || hasOptiFineForPicking) {
                     mixins.add("ngtlib.InternalButtonAccessor");
                     mixins.add("ngtlib.InternalGUIMathPickingMixin");
                     mixins.add("ngtlib.NGTTessellatorSelectModeFixMixin");
-                    mixins.add("ngtlib.GLHelperSelectBypassMixin");
                     mixins.add("ngtlib.RenderMarkerBlock1122MathPickingMixin");
+
+                    // GLHelperSelectBypassMixin / ActionPartsLoadNameMixin は
+                    // Angelica(GLSM)がglRenderMode/glLoadNameをバイトコード置換で
+                    // スタブ化していることへの回避策であり、TrueGL経由でリフレクション
+                    // 呼び出しに切り替える。OptiFine単体ではこれらのAPIはスタブ化
+                    // されておらず素通りするだけなので、常に併用しても副作用はない。
+                    // 加えて、TrueGL.glRenderMode() を通すことで
+                    // NGTTessellatorSelectModeFixMixin/RenderMarkerBlock1122MathPickingMixin
+                    // が判定に用いる TrueGL.isSelectMode() フラグが両環境で正しく
+                    // 更新されるようになる（Angelica限定適用のままだとOptiFine単体では
+                    // このフラグが常にfalseのままになり、上記2つのMathPicking系Mixinが
+                    // 事実上無効化されてしまう）。
+                    mixins.add("ngtlib.GLHelperSelectBypassMixin");
                     mixins.add("ngtlib.ActionPartsLoadNameMixin");
                 }
             }
