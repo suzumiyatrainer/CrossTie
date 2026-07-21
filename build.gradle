@@ -34,7 +34,7 @@ def forceSafeScala = (findProperty('forceSafeScala') ?: 'false').toString().toBo
 
 minecraft {
     mcVersion = '1.7.10'
-    
+
     // Inject properties into mcmod.info
     injectedTags = [
         'VERSION': project.version,

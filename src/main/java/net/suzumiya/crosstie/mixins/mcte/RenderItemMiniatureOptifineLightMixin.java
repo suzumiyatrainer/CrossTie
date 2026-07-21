@@ -34,7 +34,7 @@ public abstract class RenderItemMiniatureOptifineLightMixin {
     private static Constructor<?> crosstie$renderPropConstructor;
 
     @Unique
-    private static Constructor<?> crosstie$ngtWorldConstructor;
+    private static Constructor<?> crosstie$mcteWorldConstructor;
 
     @Unique
     private static Method crosstie$getNgtObjectMethod;
@@ -162,12 +162,12 @@ public abstract class RenderItemMiniatureOptifineLightMixin {
             return null;
         }
         try {
-            if (crosstie$ngtWorldConstructor == null) {
-                crosstie$ngtWorldConstructor = Class.forName("jp.ngt.ngtlib.world.NGTWorld").getConstructor(
+            if (crosstie$mcteWorldConstructor == null) {
+                crosstie$mcteWorldConstructor = Class.forName("jp.ngt.mcte.world.MCTEWorld").getConstructor(
                         net.minecraft.world.World.class, Class.forName("jp.ngt.ngtlib.block.NGTObject"), Integer.TYPE,
                         Integer.TYPE, Integer.TYPE);
             }
-            return crosstie$ngtWorldConstructor.newInstance(world, ngto, x, y, z);
+            return crosstie$mcteWorldConstructor.newInstance(world, ngto, x, y, z);
         } catch (ReflectiveOperationException ignored) {
             return null;
         }

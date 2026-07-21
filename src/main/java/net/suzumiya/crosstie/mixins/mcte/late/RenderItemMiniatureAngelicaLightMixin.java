@@ -1,4 +1,4 @@
-package net.suzumiya.crosstie.mixins.mcte;
+package net.suzumiya.crosstie.mixins.mcte.late;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -11,6 +11,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.MathHelper;
+import net.minecraft.world.EnumSkyBlock;
 import net.minecraftforge.client.IItemRenderer.ItemRenderType;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,6 +21,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * Angelica環境向け 手持ちミニチュアアイテム光源修正 Mixin。
+ *
+ * <p>
+ * OptiFine版（RenderItemMiniatureOptifineLightMixin）と同じ実装方針。 Angelica の
+ * DynamicLights は getLightBrightnessForSkyBlocks を通して反映されるため、 光源シグネチャの計算に
+ * packed brightness の下位nibbleを含めることで 手持ち光源の変化も検出できる。
+ */
 @Mixin(targets = "jp.ngt.mcte.item.RenderItemMiniature", remap = false)
 public abstract class RenderItemMiniatureAngelicaLightMixin {
 
@@ -28,19 +37,22 @@ public abstract class RenderItemMiniatureAngelicaLightMixin {
     private Map<ItemStack, Object> propMap;
 
     @Unique
-    private static final Map<Object, LightState> crosstie$lightStateByProp = new WeakHashMap<Object, LightState>();
+    private static final Map<Object, LightState> crosstie$lightStateByProp = new WeakHashMap<>();
 
     @Unique
     private static Constructor<?> crosstie$renderPropConstructor;
 
     @Unique
-    private static Constructor<?> crosstie$ngtWorldConstructor;
+    private static Constructor<?> crosstie$mcteWorldConstructor;
 
     @Unique
     private static Method crosstie$getNgtObjectMethod;
 
     @Unique
     private static Method crosstie$deleteGlListMethod;
+
+    @Unique
+    private static Method crosstie$setBrightnessMethod;
 
     @Unique
     private static Field crosstie$renderPropWorldField;
@@ -51,9 +63,9 @@ public abstract class RenderItemMiniatureAngelicaLightMixin {
     @Unique
     private static Field crosstie$renderPropNgtoField;
 
-    @Inject(method = "renderItem", at = @At("HEAD"), require = 0, remap = false)
-    private void crosstie$refreshHeldMiniatureLighting(
-            ItemRenderType type, ItemStack item, Object[] data, CallbackInfo ci) {
+    @Inject(method = "renderItem", at = @At("HEAD"), require = 1, remap = false)
+    private void crosstie$refreshHeldMiniatureLighting(ItemRenderType type, ItemStack item, Object[] data,
+            CallbackInfo ci) {
         if (item == null || !item.hasTagCompound() || type == ItemRenderType.INVENTORY) {
             return;
         }
@@ -75,7 +87,15 @@ public abstract class RenderItemMiniatureAngelicaLightMixin {
         int x = MathHelper.floor_double(anchor.posX);
         int y = MathHelper.floor_double(anchor.posY + anchor.getEyeHeight());
         int z = MathHelper.floor_double(anchor.posZ);
-        int lightSignature = anchor.worldObj.getLightBrightnessForSkyBlocks(x, y, z, 0);
+
+        // Angelica では DisplayList コンパイル時に頂点へ明るさが焼き込まれるため、
+        // 昼夜変化を検出して再コンパイルする必要がある。
+        // skylightSubtracted はバニラが時刻に応じて直接更新するフィールドなので
+        // これをシグネチャに含めることで昼夜変化を確実に検出できる。
+        int rawBlock = anchor.worldObj.getSavedLightValue(EnumSkyBlock.Block, x, y, z);
+        int rawSky = anchor.worldObj.getSavedLightValue(EnumSkyBlock.Sky, x, y, z);
+        // skylightSubtracted を上位ビットに含める（0〜11、時刻依存）
+        int lightSignature = (anchor.worldObj.skylightSubtracted << 8) | (rawBlock << 4) | rawSky;
 
         LightState state = crosstie$getOrCreateState(renderProp);
         boolean moved = state.world != anchor.worldObj || state.x != x || state.y != y || state.z != z;
@@ -88,9 +108,22 @@ public abstract class RenderItemMiniatureAngelicaLightMixin {
                 crosstie$setRenderPropWorld(renderProp, ngtWorld);
             }
         }
+
+        // 光源環境の変化、あるいは別次元等への移動を検知した場合にキャッシュをクリア
         if (relight) {
             crosstie$deleteDisplayLists(crosstie$getRenderPropGlLists(renderProp));
             crosstie$setRenderPropGlLists(renderProp, null);
+        }
+
+        // 【修正の核心】
+        // 手持ちアイテムが初めて描画される際、または上記でキャッシュが破棄されたタイミングにおいて、
+        // ディスプレイリストのコンパイル直前に最新のプレイヤー周囲の光量をOpenGLコンテキストへ同期する。
+        if (crosstie$getRenderPropGlLists(renderProp) == null) {
+            int brightness = anchor.worldObj.getLightBrightnessForSkyBlocks(x, y, z, 0);
+            crosstie$invokeSetBrightness(brightness);
+        }
+
+        if (relight) {
             state.world = anchor.worldObj;
             state.x = x;
             state.y = y;
@@ -99,18 +132,30 @@ public abstract class RenderItemMiniatureAngelicaLightMixin {
         }
     }
 
+    // ---- ユーティリティ ----
+
+    @Unique
+    private static void crosstie$invokeSetBrightness(int brightness) {
+        try {
+            if (crosstie$setBrightnessMethod == null) {
+                crosstie$setBrightnessMethod = Class.forName("jp.ngt.ngtlib.renderer.GLHelper")
+                        .getMethod("setBrightness", int.class);
+            }
+            crosstie$setBrightnessMethod.invoke(null, brightness);
+        } catch (ReflectiveOperationException ignored) {
+        }
+    }
+
     @Unique
     private static Object crosstie$createRenderProp(ItemStack item) {
         Object ngto = crosstie$getNgtObject(item.getTagCompound());
-        if (ngto == null) {
+        if (ngto == null)
             return null;
-        }
-
         try {
             if (crosstie$renderPropConstructor == null) {
                 Class<?> clazz = Class.forName("jp.ngt.mcte.item.RenderItemMiniature$RenderProp");
-                crosstie$renderPropConstructor =
-                        clazz.getDeclaredConstructor(Class.forName("jp.ngt.ngtlib.block.NGTObject"), ItemStack.class);
+                crosstie$renderPropConstructor = clazz
+                        .getDeclaredConstructor(Class.forName("jp.ngt.ngtlib.block.NGTObject"), ItemStack.class);
                 crosstie$renderPropConstructor.setAccessible(true);
             }
             return crosstie$renderPropConstructor.newInstance(ngto, item);
@@ -123,8 +168,8 @@ public abstract class RenderItemMiniatureAngelicaLightMixin {
     private static Object crosstie$getNgtObject(NBTTagCompound tag) {
         try {
             if (crosstie$getNgtObjectMethod == null) {
-                Class<?> itemMiniatureClass = Class.forName("jp.ngt.mcte.item.ItemMiniature");
-                crosstie$getNgtObjectMethod = itemMiniatureClass.getMethod("getNGTObject", NBTTagCompound.class);
+                crosstie$getNgtObjectMethod = Class.forName("jp.ngt.mcte.item.ItemMiniature").getMethod("getNGTObject",
+                        NBTTagCompound.class);
             }
             return crosstie$getNgtObjectMethod.invoke(null, tag);
         } catch (ReflectiveOperationException ignored) {
@@ -134,17 +179,15 @@ public abstract class RenderItemMiniatureAngelicaLightMixin {
 
     @Unique
     private static Object crosstie$createNgtWorld(net.minecraft.world.World world, Object ngto, int x, int y, int z) {
-        if (world == null || ngto == null) {
+        if (world == null || ngto == null)
             return null;
-        }
         try {
-            if (crosstie$ngtWorldConstructor == null) {
-                crosstie$ngtWorldConstructor = Class.forName("jp.ngt.ngtlib.world.NGTWorld")
-                        .getConstructor(net.minecraft.world.World.class,
-                                Class.forName("jp.ngt.ngtlib.block.NGTObject"),
-                                Integer.TYPE, Integer.TYPE, Integer.TYPE);
+            if (crosstie$mcteWorldConstructor == null) {
+                crosstie$mcteWorldConstructor = Class.forName("jp.ngt.mcte.world.MCTEWorld").getConstructor(
+                        net.minecraft.world.World.class, Class.forName("jp.ngt.ngtlib.block.NGTObject"), Integer.TYPE,
+                        Integer.TYPE, Integer.TYPE);
             }
-            return crosstie$ngtWorldConstructor.newInstance(world, ngto, x, y, z);
+            return crosstie$mcteWorldConstructor.newInstance(world, ngto, x, y, z);
         } catch (ReflectiveOperationException ignored) {
             return null;
         }
@@ -154,14 +197,12 @@ public abstract class RenderItemMiniatureAngelicaLightMixin {
     private static Entity crosstie$resolveAnchorEntity(Object[] data) {
         if (data != null) {
             for (Object datum : data) {
-                if (datum instanceof Entity) {
+                if (datum instanceof Entity)
                     return (Entity) datum;
-                }
             }
         }
-
-        Minecraft minecraft = Minecraft.getMinecraft();
-        return minecraft == null ? null : minecraft.renderViewEntity;
+        Minecraft mc = Minecraft.getMinecraft();
+        return mc == null ? null : mc.renderViewEntity;
     }
 
     @Unique
@@ -181,7 +222,7 @@ public abstract class RenderItemMiniatureAngelicaLightMixin {
                 crosstie$renderPropNgtoField = renderProp.getClass().getDeclaredField("ngto");
                 crosstie$renderPropNgtoField.setAccessible(true);
             }
-            return crosstie$renderPropNgtoField.get(renderProp);
+            return (Object[]) crosstie$renderPropNgtoField.get(renderProp);
         } catch (ReflectiveOperationException ignored) {
             return null;
         }
@@ -200,52 +241,99 @@ public abstract class RenderItemMiniatureAngelicaLightMixin {
     }
 
     @Unique
+    private static Field crosstie$findRenderPropCacheField(Class<?> clazz) {
+        if (crosstie$renderPropGlListsField != null) {
+            return crosstie$renderPropGlListsField;
+        }
+        try {
+            Field f = clazz.getDeclaredField("glLists");
+            f.setAccessible(true);
+            crosstie$renderPropGlListsField = f;
+            return f;
+        } catch (NoSuchFieldException e) {
+            try {
+                Field f = clazz.getDeclaredField("glVaos");
+                f.setAccessible(true);
+                crosstie$renderPropGlListsField = f;
+                return f;
+            } catch (NoSuchFieldException ex) {
+                for (Field f : clazz.getDeclaredFields()) {
+                    Class<?> type = f.getType();
+                    if (type.isArray()) {
+                        String compName = type.getComponentType().getName();
+                        if (compName.equals("jp.ngt.ngtlib.renderer.DisplayList")
+                                || compName.contains("IVertexArrayObject")
+                                || compName.contains("VertexArray")) {
+                            f.setAccessible(true);
+                            crosstie$renderPropGlListsField = f;
+                            return f;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @Unique
     private static Object[] crosstie$getRenderPropGlLists(Object renderProp) {
         try {
-            if (crosstie$renderPropGlListsField == null) {
-                crosstie$renderPropGlListsField = renderProp.getClass().getDeclaredField("glLists");
-                crosstie$renderPropGlListsField.setAccessible(true);
+            Field f = crosstie$findRenderPropCacheField(renderProp.getClass());
+            if (f != null) {
+                return (Object[]) f.get(renderProp);
             }
-            return (Object[]) crosstie$renderPropGlListsField.get(renderProp);
         } catch (ReflectiveOperationException ignored) {
-            return null;
         }
+        return null;
     }
 
     @Unique
     private static void crosstie$setRenderPropGlLists(Object renderProp, Object[] glLists) {
         try {
-            if (crosstie$renderPropGlListsField == null) {
-                crosstie$renderPropGlListsField = renderProp.getClass().getDeclaredField("glLists");
-                crosstie$renderPropGlListsField.setAccessible(true);
+            Field f = crosstie$findRenderPropCacheField(renderProp.getClass());
+            if (f != null) {
+                f.set(renderProp, glLists);
             }
-            crosstie$renderPropGlListsField.set(renderProp, glLists);
         } catch (ReflectiveOperationException ignored) {
         }
     }
 
     @Unique
     private static void crosstie$deleteDisplayLists(Object[] glLists) {
-        if (glLists == null) {
+        if (glLists == null)
             return;
-        }
         for (Object glList : glLists) {
-            if (glList != null) {
-                crosstie$deleteDisplayList(glList);
-            }
+            if (glList != null)
+                crosstie$deleteCacheElement(glList);
         }
     }
 
     @Unique
-    private static void crosstie$deleteDisplayList(Object glList) {
+    private static void crosstie$deleteCacheElement(Object element) {
+        if (element == null)
+            return;
         try {
-            if (crosstie$deleteGlListMethod == null) {
-                Class<?> glHelperClass = Class.forName("jp.ngt.ngtlib.renderer.GLHelper");
-                Class<?> displayListClass = Class.forName("jp.ngt.ngtlib.renderer.DisplayList");
-                crosstie$deleteGlListMethod = glHelperClass.getMethod("deleteGLList", displayListClass);
+            if (element.getClass().getName().contains("IVertexArrayObject") || element instanceof AutoCloseable) {
+                try {
+                    Method deleteMethod = element.getClass().getMethod("delete");
+                    deleteMethod.invoke(element);
+                    return;
+                } catch (NoSuchMethodException ignored) {
+                }
             }
-            crosstie$deleteGlListMethod.invoke(null, glList);
+
+            if (crosstie$deleteGlListMethod == null) {
+                Class<?> displayListClass = Class.forName("jp.ngt.ngtlib.renderer.DisplayList");
+                crosstie$deleteGlListMethod = Class.forName("jp.ngt.ngtlib.renderer.GLHelper").getMethod("deleteGLList",
+                        displayListClass);
+            }
+            crosstie$deleteGlListMethod.invoke(null, element);
         } catch (ReflectiveOperationException ignored) {
+            try {
+                Method deleteMethod = element.getClass().getMethod("delete");
+                deleteMethod.invoke(element);
+            } catch (Throwable ignored2) {
+            }
         }
     }
 

@@ -26,19 +26,10 @@ public class CrossTieLateMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.atsassist.")) {
             return true;
         }
-        if (mixinClassName.equals("net.suzumiya.crosstie.mixins.projectred.RenderHaloMixin")) {
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.mcte.late.")) {
             ModDetector detector = CrossTieCorePlugin.getModDetector();
-            if (detector != null && detector.isModPresent("ProjectRed")) {
-                return true;
-            }
-            try {
-                Class.forName("mrtjp.projectred.core.RenderHalo$", false, this.getClass().getClassLoader());
-                System.out.println(
-                        "[CrossTie] ProjectRed RenderHalo$ class detected via Class.forName. Applying RenderHaloMixin.");
-                return true;
-            } catch (ClassNotFoundException e) {
-                return false;
-            }
+            return detector != null && detector.isModPresent("MCTE")
+                    && (detector.isModPresent("Angelica") || detector.isModPresent("AngelicaGlsm"));
         }
         return true;
     }
@@ -50,6 +41,19 @@ public class CrossTieLateMixinPlugin implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
+
+        ModDetector detector = CrossTieCorePlugin.getModDetector();
+        if (detector != null && detector.isModPresent("MCTE")) {
+            if (detector.isModPresent("Angelica") || detector.isModPresent("AngelicaGlsm")) {
+                mixins.add("mcte.late.RenderMiniatureAngelicaLightMixin");
+                mixins.add("mcte.late.RenderItemMiniatureAngelicaLightMixin");
+                mixins.add("mcte.late.McteWorldAngelicaLightMixin");
+                mixins.add("mcte.late.NGTRendererMixin");
+                mixins.add("mcte.late.DirectTessellatorLightMixin");
+                System.out.println("[CrossTieLate] Registered MCTE Angelica-compat mixins successfully.");
+            }
+        }
+
         return mixins;
     }
 

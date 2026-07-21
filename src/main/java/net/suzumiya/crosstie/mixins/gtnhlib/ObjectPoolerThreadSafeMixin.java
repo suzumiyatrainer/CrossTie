@@ -2,11 +2,13 @@ package net.suzumiya.crosstie.mixins.gtnhlib;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Supplier;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 /**
@@ -25,29 +27,28 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(targets = "com.gtnewhorizon.gtnhlib.util.ObjectPooler", remap = false)
 public abstract class ObjectPoolerThreadSafeMixin<T> {
 
+    @Unique
+    private final ConcurrentLinkedQueue<T> crosstie$lockFreePool = new ConcurrentLinkedQueue<>();
+
     @Overwrite
-    public synchronized T getInstance() {
-        ObjectArrayList<T> pool = crosstie$getAvailableInstances();
-        if (pool.isEmpty()) {
-            return crosstie$getInstanceSupplier().get();
-        }
-        return pool.remove(pool.size() - 1);
+    public T getInstance() {
+        T obj = crosstie$lockFreePool.poll();
+        return obj != null ? obj : crosstie$getInstanceSupplier().get();
     }
 
     @Overwrite
-    public synchronized void releaseInstance(T instance) {
+    public void releaseInstance(T instance) {
         if (instance == null) {
             return;
         }
-        crosstie$getAvailableInstances().add(instance);
+        crosstie$lockFreePool.offer(instance);
     }
 
     @Overwrite
-    public synchronized void releaseInstances(Collection<T> instances) {
-        ObjectArrayList<T> pool = crosstie$getAvailableInstances();
+    public void releaseInstances(Collection<T> instances) {
         for (T instance : instances) {
             if (instance != null) {
-                pool.add(instance);
+                crosstie$lockFreePool.offer(instance);
             }
         }
         instances.clear();
@@ -59,9 +60,12 @@ public abstract class ObjectPoolerThreadSafeMixin<T> {
      * 参照: GTNHLib-0.11.12 ObjectPooler.java#L42
      */
     @Overwrite
-    public synchronized void releaseInstances(T[] instances) {
-        ObjectArrayList<T> pool = crosstie$getAvailableInstances();
-        pool.addElements(pool.size(), instances);
+    public void releaseInstances(T[] instances) {
+        for (T instance : instances) {
+            if (instance != null) {
+                crosstie$lockFreePool.offer(instance);
+            }
+        }
         Arrays.fill(instances, null);
     }
 

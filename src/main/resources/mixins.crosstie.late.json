@@ -7,6 +7,13 @@
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
   "mixins": [],
-  "client": [],
+  "client": [
+    "mcte.late.RenderMiniatureAngelicaLightMixin",
+    "mcte.late.RenderItemMiniatureAngelicaLightMixin",
+    "mcte.late.McteWorldAngelicaLightMixin",
+    "mcte.late.NGTRendererMixin",
+    "mcte.late.DirectTessellatorNormalMixin",
+    "mcte.late.DirectTessellatorLightMixin"
+  ],
   "server": []
 }

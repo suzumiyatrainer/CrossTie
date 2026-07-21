@@ -33,15 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "jp.ngt.rtm.electric.ElectricalWiringManager", remap = false)
 public abstract class ElectricalWiringDecorativeMixin {
 
-    /**
-     * お飾り判定キャッシュ。
-     * キー: TileEntityElectricalWiring（originノード）
-     * 値: true = お飾り（DIRECT接続なし）、false = 実配線
-     * WeakHashMapを使用してGCによる自動削除を許可する。
-     */
-    @Unique
-    private final java.util.WeakHashMap<Object, Boolean> crosstie$decorativeCache =
-            new java.util.WeakHashMap<>();
+    // キャッシュは net.suzumiya.crosstie.cache.ElectricalWiringCacheManager に移譲
 
     /**
      * {@code propagateSignal()} の HEAD でお飾りチェックを行い、
@@ -57,10 +49,10 @@ public abstract class ElectricalWiringDecorativeMixin {
         }
 
         try {
-            Boolean cached = crosstie$decorativeCache.get(origin);
+            Boolean cached = net.suzumiya.crosstie.cache.ElectricalWiringCacheManager.get(origin);
             if (cached == null) {
                 cached = crosstie$isDecorativeNetwork(origin);
-                crosstie$decorativeCache.put(origin, cached);
+                net.suzumiya.crosstie.cache.ElectricalWiringCacheManager.put(origin, cached);
             }
             if (cached) {
                 ci.cancel();
@@ -103,14 +95,8 @@ public abstract class ElectricalWiringDecorativeMixin {
         }
     }
 
-    /**
-     * 接続変更時にキャッシュをクリアする。
-     * {@code setConnectionTo()} の末尾にフック。
-     */
-    @Inject(method = "setConnectionTo", at = @At("RETURN"), require = 0, remap = false)
-    private void crosstie$invalidateCacheOnConnectionChange(CallbackInfo ci) {
-        crosstie$decorativeCache.clear();
-    }
+    // setConnectionTo は KaizPatchX の ElectricalWiringManager には存在せず、TileEntityElectricalWiring に存在するため
+    // ここではなく TileEntityEWConnectionMixin でフックするよう変更。
 
     /**
      * ノード削除時にキャッシュをクリアする。
@@ -118,6 +104,6 @@ public abstract class ElectricalWiringDecorativeMixin {
      */
     @Inject(method = "onNodeRemoved", at = @At("RETURN"), require = 0, remap = false)
     private void crosstie$invalidateCacheOnNodeRemoved(CallbackInfo ci) {
-        crosstie$decorativeCache.clear();
+        net.suzumiya.crosstie.cache.ElectricalWiringCacheManager.clear();
     }
 }

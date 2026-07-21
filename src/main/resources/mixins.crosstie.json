@@ -1,25 +1,35 @@
 {
-    "required":  true,
-    "minVersion":  "0.8",
-    "package":  "net.suzumiya.crosstie.mixins",
-    "plugin":  "net.suzumiya.crosstie.mixins.CrossTieMixinPlugin",
-    "refmap":  "mixins.crosstie.refmap.json",
-    "target":  "@env(DEFAULT)",
-    "compatibilityLevel":  "JAVA_8",
-    "mixins":  [
-                   "angelica.AngelicaRebuildSyncRTMRailMixin",
-                   "customnpc.ScriptControllerInitMixin"
-               ],
-    "client":  [
-                   "angelica.AngelicaCloudRenderingFixMixin",
-                   "angelica.AngelicaRenderDistanceWaterFixMixin",
-                   "angelica.IdMapOrderFixMixin",
-                   "angelica.AngelicaBlockMaterialMappingCaseFixMixin",
-                   "angelica.AngelicaItemMaterialHelperCaseFixMixin",
-                   "optifine.WireColorShaderFixMixin",
-                   "rtm.EntityVehicleBaseModelSetGuardMixin",
-                   "rtm.RenderVehicleBaseContextMixin",
-                   "rtm.PartsRendererCheckMouseActionGuardMixin",
-                   "rtm.PartsRendererPickPassGuardMixin"
-               ]
+    "required": true,
+    "minVersion": "0.8",
+    "package": "net.suzumiya.crosstie.mixins",
+    "plugin": "net.suzumiya.crosstie.mixins.CrossTieMixinPlugin",
+    "refmap": "mixins.crosstie.refmap.json",
+    "target": "@env(DEFAULT)",
+    "compatibilityLevel": "JAVA_8",
+    "mixins": [
+        "angelica.AngelicaRebuildSyncRTMRailMixin",
+        "customnpc.ScriptControllerInitMixin",
+        "rtm.DataEntryMixin",
+        "rtm.DataMapMixin",
+        "rtm.VehicleTrackerEntryMixin"
+    ],
+    "client": [
+        "angelica.AngelicaCloudRenderingFixMixin",
+        "angelica.AngelicaRenderDistanceWaterFixMixin",
+        "angelica.IdMapOrderFixMixin",
+        "angelica.AngelicaBlockMaterialMappingCaseFixMixin",
+        "angelica.AngelicaItemMaterialHelperCaseFixMixin",
+        "bamboo.BambooRenderCampfireMixin",
+        "bamboo.MixinBlockSpaWater",
+        "optifine.WireColorShaderFixMixin",
+        "rtm.EntityVehicleBaseModelSetGuardMixin",
+        "rtm.RenderVehicleBaseContextMixin",
+        "rtm.PartsRendererCheckMouseActionGuardMixin",
+        "rtm.PartsRendererPickPassGuardMixin",
+        "rtm.TileEntityCrossingGateNoCullingMixin",
+        "rtm.TileEntitySignalNoCullingMixin",
+        "mcte.RenderMiniatureOptifineLightMixin",
+        "mcte.RenderItemMiniatureOptifineLightMixin",
+        "mcte.McteWorldOptifineLightMixin"
+    ]
 }

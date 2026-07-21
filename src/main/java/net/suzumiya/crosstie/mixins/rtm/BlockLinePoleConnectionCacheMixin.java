@@ -1,6 +1,6 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import java.util.HashMap;
+import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.world.IBlockAccess;
@@ -46,9 +46,9 @@ public abstract class BlockLinePoleConnectionCacheMixin {
             return;
         }
 
-        Boolean cached = cache.values.get(crosstie$packKey(x, y, z, connectOther));
-        if (cached != null) {
-            cir.setReturnValue(cached);
+        byte cached = cache.values.get(crosstie$packKey(x, y, z, connectOther));
+        if (cached != -1) {
+            cir.setReturnValue(cached == 1);
         }
     }
 
@@ -62,7 +62,7 @@ public abstract class BlockLinePoleConnectionCacheMixin {
             CallbackInfoReturnable<Boolean> cir) {
         TickCache cache = crosstie$getClientTickCache(world);
         if (cache != null) {
-            cache.values.put(crosstie$packKey(x, y, z, connectOther), cir.getReturnValue());
+            cache.values.put(crosstie$packKey(x, y, z, connectOther), cir.getReturnValue() ? (byte) 1 : (byte) 0);
         }
     }
 
@@ -104,6 +104,10 @@ public abstract class BlockLinePoleConnectionCacheMixin {
     @Unique
     private static final class TickCache {
         private long tick;
-        private final Map<Long, Boolean> values = new HashMap<Long, Boolean>();
+        private final Long2ByteOpenHashMap values = new Long2ByteOpenHashMap();
+        
+        public TickCache() {
+            values.defaultReturnValue((byte) -1);
+        }
     }
 }

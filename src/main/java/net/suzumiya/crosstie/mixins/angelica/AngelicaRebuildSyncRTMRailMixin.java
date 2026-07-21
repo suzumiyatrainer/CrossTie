@@ -44,19 +44,31 @@ public abstract class AngelicaRebuildSyncRTMRailMixin {
             return;
         }
 
-        // Iterate all loaded tile entities in the world and check if any RTM rail
-        // falls within the rebuild region. Using loadedTileEntityList is acceptable
-        // here as this runs on the render thread and the list is a snapshot.
-        @SuppressWarnings("unchecked")
-        java.util.List<TileEntity> tiles = clientWorld.loadedTileEntityList;
-        for (TileEntity te : tiles) {
-            if (te instanceof TileEntityLargeRailCore) {
-                TileEntityLargeRailCore rail = (TileEntityLargeRailCore) te;
-                int tx = te.xCoord;
-                int ty = te.yCoord;
-                int tz = te.zCoord;
-                if (tx >= minX && tx <= maxX && ty >= minY && ty <= maxY && tz >= minZ && tz <= maxZ) {
-                    rail.shouldRerenderRail = true;
+        // Iterate through chunks that intersect the rebuild region instead of the global TileEntity list.
+        // This reduces the number of checked entities from thousands (or tens of thousands) to a few dozens.
+        int chunkMinX = minX >> 4;
+        int chunkMaxX = maxX >> 4;
+        int chunkMinZ = minZ >> 4;
+        int chunkMaxZ = maxZ >> 4;
+
+        for (int cx = chunkMinX; cx <= chunkMaxX; cx++) {
+            for (int cz = chunkMinZ; cz <= chunkMaxZ; cz++) {
+                if (!clientWorld.getChunkProvider().chunkExists(cx, cz)) {
+                    continue;
+                }
+                net.minecraft.world.chunk.Chunk chunk = clientWorld.getChunkFromChunkCoords(cx, cz);
+                @SuppressWarnings("unchecked")
+                java.util.Collection<TileEntity> chunkTiles = ((java.util.Map<?, TileEntity>) chunk.chunkTileEntityMap).values();
+                for (TileEntity te : chunkTiles) {
+                    if (te instanceof TileEntityLargeRailCore) {
+                        TileEntityLargeRailCore rail = (TileEntityLargeRailCore) te;
+                        int tx = te.xCoord;
+                        int ty = te.yCoord;
+                        int tz = te.zCoord;
+                        if (tx >= minX && tx <= maxX && ty >= minY && ty <= maxY && tz >= minZ && tz <= maxZ) {
+                            rail.shouldRerenderRail = true;
+                        }
+                    }
                 }
             }
         }

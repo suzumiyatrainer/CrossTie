@@ -1,7 +1,6 @@
 package net.suzumiya.crosstie.mixins.kaizpatch;
 
-import java.util.HashMap;
-import java.util.Map;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -43,7 +42,7 @@ public abstract class RailMapCustomCacheMixin {
     private Double crosstie$lengthCache;
 
     @Unique
-    private final Map<Long, crosstie$CacheEntry> crosstie$cache = new HashMap<Long, crosstie$CacheEntry>();
+    private final Long2ObjectOpenHashMap<crosstie$CacheEntry> crosstie$cache = new Long2ObjectOpenHashMap<>();
 
     @Unique
     private static class crosstie$CacheEntry {
@@ -111,7 +110,7 @@ public abstract class RailMapCustomCacheMixin {
         crosstie$ensureCacheValid();
         crosstie$CacheEntry entry = crosstie$cache.get(crosstie$key(split, index));
         if (entry != null && entry.pos != null) {
-            cir.setReturnValue(entry.pos.clone());
+            cir.setReturnValue(entry.pos);
         }
     }
 
@@ -119,7 +118,7 @@ public abstract class RailMapCustomCacheMixin {
     private void crosstie$cacheRailPos(int split, int index, CallbackInfoReturnable<double[]> cir) {
         double[] value = cir.getReturnValue();
         if (crosstie$railMapCustomCacheEnabled && value != null) {
-            crosstie$getOrCreateEntry(crosstie$key(split, index)).pos = value.clone();
+            crosstie$getOrCreateEntry(crosstie$key(split, index)).pos = value;
         }
     }
 

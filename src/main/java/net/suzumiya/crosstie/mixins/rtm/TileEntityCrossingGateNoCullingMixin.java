@@ -2,6 +2,7 @@ package net.suzumiya.crosstie.mixins.rtm;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import jp.ngt.rtm.block.tileentity.TileEntityCrossingGate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
@@ -13,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @SuppressWarnings("all")
-@Mixin(targets = "jp.ngt.rtm.block.tileentity.TileEntityCrossingGate", remap = false)
+@Mixin(targets = "jp.ngt.rtm.block.tileentity.TileEntityMachineBase", remap = false)
 public abstract class TileEntityCrossingGateNoCullingMixin {
 
     /**
@@ -49,7 +50,9 @@ public abstract class TileEntityCrossingGateNoCullingMixin {
         if (!CrossTieConfig.disableSignalCulling) {
             return;
         }
-        cir.setReturnValue(TileEntity.INFINITE_EXTENT_AABB);
+        if ((Object) this instanceof TileEntityCrossingGate) {
+            cir.setReturnValue(TileEntity.INFINITE_EXTENT_AABB);
+        }
     }
 
     /**
@@ -63,7 +66,9 @@ public abstract class TileEntityCrossingGateNoCullingMixin {
         if (!CrossTieConfig.disableSignalCulling) {
             return;
         }
-        cir.setReturnValue(crosstie$getMaxRenderDistanceSq());
+        if ((Object) this instanceof TileEntityCrossingGate) {
+            cir.setReturnValue(crosstie$getMaxRenderDistanceSq());
+        }
     }
 
 }

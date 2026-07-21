@@ -93,10 +93,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         boolean shouldApply;
         String debugReason = "";
 
-        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.macros.")) {
-            boolean hasMacroMod = isModPresent("MacroMod");
-            shouldApply = isClient && hasMacroMod;
-            debugReason = "isClient=" + isClient + ", MacroMod=" + hasMacroMod;
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.bamboo.")) {
+            boolean hasBamboo = isModPresent("Bamboo");
+            shouldApply = isClient && hasBamboo;
+            debugReason = "isClient=" + isClient + ", Bamboo=" + hasBamboo;
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.gtnhlib.")) {
             boolean hasGtnhLib = isModPresent("GTNHLib");
             if (mixinClassName.endsWith(".ObjectPoolerThreadSafeMixin")) {
@@ -141,14 +141,14 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.mcte.")) {
             boolean hasMcte = isModPresent("MCTE");
             boolean hasAngelicaGlsm = isModPresent("AngelicaGlsm");
-            if (mixinClassName.endsWith(".RenderMiniatureOptifineLightMixin") || mixinClassName.endsWith(".RenderItemMiniatureOptifineLightMixin")) {
-                shouldApply = isClient && hasMcte && !hasAngelicaGlsm;
-                debugReason = "isClient=" + isClient + ", MCTE=" + hasMcte + ", !AngelicaGlsm=" + (!hasAngelicaGlsm);
-            /*
-            } else if (mixinClassName.endsWith(".RenderMiniatureAngelicaLightMixin") || mixinClassName.endsWith(".RenderItemMiniatureAngelicaLightMixin")) {
-                shouldApply = isClient && hasMcte && hasAngelicaGlsm;
-                debugReason = "isClient=" + isClient + ", MCTE=" + hasMcte + ", AngelicaGlsm=" + hasAngelicaGlsm;
-            */
+            boolean hasAngelica = isModPresent("Angelica");
+            boolean hasAnyAngelica = hasAngelica || hasAngelicaGlsm;
+            if (mixinClassName.endsWith(".RenderMiniatureOptifineLightMixin")
+                    || mixinClassName.endsWith(".RenderItemMiniatureOptifineLightMixin")
+                    || mixinClassName.endsWith(".McteWorldOptifineLightMixin")) {
+                // Angelicaがある場合は絶対に適用しない
+                shouldApply = isClient && hasMcte && !hasAnyAngelica;
+                debugReason = "isClient=" + isClient + ", MCTE=" + hasMcte + ", !AnyAngelica=" + (!hasAnyAngelica);
             } else {
                 shouldApply = isClient && hasMcte;
                 debugReason = "isClient=" + isClient + ", MCTE=" + hasMcte;
@@ -267,6 +267,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.EntityTrainBaseSpeedSyncMixin");
             mixins.add("rtm.EntityTrainBaseOptimizationMixin");
             mixins.add("rtm.MixinSoundAPIEntityTrainBase");
+            mixins.add("rtm.TileEntityPoleOptimizationMixin");
+            mixins.add("rtm.TileEntityEWUpdateOptimizationMixin");
         }
 
         // KaizPatch / NGTScriptUtil
@@ -305,6 +307,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             // Angelica
             if (isModPresent("AngelicaGlsm")) {
                 mixins.add("angelica.AngelicaRenderGlobalDisplayListCrashMixin");
+            }
+
+            // Bamboo
+            if (isModPresent("Bamboo")) {
+                mixins.add("bamboo.BambooRenderCampfireMixin");
+                mixins.add("bamboo.MixinBlockSpaWater");
             }
 
             // GTNHLib client icons
@@ -365,17 +373,28 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
             // MCTE client
             if (isModPresent("MCTE")) {
-                // mixins.add("mcte.RenderMiniatureAngelicaLightMixin");
-                // mixins.add("mcte.RenderItemMiniatureAngelicaLightMixin");
-                mixins.add("mcte.RenderMiniatureOptifineLightMixin");
-                mixins.add("mcte.RenderItemMiniatureOptifineLightMixin");
+                boolean hasAnyAngelicaForMcte = isModPresent("Angelica") || isModPresent("AngelicaGlsm");
+                if (hasAnyAngelicaForMcte) {
+                    // Angelica環境用Mixinは、クラスロード競合を避けるため
+                    // ここでは追加せず、CrossTieLateMixinPlugin (Late Mixin) 側で一括登録します。
+                } else {
+                    // OptiFine/その他環境: OptiFine用Mixinを適用
+                    mixins.add("mcte.RenderMiniatureOptifineLightMixin");
+                    mixins.add("mcte.RenderItemMiniatureOptifineLightMixin");
+                    mixins.add("mcte.McteWorldOptifineLightMixin");
+                }
             }
         }
 
         // RTM サーバー側 Mixin（クライアント・サーバー共通）
         if (isModPresent("RTM")) {
             mixins.add("rtm.ElectricalWiringDecorativeMixin");
+            mixins.add("rtm.TileEntityEWConnectionMixin");
             mixins.add("rtm.EntityTrainDetectorThrottleMixin");
+            mixins.add("rtm.DataEntryMixin");
+            mixins.add("rtm.DataMapMixin");
+            mixins.add("rtm.VehicleTrackerEntryMixin");
+            mixins.add("rtm.TileEntityEWThrottleMixin");
         }
 
         // WorldEdit
