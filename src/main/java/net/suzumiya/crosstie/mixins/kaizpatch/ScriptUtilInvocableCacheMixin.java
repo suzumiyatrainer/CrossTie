@@ -8,6 +8,8 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Unique;
@@ -133,10 +135,10 @@ public abstract class ScriptUtilInvocableCacheMixin {
     }
 
     @Unique
-    private static final Map<String, ScriptEngine> crosstie$scriptCache =
-            Collections.synchronizedMap(new LinkedHashMap<String, ScriptEngine>(128, 0.75f, true) {
+    private static final Map<String, CompiledScript> crosstie$compiledScriptCache =
+            Collections.synchronizedMap(new LinkedHashMap<String, CompiledScript>(128, 0.75f, true) {
                 @Override
-                protected boolean removeEldestEntry(Map.Entry<String, ScriptEngine> eldest) {
+                protected boolean removeEldestEntry(Map.Entry<String, CompiledScript> eldest) {
                     return size() > 256;
                 }
             });
@@ -144,33 +146,42 @@ public abstract class ScriptUtilInvocableCacheMixin {
     /**
      * @author CrossTie
      * @reason KaizPatchX 1.10.0-rc.2 targets jdk.nashorn directly, but some Java 8
-     *         runtimes ship without Nashorn. Optimized with cached script engines
-     *         to prevent recurrent compilations.
+     *         runtimes ship without Nashorn. Optimized with cached CompiledScript
+     *         to prevent recurrent compilations without sharing stateful ScriptEngines.
      */
     @Overwrite
     public static ScriptEngine doScript(String script) {
+        ScriptEngine engine = crosstie$createScriptEngine();
         if (script == null || script.trim().isEmpty()) {
-            return crosstie$createScriptEngine();
+            return engine;
         }
 
-        return crosstie$scriptCache.computeIfAbsent(script, s -> {
-            ScriptEngine engine = crosstie$createScriptEngine();
-            try {
-                String name = engine.getFactory().getEngineName();
-                if (name != null && name.toLowerCase().contains("nashorn")) {
-                    try {
-                        engine.eval("load(\"nashorn:mozilla_compat.js\");");
-                    } catch (ScriptException ignored) {
-                        // If the compatibility helper is absent or cannot be loaded, continue with
-                        // execution.
-                    }
+        try {
+            String name = engine.getFactory().getEngineName();
+            if (name != null && name.toLowerCase().contains("nashorn")) {
+                try {
+                    engine.eval("load(\"nashorn:mozilla_compat.js\");");
+                } catch (ScriptException ignored) {
                 }
-                engine.eval(s);
-                return engine;
-            } catch (ScriptException e) {
-                throw new RuntimeException("Script exec error\n" + s, e);
             }
-        });
+
+            CompiledScript compiled = crosstie$compiledScriptCache.get(script);
+            if (compiled == null) {
+                if (engine instanceof Compilable) {
+                    compiled = ((Compilable) engine).compile(script);
+                    crosstie$compiledScriptCache.put(script, compiled);
+                }
+            }
+
+            if (compiled != null) {
+                compiled.eval(engine.getContext());
+            } else {
+                engine.eval(script);
+            }
+            return engine;
+        } catch (ScriptException e) {
+            throw new RuntimeException("Script exec error\n" + script, e);
+        }
     }
 
     /**
