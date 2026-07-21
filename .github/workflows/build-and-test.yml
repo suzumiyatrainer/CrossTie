@@ -36,6 +36,9 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Clean Corrupted Gradle Cache Metadata (JSON)
+      run: find ${{ github.workspace }}/.gradle-user-home -name "*.json" -type f -delete || true
+
     - name: Build with Gradle
       run: ./gradlew build --no-daemon --no-configuration-cache
     - name: Upload Artifact

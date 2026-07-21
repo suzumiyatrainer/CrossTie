@@ -31,43 +31,42 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Clean Corrupted Gradle Cache Metadata (JSON)
+      run: find ${{ github.workspace }}/.gradle-user-home -name "*.json" -type f -delete || true
+
     # Gradleビルドを実行して製品版JARを生成
     - name: Build with Gradle
       run: ./gradlew build --no-daemon --no-configuration-cache
 
     # Modrinthへの公開処理
     - name: Publish to Modrinth
-      uses: Kir-Skay/modrinth-publish-action@v1
+      uses: Kir-Antipov/mc-publish@v3
       with:
-        # GitHubリポジトリのSecretsに登録した「MODRINTH_TOKEN」を使用します
-        token: ${{ secrets.MODRINTH_TOKEN }}
+        # Modrinthのアクセストークン
+        modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
         
         # 指定されたcrosstieのプロジェクトID
-        project-id: "xrwNprGB"
+        modrinth-id: "xrwNprGB"
         
         # build.gradleでbase.archivesName.set('CrossTie')が指定されているため、
         # 生成されるJARファイル名は「CrossTie-バージョン.jar」となります。
         # GitHubのタグ名（例: 1.0.0-Alpha7）を動的に当てはめます。
-        file-path: "build/libs/CrossTie-${{ github.event.release.tag_name }}.jar"
+        files: "build/libs/CrossTie-${{ github.event.release.tag_name }}.jar"
         
         # タイトルと変更ログをGitHubのリリースからそのまま同期
-        version-title: "CrossTie ${{ github.event.release.tag_name }}"
+        name: "CrossTie ${{ github.event.release.tag_name }}"
         changelog: ${{ github.event.release.body }}
         
-        version-number: ${{ github.event.release.tag_name }}
+        version: ${{ github.event.release.tag_name }}
         
         # リリースの種類（GitHub側がプレリリースなら 'beta'、正式版なら 'release' に自動判定）
         version-type: ${{ github.event.release.prerelease && 'beta' || 'release' }}
 
         # 対象環境等のメタデータ設定
-        game-versions: |
-          1.7.10
-        loaders: |
-          forge
-        environments: |
-          client
-          server
+        game-versions: "1.7.10"
+        loaders: "forge"
+        environments: "client | server"
 
         # 必須前提Modとして UniMixins を指定
-        dependencies: |
+        modrinth-dependencies: |
           unimixins:required
