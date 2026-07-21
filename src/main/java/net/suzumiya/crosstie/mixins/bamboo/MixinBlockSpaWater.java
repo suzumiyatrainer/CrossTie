@@ -4,9 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import ruby.bamboo.block.BlockSpaWater;
-
-@Mixin(BlockSpaWater.class)
+@Mixin(targets = "ruby.bamboo.block.BlockSpaWater", remap = false)
 public abstract class MixinBlockSpaWater extends Block {
 
     // 必須となる親クラスのコンストラクタ（コンパイルを通すため）
