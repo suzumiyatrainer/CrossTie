@@ -32,27 +32,43 @@ public abstract class RenderItemMiniatureOptifineLightMixin {
 
     @Unique
     private static Constructor<?> crosstie$renderPropConstructor;
+    @Unique
+    private static boolean crosstie$renderPropConstructorInitialized = false;
 
     @Unique
     private static Constructor<?> crosstie$mcteWorldConstructor;
+    @Unique
+    private static boolean crosstie$mcteWorldConstructorInitialized = false;
 
     @Unique
     private static Method crosstie$getNgtObjectMethod;
+    @Unique
+    private static boolean crosstie$getNgtObjectMethodInitialized = false;
 
     @Unique
     private static Method crosstie$deleteGlListMethod;
+    @Unique
+    private static boolean crosstie$deleteGlListMethodInitialized = false;
 
     @Unique
     private static Method crosstie$setBrightnessMethod;
+    @Unique
+    private static boolean crosstie$setBrightnessMethodInitialized = false;
 
     @Unique
     private static Field crosstie$renderPropWorldField;
+    @Unique
+    private static boolean crosstie$renderPropWorldFieldInitialized = false;
 
     @Unique
     private static Field crosstie$renderPropGlListsField;
+    @Unique
+    private static boolean crosstie$renderPropGlListsFieldInitialized = false;
 
     @Unique
     private static Field crosstie$renderPropNgtoField;
+    @Unique
+    private static boolean crosstie$renderPropNgtoFieldInitialized = false;
 
     @Inject(method = "renderItem", at = @At("HEAD"), require = 1, remap = false)
     private void crosstie$refreshHeldMiniatureLighting(ItemRenderType type, ItemStack item, Object[] data,
@@ -113,13 +129,21 @@ public abstract class RenderItemMiniatureOptifineLightMixin {
 
     @Unique
     private static void crosstie$invokeSetBrightness(int brightness) {
-        try {
-            if (crosstie$setBrightnessMethod == null) {
+        if (!crosstie$setBrightnessMethodInitialized) {
+            crosstie$setBrightnessMethodInitialized = true;
+            try {
                 Class<?> glHelperClass = Class.forName("jp.ngt.ngtlib.renderer.GLHelper");
                 crosstie$setBrightnessMethod = glHelperClass.getMethod("setBrightness", int.class);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$setBrightnessMethod = null;
             }
-            crosstie$setBrightnessMethod.invoke(null, brightness);
-        } catch (ReflectiveOperationException ignored) {
+        }
+
+        if (crosstie$setBrightnessMethod != null) {
+            try {
+                crosstie$setBrightnessMethod.invoke(null, brightness);
+            } catch (ReflectiveOperationException ignored) {
+            }
         }
     }
 
@@ -130,13 +154,23 @@ public abstract class RenderItemMiniatureOptifineLightMixin {
             return null;
         }
 
-        try {
-            if (crosstie$renderPropConstructor == null) {
+        if (!crosstie$renderPropConstructorInitialized) {
+            crosstie$renderPropConstructorInitialized = true;
+            try {
                 Class<?> clazz = Class.forName("jp.ngt.mcte.item.RenderItemMiniature$RenderProp");
                 crosstie$renderPropConstructor = clazz
                         .getDeclaredConstructor(Class.forName("jp.ngt.ngtlib.block.NGTObject"), ItemStack.class);
                 crosstie$renderPropConstructor.setAccessible(true);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$renderPropConstructor = null;
             }
+        }
+
+        if (crosstie$renderPropConstructor == null) {
+            return null;
+        }
+
+        try {
             return crosstie$renderPropConstructor.newInstance(ngto, item);
         } catch (ReflectiveOperationException ignored) {
             return null;
@@ -145,11 +179,21 @@ public abstract class RenderItemMiniatureOptifineLightMixin {
 
     @Unique
     private static Object crosstie$getNgtObject(NBTTagCompound tag) {
-        try {
-            if (crosstie$getNgtObjectMethod == null) {
+        if (!crosstie$getNgtObjectMethodInitialized) {
+            crosstie$getNgtObjectMethodInitialized = true;
+            try {
                 Class<?> itemMiniatureClass = Class.forName("jp.ngt.mcte.item.ItemMiniature");
                 crosstie$getNgtObjectMethod = itemMiniatureClass.getMethod("getNGTObject", NBTTagCompound.class);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$getNgtObjectMethod = null;
             }
+        }
+
+        if (crosstie$getNgtObjectMethod == null) {
+            return null;
+        }
+
+        try {
             return crosstie$getNgtObjectMethod.invoke(null, tag);
         } catch (ReflectiveOperationException ignored) {
             return null;
@@ -161,12 +205,23 @@ public abstract class RenderItemMiniatureOptifineLightMixin {
         if (world == null || ngto == null) {
             return null;
         }
-        try {
-            if (crosstie$mcteWorldConstructor == null) {
+
+        if (!crosstie$mcteWorldConstructorInitialized) {
+            crosstie$mcteWorldConstructorInitialized = true;
+            try {
                 crosstie$mcteWorldConstructor = Class.forName("jp.ngt.mcte.world.MCTEWorld").getConstructor(
                         net.minecraft.world.World.class, Class.forName("jp.ngt.ngtlib.block.NGTObject"), Integer.TYPE,
                         Integer.TYPE, Integer.TYPE);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$mcteWorldConstructor = null;
             }
+        }
+
+        if (crosstie$mcteWorldConstructor == null) {
+            return null;
+        }
+
+        try {
             return crosstie$mcteWorldConstructor.newInstance(world, ngto, x, y, z);
         } catch (ReflectiveOperationException ignored) {
             return null;
@@ -199,11 +254,21 @@ public abstract class RenderItemMiniatureOptifineLightMixin {
 
     @Unique
     private static Object crosstie$getRenderPropNgto(Object renderProp) {
-        try {
-            if (crosstie$renderPropNgtoField == null) {
+        if (!crosstie$renderPropNgtoFieldInitialized) {
+            crosstie$renderPropNgtoFieldInitialized = true;
+            try {
                 crosstie$renderPropNgtoField = renderProp.getClass().getDeclaredField("ngto");
                 crosstie$renderPropNgtoField.setAccessible(true);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$renderPropNgtoField = null;
             }
+        }
+
+        if (crosstie$renderPropNgtoField == null) {
+            return null;
+        }
+
+        try {
             return crosstie$renderPropNgtoField.get(renderProp);
         } catch (ReflectiveOperationException ignored) {
             return null;
@@ -212,23 +277,41 @@ public abstract class RenderItemMiniatureOptifineLightMixin {
 
     @Unique
     private static void crosstie$setRenderPropWorld(Object renderProp, Object world) {
-        try {
-            if (crosstie$renderPropWorldField == null) {
+        if (!crosstie$renderPropWorldFieldInitialized) {
+            crosstie$renderPropWorldFieldInitialized = true;
+            try {
                 crosstie$renderPropWorldField = renderProp.getClass().getDeclaredField("world");
                 crosstie$renderPropWorldField.setAccessible(true);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$renderPropWorldField = null;
             }
-            crosstie$renderPropWorldField.set(renderProp, world);
-        } catch (ReflectiveOperationException ignored) {
+        }
+
+        if (crosstie$renderPropWorldField != null) {
+            try {
+                crosstie$renderPropWorldField.set(renderProp, world);
+            } catch (ReflectiveOperationException ignored) {
+            }
         }
     }
 
     @Unique
     private static Object[] crosstie$getRenderPropGlLists(Object renderProp) {
-        try {
-            if (crosstie$renderPropGlListsField == null) {
+        if (!crosstie$renderPropGlListsFieldInitialized) {
+            crosstie$renderPropGlListsFieldInitialized = true;
+            try {
                 crosstie$renderPropGlListsField = renderProp.getClass().getDeclaredField("glLists");
                 crosstie$renderPropGlListsField.setAccessible(true);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$renderPropGlListsField = null;
             }
+        }
+
+        if (crosstie$renderPropGlListsField == null) {
+            return null;
+        }
+
+        try {
             return (Object[]) crosstie$renderPropGlListsField.get(renderProp);
         } catch (ReflectiveOperationException ignored) {
             return null;
@@ -237,13 +320,21 @@ public abstract class RenderItemMiniatureOptifineLightMixin {
 
     @Unique
     private static void crosstie$setRenderPropGlLists(Object renderProp, Object[] glLists) {
-        try {
-            if (crosstie$renderPropGlListsField == null) {
+        if (!crosstie$renderPropGlListsFieldInitialized) {
+            crosstie$renderPropGlListsFieldInitialized = true;
+            try {
                 crosstie$renderPropGlListsField = renderProp.getClass().getDeclaredField("glLists");
                 crosstie$renderPropGlListsField.setAccessible(true);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$renderPropGlListsField = null;
             }
-            crosstie$renderPropGlListsField.set(renderProp, glLists);
-        } catch (ReflectiveOperationException ignored) {
+        }
+
+        if (crosstie$renderPropGlListsField != null) {
+            try {
+                crosstie$renderPropGlListsField.set(renderProp, glLists);
+            } catch (ReflectiveOperationException ignored) {
+            }
         }
     }
 
@@ -261,14 +352,22 @@ public abstract class RenderItemMiniatureOptifineLightMixin {
 
     @Unique
     private static void crosstie$deleteDisplayList(Object glList) {
-        try {
-            if (crosstie$deleteGlListMethod == null) {
+        if (!crosstie$deleteGlListMethodInitialized) {
+            crosstie$deleteGlListMethodInitialized = true;
+            try {
                 Class<?> glHelperClass = Class.forName("jp.ngt.ngtlib.renderer.GLHelper");
                 Class<?> displayListClass = Class.forName("jp.ngt.ngtlib.renderer.DisplayList");
                 crosstie$deleteGlListMethod = glHelperClass.getMethod("deleteGLList", displayListClass);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$deleteGlListMethod = null;
             }
-            crosstie$deleteGlListMethod.invoke(null, glList);
-        } catch (ReflectiveOperationException ignored) {
+        }
+
+        if (crosstie$deleteGlListMethod != null) {
+            try {
+                crosstie$deleteGlListMethod.invoke(null, glList);
+            } catch (ReflectiveOperationException ignored) {
+            }
         }
     }
 

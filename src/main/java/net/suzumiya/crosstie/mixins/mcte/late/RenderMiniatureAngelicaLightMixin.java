@@ -19,9 +19,18 @@ public abstract class RenderMiniatureAngelicaLightMixin {
     @Unique
     private static Method crosstie$setBrightnessMethod;
     @Unique
+    private static boolean crosstie$setBrightnessMethodInitialized = false;
+
+    @Unique
     private static Method crosstie$deleteGlListMethod;
     @Unique
-    private static Field crosstie$renderCacheField;
+    private static boolean crosstie$deleteGlListMethodInitialized = false;
+
+    @Unique
+    private static final Map<Class<?>, Field> crosstie$renderCacheFields = new WeakHashMap<>();
+
+    @Unique
+    private static final Map<Class<?>, Method> crosstie$deleteMethods = new WeakHashMap<>();
 
     @Unique
     private static final Map<TileEntity, Integer> crosstie$blockLightCache = new WeakHashMap<>();
@@ -67,7 +76,7 @@ public abstract class RenderMiniatureAngelicaLightMixin {
             crosstie$blockLightCache.put(tile, currentLight);
         }
 
-        // 4. コンパイルが走る直前に、このブロック専用のライト値をスタックへpush
+        // 4. コンパイルが走る直前に、このブロック専用 of ライト値をスタックへpush
         // （単一staticフィールドの上書き競合を避けるため）
         crosstie$lightStack.push(currentLight);
 
@@ -96,32 +105,38 @@ public abstract class RenderMiniatureAngelicaLightMixin {
     // ---- ユーティリティ群（リフレクション） ----
     @Unique
     private static void crosstie$invokeSetBrightness(int brightness) {
-        try {
-            if (crosstie$setBrightnessMethod == null) {
+        if (!crosstie$setBrightnessMethodInitialized) {
+            crosstie$setBrightnessMethodInitialized = true;
+            try {
                 crosstie$setBrightnessMethod = Class.forName("jp.ngt.ngtlib.renderer.GLHelper")
                         .getMethod("setBrightness", int.class);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$setBrightnessMethod = null;
             }
-            crosstie$setBrightnessMethod.invoke(null, brightness);
-        } catch (ReflectiveOperationException ignored) {
+        }
+
+        if (crosstie$setBrightnessMethod != null) {
+            try {
+                crosstie$setBrightnessMethod.invoke(null, brightness);
+            } catch (ReflectiveOperationException ignored) {
+            }
         }
     }
 
     @Unique
     private static Field crosstie$findRenderCacheField(Class<?> clazz) {
-        if (crosstie$renderCacheField != null) {
-            return crosstie$renderCacheField;
+        if (crosstie$renderCacheFields.containsKey(clazz)) {
+            return crosstie$renderCacheFields.get(clazz);
         }
+
+        Field foundField = null;
         try {
-            Field f = clazz.getDeclaredField("glLists");
-            f.setAccessible(true);
-            crosstie$renderCacheField = f;
-            return f;
+            foundField = clazz.getDeclaredField("glLists");
+            foundField.setAccessible(true);
         } catch (NoSuchFieldException e) {
             try {
-                Field f = clazz.getDeclaredField("glVaos");
-                f.setAccessible(true);
-                crosstie$renderCacheField = f;
-                return f;
+                foundField = clazz.getDeclaredField("glVaos");
+                foundField.setAccessible(true);
             } catch (NoSuchFieldException ex) {
                 for (Field f : clazz.getDeclaredFields()) {
                     Class<?> type = f.getType();
@@ -131,36 +146,38 @@ public abstract class RenderMiniatureAngelicaLightMixin {
                                 || compName.contains("IVertexArrayObject")
                                 || compName.contains("VertexArray")) {
                             f.setAccessible(true);
-                            crosstie$renderCacheField = f;
-                            return f;
+                            foundField = f;
+                            break;
                         }
                     }
                 }
             }
         }
-        return null;
+        
+        crosstie$renderCacheFields.put(clazz, foundField);
+        return foundField;
     }
 
     @Unique
     private static Object[] crosstie$getGlLists(TileEntity tile) {
-        try {
-            Field f = crosstie$findRenderCacheField(tile.getClass());
-            if (f != null) {
+        Field f = crosstie$findRenderCacheField(tile.getClass());
+        if (f != null) {
+            try {
                 return (Object[]) f.get(tile);
+            } catch (ReflectiveOperationException ignored) {
             }
-        } catch (ReflectiveOperationException ignored) {
         }
         return null;
     }
 
     @Unique
     private static void crosstie$setGlLists(TileEntity tile, Object[] glLists) {
-        try {
-            Field f = crosstie$findRenderCacheField(tile.getClass());
-            if (f != null) {
+        Field f = crosstie$findRenderCacheField(tile.getClass());
+        if (f != null) {
+            try {
                 f.set(tile, glLists);
+            } catch (ReflectiveOperationException ignored) {
             }
-        } catch (ReflectiveOperationException ignored) {
         }
     }
 
@@ -178,27 +195,45 @@ public abstract class RenderMiniatureAngelicaLightMixin {
     private static void crosstie$deleteCacheElement(Object element) {
         if (element == null)
             return;
-        try {
-            if (element.getClass().getName().contains("IVertexArrayObject") || element instanceof AutoCloseable) {
-                try {
-                    Method deleteMethod = element.getClass().getMethod("delete");
-                    deleteMethod.invoke(element);
-                    return;
-                } catch (NoSuchMethodException ignored) {
-                }
-            }
 
-            if (crosstie$deleteGlListMethod == null) {
+        Class<?> clazz = element.getClass();
+        Method deleteMethod = null;
+
+        if (crosstie$deleteMethods.containsKey(clazz)) {
+            deleteMethod = crosstie$deleteMethods.get(clazz);
+        } else {
+            try {
+                deleteMethod = clazz.getMethod("delete");
+                deleteMethod.setAccessible(true);
+            } catch (NoSuchMethodException ignored) {
+                deleteMethod = null;
+            }
+            crosstie$deleteMethods.put(clazz, deleteMethod);
+        }
+
+        if (deleteMethod != null) {
+            try {
+                deleteMethod.invoke(element);
+                return;
+            } catch (Throwable ignored) {
+            }
+        }
+
+        if (!crosstie$deleteGlListMethodInitialized) {
+            crosstie$deleteGlListMethodInitialized = true;
+            try {
                 Class<?> displayListClass = Class.forName("jp.ngt.ngtlib.renderer.DisplayList");
                 crosstie$deleteGlListMethod = Class.forName("jp.ngt.ngtlib.renderer.GLHelper").getMethod("deleteGLList",
                         displayListClass);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$deleteGlListMethod = null;
             }
-            crosstie$deleteGlListMethod.invoke(null, element);
-        } catch (ReflectiveOperationException ignored) {
+        }
+
+        if (crosstie$deleteGlListMethod != null) {
             try {
-                Method deleteMethod = element.getClass().getMethod("delete");
-                deleteMethod.invoke(element);
-            } catch (Throwable ignored2) {
+                crosstie$deleteGlListMethod.invoke(null, element);
+            } catch (ReflectiveOperationException ignored) {
             }
         }
     }

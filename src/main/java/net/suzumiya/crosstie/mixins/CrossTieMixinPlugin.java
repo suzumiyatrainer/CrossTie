@@ -83,6 +83,15 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         return modDetector.isModPresent(modName);
     }
 
+    public static boolean hasOptiFineLikeEnv() {
+        ModDetector detector = CrossTieCorePlugin.getModDetector();
+        if (detector == null) {
+            detector = new ModDetector(null);
+        }
+        return (detector.isModPresent("OptiFine") || detector.isModPresent("FastCraft")) && !detector.isModPresent("AngelicaGlsm");
+    }
+
+
     @Override
     public String getRefMapperConfig() {
         return null;
@@ -299,14 +308,13 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             // OptiFine / FastCraft - LargeRail brightness fix (Angelicaがある場合は追加しない)
             if ((isModPresent("OptiFine") || isModPresent("FastCraft")) && !isModPresent("AngelicaGlsm")) {
                 mixins.add("optifine.RailBrightnessDisplayListSafeMixin");
-                mixins.add("optifine.WireShadowPassRenderMixin");
-                mixins.add("optifine.WireNormalizeShaderFixMixin");
                 mixins.add("optifine.WireColorShaderFixMixin");
             }
 
             // Angelica
             if (isModPresent("AngelicaGlsm")) {
                 mixins.add("angelica.AngelicaRenderGlobalDisplayListCrashMixin");
+                mixins.add("angelica.SimpleWorldRendererMixin");
             }
 
             // Bamboo
@@ -323,7 +331,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
             // RTM client
             if (isModPresent("RTM")) {
-                mixins.add("rtm.RenderElectricalWiringConnectionCacheMixin");
+                mixins.add("rtm.RenderElectricalWiringOptimizationMixin");
                 mixins.add("rtm.BlockLinePoleConnectionCacheMixin");
                 mixins.add("rtm.RenderLargeRailOptimizationMixin");
                 mixins.add("rtm.RailTessellateOptimizationMixin");

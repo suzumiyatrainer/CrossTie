@@ -1,6 +1,9 @@
 package net.suzumiya.crosstie.mixins.kaizpatch;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -8,6 +11,7 @@ import javax.script.ScriptException;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Unique;
+
 
 @Mixin(targets = "jp.ngt.ngtlib.io.ScriptUtil", remap = false)
 public abstract class ScriptUtilInvocableCacheMixin {
@@ -128,29 +132,45 @@ public abstract class ScriptUtilInvocableCacheMixin {
         throw new RuntimeException("No JavaScript engine available for script execution.");
     }
 
+    @Unique
+    private static final Map<String, ScriptEngine> crosstie$scriptCache =
+            Collections.synchronizedMap(new LinkedHashMap<String, ScriptEngine>(128, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, ScriptEngine> eldest) {
+                    return size() > 256;
+                }
+            });
+
     /**
      * @author CrossTie
      * @reason KaizPatchX 1.10.0-rc.2 targets jdk.nashorn directly, but some Java 8
-     *         runtimes ship without Nashorn.
+     *         runtimes ship without Nashorn. Optimized with cached script engines
+     *         to prevent recurrent compilations.
      */
     @Overwrite
     public static ScriptEngine doScript(String script) {
-        ScriptEngine engine = crosstie$createScriptEngine();
-        try {
-            String name = engine.getFactory().getEngineName();
-            if (name != null && name.toLowerCase().contains("nashorn")) {
-                try {
-                    engine.eval("load(\"nashorn:mozilla_compat.js\");");
-                } catch (ScriptException ignored) {
-                    // If the compatibility helper is absent or cannot be loaded, continue with
-                    // execution.
-                }
-            }
-            engine.eval(script);
-            return engine;
-        } catch (ScriptException e) {
-            throw new RuntimeException("Script exec error\n" + script, e);
+        if (script == null || script.trim().isEmpty()) {
+            return crosstie$createScriptEngine();
         }
+
+        return crosstie$scriptCache.computeIfAbsent(script, s -> {
+            ScriptEngine engine = crosstie$createScriptEngine();
+            try {
+                String name = engine.getFactory().getEngineName();
+                if (name != null && name.toLowerCase().contains("nashorn")) {
+                    try {
+                        engine.eval("load(\"nashorn:mozilla_compat.js\");");
+                    } catch (ScriptException ignored) {
+                        // If the compatibility helper is absent or cannot be loaded, continue with
+                        // execution.
+                    }
+                }
+                engine.eval(s);
+                return engine;
+            } catch (ScriptException e) {
+                throw new RuntimeException("Script exec error\n" + s, e);
+            }
+        });
     }
 
     /**

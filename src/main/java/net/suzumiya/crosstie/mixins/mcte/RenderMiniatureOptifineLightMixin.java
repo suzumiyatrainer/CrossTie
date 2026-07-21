@@ -22,12 +22,18 @@ public abstract class RenderMiniatureOptifineLightMixin {
 
     @Unique
     private static Field crosstie$tileGlListsField;
+    @Unique
+    private static boolean crosstie$tileGlListsFieldInitialized = false;
 
     @Unique
     private static Method crosstie$deleteGlListMethod;
+    @Unique
+    private static boolean crosstie$deleteGlListMethodInitialized = false;
 
     @Unique
     private static Method crosstie$setBrightnessMethod;
+    @Unique
+    private static boolean crosstie$setBrightnessMethodInitialized = false;
 
     @Inject(method = "func_147500_a", at = @At("HEAD"), require = 1, remap = false)
     private void crosstie$invalidateDisplayListOnLightChange(TileEntity tile, double x, double y, double z,
@@ -77,23 +83,41 @@ public abstract class RenderMiniatureOptifineLightMixin {
 
     @Unique
     private static void crosstie$invokeSetBrightness(int brightness) {
-        try {
-            if (crosstie$setBrightnessMethod == null) {
+        if (!crosstie$setBrightnessMethodInitialized) {
+            crosstie$setBrightnessMethodInitialized = true;
+            try {
                 Class<?> glHelperClass = Class.forName("jp.ngt.ngtlib.renderer.GLHelper");
                 crosstie$setBrightnessMethod = glHelperClass.getMethod("setBrightness", int.class);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$setBrightnessMethod = null;
             }
-            crosstie$setBrightnessMethod.invoke(null, brightness);
-        } catch (ReflectiveOperationException ignored) {
+        }
+
+        if (crosstie$setBrightnessMethod != null) {
+            try {
+                crosstie$setBrightnessMethod.invoke(null, brightness);
+            } catch (ReflectiveOperationException ignored) {
+            }
         }
     }
 
     @Unique
     private static Object[] crosstie$getDisplayLists(TileEntity tile) {
-        try {
-            if (crosstie$tileGlListsField == null) {
+        if (!crosstie$tileGlListsFieldInitialized) {
+            crosstie$tileGlListsFieldInitialized = true;
+            try {
                 crosstie$tileGlListsField = tile.getClass().getDeclaredField("glLists");
                 crosstie$tileGlListsField.setAccessible(true);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$tileGlListsField = null;
             }
+        }
+
+        if (crosstie$tileGlListsField == null) {
+            return null;
+        }
+
+        try {
             return (Object[]) crosstie$tileGlListsField.get(tile);
         } catch (ReflectiveOperationException ignored) {
             return null;
@@ -102,13 +126,21 @@ public abstract class RenderMiniatureOptifineLightMixin {
 
     @Unique
     private static void crosstie$setDisplayLists(TileEntity tile, Object[] glLists) {
-        try {
-            if (crosstie$tileGlListsField == null) {
+        if (!crosstie$tileGlListsFieldInitialized) {
+            crosstie$tileGlListsFieldInitialized = true;
+            try {
                 crosstie$tileGlListsField = tile.getClass().getDeclaredField("glLists");
                 crosstie$tileGlListsField.setAccessible(true);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$tileGlListsField = null;
             }
-            crosstie$tileGlListsField.set(tile, glLists);
-        } catch (ReflectiveOperationException ignored) {
+        }
+
+        if (crosstie$tileGlListsField != null) {
+            try {
+                crosstie$tileGlListsField.set(tile, glLists);
+            } catch (ReflectiveOperationException ignored) {
+            }
         }
     }
 
@@ -126,14 +158,22 @@ public abstract class RenderMiniatureOptifineLightMixin {
 
     @Unique
     private static void crosstie$deleteDisplayList(Object glList) {
-        try {
-            if (crosstie$deleteGlListMethod == null) {
+        if (!crosstie$deleteGlListMethodInitialized) {
+            crosstie$deleteGlListMethodInitialized = true;
+            try {
                 Class<?> glHelperClass = Class.forName("jp.ngt.ngtlib.renderer.GLHelper");
                 Class<?> displayListClass = Class.forName("jp.ngt.ngtlib.renderer.DisplayList");
                 crosstie$deleteGlListMethod = glHelperClass.getMethod("deleteGLList", displayListClass);
+            } catch (ReflectiveOperationException ignored) {
+                crosstie$deleteGlListMethod = null;
             }
-            crosstie$deleteGlListMethod.invoke(null, glList);
-        } catch (ReflectiveOperationException ignored) {
+        }
+
+        if (crosstie$deleteGlListMethod != null) {
+            try {
+                crosstie$deleteGlListMethod.invoke(null, glList);
+            } catch (ReflectiveOperationException ignored) {
+            }
         }
     }
 }
