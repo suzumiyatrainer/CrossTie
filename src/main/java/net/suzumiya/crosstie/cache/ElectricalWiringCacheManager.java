@@ -6,7 +6,7 @@ public class ElectricalWiringCacheManager {
     /**
      * お飾り判定キャッシュ。
      * キー: TileEntityElectricalWiring（originノード）
-     * 値: true = お飾り（DIRECT接続なし）、false = 実配線
+     * 値: true = お飾り（BlockConnector等の機能接続なし）、false = 機能配線
      * WeakHashMapを使用してGCによる自動削除を許可する。
      */
     private static final WeakHashMap<Object, Boolean> DECORATIVE_CACHE = new WeakHashMap<>();

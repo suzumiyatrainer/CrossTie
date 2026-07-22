@@ -273,6 +273,14 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         // RTM
         if (isModPresent("RTM")) {
+            mixins.add("rtm.DataEntryMixin");
+            mixins.add("rtm.DataMapMixin");
+            mixins.add("rtm.VehicleTrackerThrottleMixin");
+            mixins.add("rtm.CommonProxySoundRangeOptimizationMixin");
+            mixins.add("rtm.TileEntityInsulatorOptimizationMixin");
+            mixins.add("rtm.ElectricalWiringDecorativeMixin");
+            mixins.add("rtm.RenderElectricalWiringOptimizationMixin");
+            mixins.add("rtm.TileEntityEWConnectionMixin");
             mixins.add("rtm.EntityTrainBaseSpeedSyncMixin");
             mixins.add("rtm.EntityTrainBaseOptimizationMixin");
             mixins.add("rtm.MixinSoundAPIEntityTrainBase");
@@ -314,7 +322,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             // Angelica
             if (isModPresent("AngelicaGlsm")) {
                 mixins.add("angelica.AngelicaRenderGlobalDisplayListCrashMixin");
-                mixins.add("angelica.SimpleWorldRendererMixin");
+                // mixins.add("angelica.SimpleWorldRendererMixin"); // 現在のAngelica/Celeritasにはターゲットメソッドが存在しないため、クラッシュ回避のため無効化
             }
 
             // Bamboo

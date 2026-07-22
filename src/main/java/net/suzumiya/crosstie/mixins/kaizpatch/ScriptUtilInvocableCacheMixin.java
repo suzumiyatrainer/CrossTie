@@ -1,15 +1,18 @@
 package net.suzumiya.crosstie.mixins.kaizpatch;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import javax.script.Bindings;
 import javax.script.Invocable;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
+import javax.script.SimpleScriptContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Unique;
@@ -135,53 +138,131 @@ public abstract class ScriptUtilInvocableCacheMixin {
     }
 
     @Unique
-    private static final Map<String, CompiledScript> crosstie$compiledScriptCache =
-            Collections.synchronizedMap(new LinkedHashMap<String, CompiledScript>(128, 0.75f, true) {
-                @Override
-                protected boolean removeEldestEntry(Map.Entry<String, CompiledScript> eldest) {
-                    return size() > 256;
-                }
-            });
+    private static final ThreadLocal<ScriptEngine> crosstie$threadLocalEngine = new ThreadLocal<ScriptEngine>() {
+        @Override
+        protected ScriptEngine initialValue() {
+            return crosstie$createScriptEngine();
+        }
+    };
 
     /**
      * @author CrossTie
-     * @reason KaizPatchX 1.10.0-rc.2 targets jdk.nashorn directly, but some Java 8
-     *         runtimes ship without Nashorn. Optimized with cached CompiledScript
-     *         to prevent recurrent compilations without sharing stateful ScriptEngines.
+     * @reason Optimized script execution using ThreadLocal and ScriptContext Proxy
+     *         to prevent concurrent execution crashes, variables leakage, and ClassLoader overheads
+     *         while avoiding Nashorn's CompiledScript ReferenceError bugs.
      */
     @Overwrite
     public static ScriptEngine doScript(String script) {
-        ScriptEngine engine = crosstie$createScriptEngine();
+        ScriptEngine realEngine = crosstie$threadLocalEngine.get();
         if (script == null || script.trim().isEmpty()) {
-            return engine;
+            return realEngine;
         }
 
+        ScriptContext context = new SimpleScriptContext();
+        Bindings bindings = realEngine.createBindings();
+        context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
+
+        ScriptEngine proxyEngine = crosstie$createEngineProxy(realEngine, context);
+
         try {
-            String name = engine.getFactory().getEngineName();
+            String name = realEngine.getFactory().getEngineName();
             if (name != null && name.toLowerCase().contains("nashorn")) {
                 try {
-                    engine.eval("load(\"nashorn:mozilla_compat.js\");");
+                    proxyEngine.eval("load(\"nashorn:mozilla_compat.js\");");
                 } catch (ScriptException ignored) {
                 }
             }
-
-            CompiledScript compiled = crosstie$compiledScriptCache.get(script);
-            if (compiled == null) {
-                if (engine instanceof Compilable) {
-                    compiled = ((Compilable) engine).compile(script);
-                    crosstie$compiledScriptCache.put(script, compiled);
-                }
-            }
-
-            if (compiled != null) {
-                compiled.eval(engine.getContext());
-            } else {
-                engine.eval(script);
-            }
-            return engine;
+            proxyEngine.eval(script);
+            return proxyEngine;
         } catch (ScriptException e) {
             throw new RuntimeException("Script exec error\n" + script, e);
         }
+    }
+
+    @Unique
+    private static ScriptEngine crosstie$createEngineProxy(final ScriptEngine realEngine, final ScriptContext context) {
+        Class<?>[] interfaces = new Class<?>[] { ScriptEngine.class, Invocable.class };
+        return (ScriptEngine) Proxy.newProxyInstance(
+                ScriptUtilInvocableCacheMixin.class.getClassLoader(),
+                interfaces,
+                new InvocationHandler() {
+                    @Override
+                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                        String name = method.getName();
+
+                        if (method.getDeclaringClass() == Invocable.class) {
+                            if ("invokeFunction".equals(name)) {
+                                String funcName = (String) args[0];
+                                Object[] funcArgs = (Object[]) args[1];
+                                Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
+                                Object funcObj = bindings.get(funcName);
+                                if (funcObj == null) {
+                                    throw new NoSuchMethodException("No such function: " + funcName);
+                                }
+                                synchronized (realEngine) {
+                                    ScriptContext oldContext = realEngine.getContext();
+                                    try {
+                                        realEngine.setContext(context);
+                                        return ((Invocable) realEngine).invokeFunction(funcName, funcArgs);
+                                    } finally {
+                                        realEngine.setContext(oldContext);
+                                    }
+                                }
+                            }
+
+                            if ("getInterface".equals(name)) {
+                                throw new UnsupportedOperationException("getInterface is not supported on proxy");
+                            }
+                        }
+
+                        if ("eval".equals(name)) {
+                            if (args.length == 1 && args[0] instanceof String) {
+                                synchronized (realEngine) {
+                                    ScriptContext oldContext = realEngine.getContext();
+                                    try {
+                                        realEngine.setContext(context);
+                                        return realEngine.eval((String) args[0]);
+                                    } finally {
+                                        realEngine.setContext(oldContext);
+                                    }
+                                }
+                            }
+                        }
+
+                        if ("get".equals(name)) {
+                            return context.getBindings(ScriptContext.ENGINE_SCOPE).get(args[0]);
+                        }
+
+                        if ("put".equals(name)) {
+                            context.getBindings(ScriptContext.ENGINE_SCOPE).put((String) args[0], args[1]);
+                            return null;
+                        }
+
+                        if ("getBindings".equals(name)) {
+                            return context.getBindings(((Integer) args[0]).intValue());
+                        }
+
+                        if ("setBindings".equals(name)) {
+                            context.setBindings((Bindings) args[0], ((Integer) args[1]).intValue());
+                            return null;
+                        }
+
+                        if ("getContext".equals(name)) {
+                            return context;
+                        }
+
+                        if ("setContext".equals(name)) {
+                            throw new UnsupportedOperationException("setContext is not supported on proxy");
+                        }
+
+                        try {
+                            return method.invoke(realEngine, args);
+                        } catch (java.lang.reflect.InvocationTargetException e) {
+                            throw e.getCause();
+                        }
+                    }
+                }
+        );
     }
 
     /**
