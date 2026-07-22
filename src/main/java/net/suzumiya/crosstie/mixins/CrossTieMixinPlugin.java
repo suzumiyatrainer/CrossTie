@@ -351,6 +351,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.GuiSelectTexturePagingMixin");
                 mixins.add("rtm.RtmPartsMatrixPushMixin");
                 mixins.add("rtm.BasicVehiclePartsRendererMixin");
+                mixins.add("rtm.ItemWithModelNbtSyncGuardMixin");
 
                 // GL_SELECT (マウスピッキング) 回避パッチ
                 //
@@ -411,7 +412,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.DataMapMixin");
             mixins.add("rtm.VehicleTrackerEntryMixin");
             mixins.add("rtm.TileEntityEWThrottleMixin");
-            mixins.add("rtm.ItemWithModelNbtSyncGuardMixin");
         }
 
         if (isModPresent("NGTLib")) {

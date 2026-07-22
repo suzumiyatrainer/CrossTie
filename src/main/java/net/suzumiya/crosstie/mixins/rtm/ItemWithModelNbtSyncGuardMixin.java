@@ -1,5 +1,7 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import jp.ngt.rtm.item.ItemWithModel;
 import jp.ngt.rtm.modelpack.state.ResourceState;
 import net.minecraft.entity.player.EntityPlayer;
@@ -27,6 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *       ピックブロック中のパケット自動送信をガードする。</li>
  * </ol>
  */
+@SideOnly(Side.CLIENT)
 @Mixin(value = ItemWithModel.class, remap = false)
 public abstract class ItemWithModelNbtSyncGuardMixin {
 
