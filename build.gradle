@@ -191,7 +191,7 @@ dependencies {
 
     // IFTTTUtilMixin用: ATSAssistModが実行時に提供するJacksonのDatabindを
     // コンパイル時のみ参照する(CrossTie本体には同梱しない)
-    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.18.9'
+    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
 }
 
 tasks.withType(JavaCompile) {
