@@ -411,6 +411,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.DataMapMixin");
             mixins.add("rtm.VehicleTrackerEntryMixin");
             mixins.add("rtm.TileEntityEWThrottleMixin");
+            mixins.add("rtm.ItemWithModelNbtSyncGuardMixin");
+        }
+
+        if (isModPresent("NGTLib")) {
+            mixins.add("ngtlib.PacketNBTPlayerItemGuardMixin");
         }
 
         // WorldEdit
