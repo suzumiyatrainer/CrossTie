@@ -34,7 +34,7 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 | **Gradle** | `9.6.1` |
 | **필수 모드** | `UniMixins 0.3.1+` |
 | **빌드 시스템** | RetroFuturaGradle 2.0.2 |
-| **최종 확인** | `2026-07-16` |
+| **최종 확인** | `2026-07-22` |
 
 ### 🔍 내부 구조 인덱스
 * **Mixin 제어**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -64,26 +64,26 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 
 ## ⚡ 이 모드의 기능
 
-CrossTie는 RTM 관련 모드군과 성능 최적화 모드군 사이에서 발생하는 다음 **4가지 핵심 항목**을 통합하여 해결하고 제공합니다.
+CrossTie는 RTM 관련 모드군(KaizPatchX)과 성능 최적화 모드군 사이에서 발생하는 다음 **4가지 핵심 항목**을 통합하여 해결하고 제공합니다.
 
 1. **🏃 FPS 최적화**
-   * LargeRail 렌더링 최적화, 스크립트 실행 최적화, 디스플레이 리스트 최적화 등.
-   * 자세히: [`doc/RTM・NGTLib関連_パフォーマンス最適化.md`](./doc/RTM・NGTLib関連_パフォーマンス最適化.md)
+   * LargeRail 렌더링 최적화, KaizPatch / NGTLib의 Nashorn 스크립트 실행 엔진 초고속 캐싱, 표지판 GUI 가상 스크롤화, 디스플레이 리스트 최적화 등.
+   * 자세히: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 2. **⏳ TPS / 서버 부하 최적화**
-   * Train Entity 업데이트 빈도 최적화, 네트워크 부하 감소, 객체 풀 최적화 등.
-   * 자세히: [`doc/RTM・NGTLib関連_パフォーマンス最適化.md`](./doc/RTM・NGTLib関連_パフォーマンス最適化.md)
+   * 애자 및 가선주의 불필요한 Tick 업데이트(`updateEntity`) 완전 스킵, Train Entity 업데이트 빈도 최적화, 네트워크/음향 패킷 전송 수신 거리 고속 판정, MCTE 대규모 블록 교체 Diff 판정, GTNHLib 객체 풀 스레드 안전화 등.
+   * 자세히: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 호환성 및 렌더링 버그 수정**
-   * Angelica 및 OptiFine 환경에서의 RTM 렌더링 버그 수정, 기타 주변 모드 충돌 수정.
+   * Angelica 및 OptiFine 환경에서의 RTM/MCTE 렌더링 버그 수정(동적 광원·1.12.2 매니페스트 마커 현대화), 차량 파츠 호버 데이터 혼선 방지, 대나무 모드 온천수에 셰이더 수면 효과 적용, 기타 주변 모드 충돌 수정.
    * 자세히:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)
-     * [`doc/RTM・NGTLib関連_バグ修正.md`](./doc/RTM・NGTLib関連_バグ修正.md)
+     * [`doc/KaizPatchX関連_バグ修正.md`](./doc/KaizPatchX関連_バグ修正.md)
      * [`doc/その他周辺Mod互換性修正.md`](./doc/その他周辺Mod互換性修正.md)
 
 4. **✨ 새로운 기능 추가**
-   * 재시작 없는 모델 팩 재로드 기능, 가선 삭제 기능, 차내 방송용 사운드 API 추가 등.
+   * 재시작 없는 모델 팩 재로드 기능, 2점간 와이어 삭제 기능, 차내 방송용 사운드 API 추가 등.
    * 자세히: [`doc/新規機能の使い方/`](./doc/新規機能の使い方/)
 
 ---

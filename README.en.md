@@ -34,7 +34,7 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | **Gradle** | `9.6.1` |
 | **Required Mod** | `UniMixins 0.3.1+` |
 | **Build System** | RetroFuturaGradle 2.0.2 |
-| **Last Checked** | `2026-07-16` |
+| **Last Checked** | `2026-07-22` |
 
 ### 🔍 Internal Structure Index
 * **Mixin Control**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -64,26 +64,26 @@ Recommended mod versions for a smooth experience.
 
 ## ⚡ What Does This Mod Do?
 
-CrossTie collectively solves and provides the following **4 core features** regarding issues between RTM-related mods and performance mods.
+CrossTie collectively solves and provides the following **4 core features** regarding issues between RTM-related mods (KaizPatchX) and performance mods.
 
 1. **🏃 FPS Optimization**
-   * LargeRail rendering optimization, script execution optimization, display list optimization, etc.
-   * Details: [`doc/RTM・NGTLib関連_パフォーマンス最適化.md`](./doc/RTM・NGTLib関連_パフォーマンス最適化.md)
+   * LargeRail rendering optimization, ultra-fast Nashorn script engine caching for KaizPatch / NGTLib, signboard GUI virtual scrolling, display list optimization, etc.
+   * Details: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 2. **⏳ TPS / Server Load Optimization**
-   * Train Entity update frequency optimization, network load reduction, object pool optimization, etc.
-   * Details: [`doc/RTM・NGTLib関連_パフォーマンス最適化.md`](./doc/RTM・NGTLib関連_パフォーマンス最適化.md)
+   * Complete skip of unnecessary TileEntity tick updates (`updateEntity`) for insulators and poles, Train Entity update frequency optimization, fast hearing distance checks for network/sound packets, MCTE large-scale block replacement Diff checks, GTNHLib object pool thread-safety, etc.
+   * Details: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 Compatibility & Rendering Bug Fixes**
-   * RTM rendering bug fixes under Angelica or OptiFine, and compatibility fixes for other surrounding mods.
+   * RTM/MCTE rendering bug fixes under Angelica or OptiFine (dynamic lighting, 1.12.2 manifest marker modernization), vehicle part hover data corruption guards, shader water effects for Bamboo Spa Water, and compatibility fixes for other surrounding mods.
    * Details:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)
-     * [`doc/RTM・NGTLib関連_バグ修正.md`](./doc/RTM・NGTLib関連_バグ修正.md)
+     * [`doc/KaizPatchX関連_バグ修正.md`](./doc/KaizPatchX関連_バグ修正.md)
      * [`doc/その他周辺Mod互換性修正.md`](./doc/その他周辺Mod互換性修正.md)
 
 4. **✨ New Features**
-   * Hot-reload of model packs without restart, wire removal feature, and sound API for in-car announcements, etc.
+   * Hot-reload of model packs without restart, 2-point wire removal feature, and sound API for in-car announcements, etc.
    * Details: [`doc/新規機能の使い方/`](./doc/新規機能の使い方/)
 
 ---

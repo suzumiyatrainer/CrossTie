@@ -34,7 +34,7 @@ CrossTie 將橫跨多個模組（例如 RTM / NGTLib / MCTE (KaizPatchX)、Angel
 | **Gradle** | `9.6.1` |
 | **必備模組** | `UniMixins 0.3.1+` |
 | **建置系統** | RetroFuturaGradle 2.0.2 |
-| **最後確認** | `2026-07-16` |
+| **最後確認** | `2026-07-22` |
 
 ### 🔍 內部結構索引
 * **Mixin 控制**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -64,26 +64,26 @@ CrossTie 將橫跨多個模組（例如 RTM / NGTLib / MCTE (KaizPatchX)、Angel
 
 ## ⚡ 本模組的功能
 
-CrossTie 統整解決了 RTM 相關模組與效能最佳化模組之間發生的以下 **4 項核心項目**。
+CrossTie 統整解決了 RTM 相關模組（KaizPatchX）與效能最佳化模組之間發生的以下 **4 項核心項目**。
 
 1. **🏃 FPS 最佳化**
-   * LargeRail 渲染最佳化、腳本執行最佳化、顯示列表（Display List）最佳化等。
-   * 詳情: [`doc/RTM・NGTLib関連_パフォーマンス最適化.md`](./doc/RTM・NGTLib関連_パフォーマンス最適化.md)
+   * LargeRail 渲染最佳化、KaizPatch / NGTLib 的 Nashorn 腳本執行引擎超高速快取、站牌 GUI 虛擬滾動化、顯示列表（Display List）最佳化等。
+   * 詳情: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 2. **⏳ TPS / 伺服器負載最佳化**
-   * 列車實體更新頻率最佳化、網路負載降低、物件池最佳化等。
-   * 詳情: [`doc/RTM・NGTLib関連_パフォーマンス最適化.md`](./doc/RTM・NGTLib関連_パフォーマンス最適化.md)
+   * 完全跳過絕緣子與電線桿不必要的 Tick 更新（`updateEntity`）、列車實體更新頻率最佳化、網路/音效封包傳送聽覺距離高速判定、MCTE 大規模方塊替換 Diff 判定、GTNHLib 物件池執行緒安全化等。
+   * 詳情: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 相容性與渲染錯誤修復**
-   * 修復在 Angelica 或 OptiFine 環境下的 RTM 渲染錯誤，以及其他周邊模組的衝突。
+   * 修復在 Angelica 或 OptiFine 環境下的 RTM/MCTE 渲染錯誤（動態光源、1.12.2 Manifest 標記現代化）、列車部件懸停資料串擾防護、竹 Mod 溫泉水應用光影水面效果、以及其他周邊模組的衝突。
    * 詳情:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)
-     * [`doc/RTM・NGTLib関連_バグ修正.md`](./doc/RTM・NGTLib関連_バグ修正.md)
+     * [`doc/KaizPatchX関連_バグ修正.md`](./doc/KaizPatchX関連_バグ修正.md)
      * [`doc/その他周辺Mod互換性修正.md`](./doc/その他周辺Mod互換性修正.md)
 
 4. **✨ 新功能新增**
-   * 免重啟重新載入模型包功能、電車線刪除功能、車廂內廣播用音效 API 等。
+   * 免重啟重新載入模型包功能、兩點間電線刪除功能、車廂內廣播用音效 API 等。
    * 詳情: [`doc/新規機能の使い方/`](./doc/新規機能の使い方/)
 
 ---

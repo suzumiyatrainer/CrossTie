@@ -34,7 +34,7 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 | **Gradle** | `9.6.1` |
 | **必須Mod** | `UniMixins 0.3.1+` |
 | **ビルドシステム** | RetroFuturaGradle 2.0.2 |
-| **最終確認** | `2026-07-16` |
+| **最終確認** | `2026-07-22` |
 
 ### 🔍 内部構造インデックス
 * **Mixin 制御**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -64,26 +64,26 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 
 ## ⚡ 何をする Mod か
 
-CrossTie は、RTM 関連の Mod 群とパフォーマンス系 Mod 群の間で発生する、以下の **4つのコア項目**をまとめて解決・提供します。
+CrossTie は、RTM 関連の Mod 群（KaizPatchX）とパフォーマンス系 Mod 群の間で発生する、以下の **4つのコア項目**をまとめて解決・提供します。
 
 1. **🏃 FPS 最適化**
-   * LargeRail の描画最適化、スクリプト実行最適化、ディスプレイリスト最適化など。
-   * 詳細: [`doc/RTM・NGTLib関連_パフォーマンス最適化.md`](./doc/RTM・NGTLib関連_パフォーマンス最適化.md)
+   * LargeRail の描画最適化、KaizPatch / NGTLib の Nashorn スクリプト実行エンジン超高速キャッシュ、サインボード GUI 仮想スクロール化、ディスプレイリスト最適化など。
+   * 詳細: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 2. **⏳ TPS / サーバー負荷最適化**
-   * Train Entity の更新頻度最適化、ネットワーク負荷低減、オブジェクトプール最適化など。
-   * 詳細: [`doc/RTM・NGTLib関連_パフォーマンス最適化.md`](./doc/RTM・NGTLib関連_パフォーマンス最適化.md)
+   * 碍子・架線柱の不要な Tick 更新（`updateEntity`）完全スキップ、Train Entity の更新頻度最適化、ネットワーク/音響パケット送信の聴取距離高速判定、MCTE 大規模ブロック置換の Diff 判定、GTNHLib オブジェクトプールスレッドセーフ化など。
+   * 詳細: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 互換性・描画バグ修正**
-   * Angelica や OptiFine 環境下での RTM 描画バグ修正、その他周辺Modの競合修正。
+   * Angelica や OptiFine 環境下での RTM/MCTE 描画バグ修正（動的光源・1.12.2マニフェストマーカー現代化）、車両パーツホバー混線防止、竹Mod温泉水へのシェーダー水面効果適用、その他周辺Modの競合修正。
    * 詳細:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)
-     * [`doc/RTM・NGTLib関連_バグ修正.md`](./doc/RTM・NGTLib関連_バグ修正.md)
+     * [`doc/KaizPatchX関連_バグ修正.md`](./doc/KaizPatchX関連_バグ修正.md)
      * [`doc/その他周辺Mod互換性修正.md`](./doc/その他周辺Mod互換性修正.md)
 
 4. **✨ 新機能の追加**
-   * 再起動不要のモデルパック再読み込み機能、架線削除機能、車内放送用サウンドAPIの追加など。
+   * 再起動不要のモデルパック再読み込み機能、2点間ワイヤ削除機能、車内放送用サウンドAPIの追加など。
    * 詳細: [`doc/新規機能の使い方/`](./doc/新規機能の使い方/)
 
 ---
