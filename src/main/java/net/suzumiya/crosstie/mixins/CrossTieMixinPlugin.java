@@ -189,8 +189,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             } else if (mixinClassName.endsWith(".EntityVehicleBaseModelSetGuardMixin")
                     || mixinClassName.endsWith(".RenderVehicleBaseContextMixin")
                     || mixinClassName.endsWith(".PartsRendererCheckMouseActionGuardMixin")
-                    || mixinClassName.endsWith(".PartsRendererPickPassGuardMixin")) {
-                // ホバー時モデルデータ混線防止: クライアントかつRTM存在時のみ適用
+                    || mixinClassName.endsWith(".PartsRendererPickPassGuardMixin")
+                    || mixinClassName.endsWith(".MixinSoundAPIEntityTrainBase")) {
+                // クライアント専用パッチ/API: クライアントかつRTM存在時のみ適用
                 shouldApply = isClient && hasRtm;
                 debugReason = "isClient=" + isClient + ", RTM=" + hasRtm;
             } else {
@@ -283,7 +284,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.TileEntityEWConnectionMixin");
             mixins.add("rtm.EntityTrainBaseSpeedSyncMixin");
             mixins.add("rtm.EntityTrainBaseOptimizationMixin");
-            mixins.add("rtm.MixinSoundAPIEntityTrainBase");
             mixins.add("rtm.TileEntityPoleOptimizationMixin");
             mixins.add("rtm.TileEntityEWUpdateOptimizationMixin");
         }
@@ -353,6 +353,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.RtmPartsMatrixPushMixin");
                 mixins.add("rtm.BasicVehiclePartsRendererMixin");
                 mixins.add("rtm.ItemWithModelNbtSyncGuardMixin");
+                mixins.add("rtm.MixinSoundAPIEntityTrainBase");
 
                 // GL_SELECT (マウスピッキング) 回避パッチ
                 //

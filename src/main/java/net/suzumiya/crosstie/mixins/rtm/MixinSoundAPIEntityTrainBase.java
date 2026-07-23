@@ -1,5 +1,6 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import jp.ngt.rtm.entity.train.EntityTrainBase;
 import net.suzumiya.crosstie.api.sound.SoundManager;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,21 +21,21 @@ public abstract class MixinSoundAPIEntityTrainBase {
 
     @Inject(method = "setNotch", at = @At("RETURN"))
     private void crosstie$onSetNotch(int par1, CallbackInfoReturnable<Boolean> cir) {
-        if (cir.getReturnValue()) {
+        if (FMLCommonHandler.instance().getSide().isClient() && cir.getReturnValue()) {
             SoundManager.getInstance().onNotchChanged((EntityTrainBase)(Object)this, this.getNotch());
         }
     }
 
     @Inject(method = "setByteToDataWatcher", at = @At("RETURN"))
     private void crosstie$onStateChanged(int id, byte data, CallbackInfoReturnable<Byte> cir) {
-        if (id == 4) { // TrainStateType.State_Door.id
+        if (FMLCommonHandler.instance().getSide().isClient() && id == 4) { // TrainStateType.State_Door.id
             SoundManager.getInstance().onDoorStateChanged((EntityTrainBase)(Object)this, data);
         }
     }
 
     @Inject(method = "setSpeed_NoSync", at = @At("HEAD"))
     private void crosstie$onSpeedUpdate(float par1, CallbackInfo ci) {
-        if (this.crosstie$lastSpeed != par1) {
+        if (FMLCommonHandler.instance().getSide().isClient() && this.crosstie$lastSpeed != par1) {
             SoundManager.getInstance().onSpeedChanged((EntityTrainBase)(Object)this, par1);
             this.crosstie$lastSpeed = par1;
         }
