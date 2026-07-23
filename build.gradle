@@ -160,7 +160,7 @@ dependencies {
     implementation 'org.ow2.asm:asm-util:9.10.1'
 
     // fastutil: Needed for ObjectArrayList type in gtnhlib mixin
-    compileOnly('it.unimi.dsi:fastutil:8.5.18')
+    compileOnly('it.unimi.dsi:fastutil:8.5.19')
 
     // RTM compatibility target (KaizPatchX), resolved from JitPack — see rtmCoordinate
     // in gradle.properties. Public, so no private Maven or libs/ jar is required.
@@ -191,7 +191,7 @@ dependencies {
 
     // IFTTTUtilMixin用: ATSAssistModが実行時に提供するJacksonのDatabindを
     // コンパイル時のみ参照する(CrossTie本体には同梱しない)
-    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.18.9'
+    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
 }
 
 tasks.withType(JavaCompile) {
