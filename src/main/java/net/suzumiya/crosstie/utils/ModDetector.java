@@ -61,6 +61,12 @@ public class ModDetector {
 
         // CustomNPC+
         MOD_PATTERNS.put("CustomNpc", new String[] { "customnpc" });
+
+        // Bamboo
+        MOD_PATTERNS.put("Bamboo", new String[] { "bamboo" });
+
+        // WorldEdit
+        MOD_PATTERNS.put("WorldEdit", new String[] { "worldedit" });
     }
 
     private final File mcDataDir;
@@ -154,7 +160,18 @@ public class ModDetector {
     }
 
     /**
-     * Collect possible mod directories from various launcher layouts.
+     * Check if currently running in a server environment.
+     */
+    private static boolean isServerEnvironment() {
+        try {
+            return cpw.mods.fml.relauncher.FMLLaunchHandler.side() == cpw.mods.fml.relauncher.Side.SERVER;
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    /**
+     * Collect possible mod and plugin directories from various launcher layouts.
      */
     private File[] collectModDirectories() {
         // The original implementation assumed mcDataDir was always non‑null, which
@@ -164,6 +181,11 @@ public class ModDetector {
         File modsDir = null;
         File modsVersionDir = null;
         File parentModsDir = null;
+
+        File pluginsDir = null;
+        File parentPluginsDir = null;
+
+        boolean isServer = isServerEnvironment();
 
         if (mcDataDir != null) {
             modsDir = new File(mcDataDir, "mods");
@@ -175,9 +197,17 @@ public class ModDetector {
             parentModsDir = mcDataDir.getParentFile() != null
                     ? new File(mcDataDir.getParentFile(), mcDataDir.getName() + "/mods")
                     : null;
+
+            if (isServer) {
+                pluginsDir = new File(mcDataDir, "plugins");
+                parentPluginsDir = mcDataDir.getParentFile() != null
+                        ? new File(mcDataDir.getParentFile(), mcDataDir.getName() + "/plugins")
+                        : null;
+            }
         }
 
         File jarModsDir = null;
+        File jarPluginsDir = null;
         try {
             java.net.URL location = ModDetector.class.getProtectionDomain().getCodeSource().getLocation();
             if (location != null) {
@@ -185,6 +215,12 @@ public class ModDetector {
                 if (file != null) {
                     if (file.isFile() && (file.getName().endsWith(".jar") || file.getName().endsWith(".zip"))) {
                         jarModsDir = file.getParentFile();
+                        if (isServer && jarModsDir != null && jarModsDir.getParentFile() != null) {
+                            File candidatePlugins = new File(jarModsDir.getParentFile(), "plugins");
+                            if (candidatePlugins.isDirectory()) {
+                                jarPluginsDir = candidatePlugins;
+                            }
+                        }
                     } else if (file.isDirectory()) {
                         // Dev environment fallback, e.g. build/classes/java/main/
                         File projectDir = file.getParentFile().getParentFile().getParentFile().getParentFile();
@@ -192,6 +228,12 @@ public class ModDetector {
                             File runMods = new File(projectDir, "run/mods");
                             if (runMods.isDirectory()) {
                                 jarModsDir = runMods;
+                            }
+                            if (isServer) {
+                                File runPlugins = new File(projectDir, "run/plugins");
+                                if (runPlugins.isDirectory()) {
+                                    jarPluginsDir = runPlugins;
+                                }
                             }
                         }
                     }
@@ -201,7 +243,7 @@ public class ModDetector {
             // jar location resolution failed; rely on mcDataDir fallback
         }
 
-        return new File[] { modsDir, modsVersionDir, parentModsDir, jarModsDir };
+        return new File[] { modsDir, modsVersionDir, parentModsDir, jarModsDir, pluginsDir, parentPluginsDir, jarPluginsDir };
     }
 
     /**

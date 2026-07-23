@@ -19,8 +19,6 @@
         "angelica.IdMapOrderFixMixin",
         "angelica.AngelicaBlockMaterialMappingCaseFixMixin",
         "angelica.AngelicaItemMaterialHelperCaseFixMixin",
-        "bamboo.BambooRenderCampfireMixin",
-        "bamboo.MixinBlockSpaWater",
         "optifine.WireColorShaderFixMixin",
         "rtm.EntityVehicleBaseModelSetGuardMixin",
         "rtm.RenderVehicleBaseContextMixin",

@@ -327,8 +327,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
             // Bamboo
             if (isModPresent("Bamboo")) {
-                mixins.add("bamboo.BambooRenderCampfireMixin");
-                mixins.add("bamboo.MixinBlockSpaWater");
+                // Bamboo関連のMixinは未完成のため一旦無効化
+                // mixins.add("bamboo.BambooRenderCampfireMixin");
+                // mixins.add("bamboo.MixinBlockSpaWater");
             }
 
             // GTNHLib client icons

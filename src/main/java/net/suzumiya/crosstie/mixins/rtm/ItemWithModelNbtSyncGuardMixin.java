@@ -15,19 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * CrossTie: ItemWithModel におけるピックブロック時の無用なNBTパケット送信と selectedPlayer 残存防止 Mixin
- *
- * <h3>問題の背景</h3>
- * <p>ItemWithModel（シングルトン Item）は selectedPlayer フィールドを持ち、モデル選択GUIを開いた際にセットされる。
- * しかしGUI閉鎖後もこの参照が null にクリアされないため、getPickBlock() 等で setModelState() が呼ばれた際にも
- * selectedPlayer != null と判定され、ピックブロック中に意図しない PacketNBT がサーバーへ送信されていた。</p>
- *
- * <h3>修正内容</h3>
- * <ol>
- *   <li>GUI閉鎖時 (closeGui) に selectedPlayer および selectedItem を null にクリアする。</li>
- *   <li>setModelState 実行時、closeGui 経由以外の呼び出し（getPickBlock等）では一時的に selectedPlayer を抑止し、
- *       ピックブロック中のパケット自動送信をガードする。</li>
- * </ol>
+ * CrossTie: ItemWithModel におけるモデル選択時の NPE ガードおよびピックブロック時の無用なNBTパケット送信防止 Mixin
  */
 @SideOnly(Side.CLIENT)
 @Mixin(value = ItemWithModel.class, remap = false)
@@ -45,6 +33,26 @@ public abstract class ItemWithModelNbtSyncGuardMixin {
     @Unique
     private EntityPlayer crosstie$savedPlayer = null;
 
+    /**
+     * itemStack が null で getModelState() が呼ばれた際の NPE 完全防止ガード
+     */
+    @Inject(
+        method = "getModelState(Lnet/minecraft/item/ItemStack;)Ljp/ngt/rtm/modelpack/state/ResourceState;",
+        at = @At("HEAD"),
+        cancellable = true,
+        remap = false
+    )
+    private void crosstie$guardNullItemStack(ItemStack itemStack, CallbackInfoReturnable<ResourceState> cir) {
+        if (itemStack == null) {
+            ItemWithModel self = (ItemWithModel) (Object) this;
+            if (this.selectedItem != null && this.selectedItem != itemStack) {
+                cir.setReturnValue(self.getModelState(this.selectedItem));
+            } else {
+                cir.setReturnValue(new ResourceState(self));
+            }
+        }
+    }
+
     @Inject(
         method = "closeGui",
         at = @At("HEAD"),
@@ -61,8 +69,6 @@ public abstract class ItemWithModelNbtSyncGuardMixin {
     )
     private void crosstie$onCloseGuiEnd(String par1, ResourceState par2, CallbackInfoReturnable<Boolean> cir) {
         this.crosstie$isExplicitGuiClose = false;
-        this.selectedPlayer = null;
-        this.selectedItem = null;
     }
 
     @Inject(
