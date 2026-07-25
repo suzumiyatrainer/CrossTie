@@ -1,59 +1,30 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import jp.ngt.rtm.modelpack.state.DataEntry;
-import jp.ngt.rtm.modelpack.state.DataFormatter;
 import jp.ngt.rtm.modelpack.state.DataMap;
-import jp.ngt.ngtlib.io.NGTLog;
-import jp.ngt.ngtlib.util.NGTUtil;
-import net.minecraft.item.Item;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Map;
-
-@SuppressWarnings("rawtypes")
+/**
+ * [DISABLED - KaizPatchX 1.10.1 非互換]
+ *
+ * <p>KaizPatchX 1.10.1 において DataMap は Java から Kotlin へ書き直された。
+ * これにより以下の破壊的変更が発生し、旧実装はクラッシュを引き起こす：
+ *
+ * <ul>
+ *   <li>{@code sendPacket(String, DataEntry, boolean)} → {@code private fun sendPacket(DataKey, DataEntry<*>, Boolean)}
+ *       に変更されたため {@code @Shadow} で取得不可能。</li>
+ *   <li>{@code map} フィールドのキー型が {@code String} から {@code DataKey}（非公開内部クラス）に変更。</li>
+ *   <li>{@code set(String, DataEntry, int)} の公開シグネチャが
+ *       {@code setEntry(String, DataEntry<*>, int)} に変更。</li>
+ * </ul>
+ *
+ * <p>1.10.1 では DataMap 自体がすでに差分チェックを行うため（{@code set()} 内で
+ * 旧値と比較して変更なしの場合はパケット送信しない実装になっている）、
+ * このMixinが担っていた最適化の多くはターゲット側で吸収されている。
+ *
+ * <p>TODO: 1.10.1 の {@code DataMap.setEntry} に対して必要な追加最適化があれば
+ * 新しい Mixin として実装する。
+ */
 @Mixin(value = DataMap.class, remap = false)
 public abstract class DataMapMixin {
-
-    @Shadow
-    private Map<String, DataEntry> map;
-
-    @Shadow
-    private DataFormatter dataFormatter;
-
-    @Shadow
-    private Object entity;
-
-    @Shadow
-    protected abstract void sendPacket(String key, DataEntry value, boolean toClient);
-
-    /**
-     * @author Antigravity
-     * @reason パケット送信を初回および値が変更された時のみに制限する
-     */
-    @Inject(method = "set(Ljava/lang/String;Ljp/ngt/rtm/modelpack/state/DataEntry;I)V", at = @At("HEAD"), cancellable = true)
-    private void onSet(String key, DataEntry value, int flag, CallbackInfo ci) {
-        if (!this.dataFormatter.check(key, value)) {
-            NGTLog.debug("Invalid data : %s=%s", key, value.toString());
-            ci.cancel();
-            return;
-        }
-
-        DataEntry oldValue = this.map.get(key);
-        boolean isChanged = (oldValue == null || !oldValue.equals(value));
-
-        boolean sync = ((flag & DataMap.SYNC_FLAG) != 0);
-        boolean onServerSide = NGTUtil.isServer();
-        if (onServerSide || !sync || (this.entity == null) || this.entity instanceof Item) {
-            this.map.put(key, value);
-        }
-
-        if (sync && isChanged) {
-            this.sendPacket(key, value, onServerSide);
-        }
-        ci.cancel();
-    }
+    // 現在は空スタブ。1.10.1 API に合わせた再実装が必要。
 }
