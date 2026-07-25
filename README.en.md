@@ -34,7 +34,7 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | **Gradle** | `9.6.1` |
 | **Required Mod** | `UniMixins 0.3.1+` |
 | **Build System** | RetroFuturaGradle 2.0.2 |
-| **Last Checked** | `2026-07-22` |
+| **Last Checked** | `2026-07-25` |
 
 ### 🔍 Internal Structure Index
 * **Mixin Control**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
