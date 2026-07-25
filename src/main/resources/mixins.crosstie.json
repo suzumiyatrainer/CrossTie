@@ -9,8 +9,6 @@
     "mixins": [
         "angelica.AngelicaRebuildSyncRTMRailMixin",
         "customnpc.ScriptControllerInitMixin",
-        "rtm.DataEntryMixin",
-        "rtm.DataMapMixin",
         "rtm.VehicleTrackerEntryMixin"
     ],
     "client": [

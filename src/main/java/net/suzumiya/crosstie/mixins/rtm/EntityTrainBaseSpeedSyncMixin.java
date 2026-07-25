@@ -51,7 +51,7 @@ public abstract class EntityTrainBaseSpeedSyncMixin {
         }
     }
 
-    @Inject(method = "setSpeed_NoSync", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "setSpeed_NoSync", at = @At("HEAD"), cancellable = true, require = 0)
     private void crosstie$throttleSpeedSync(float newSpeed, CallbackInfo ci) {
         if (!CrossTieConfig.trainSpeedSyncEnabled) {
             return;

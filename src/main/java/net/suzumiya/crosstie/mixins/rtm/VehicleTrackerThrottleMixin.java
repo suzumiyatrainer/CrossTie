@@ -31,6 +31,22 @@ public abstract class VehicleTrackerThrottleMixin {
 
     /**
      * 送信ループの間引き条件を書き換え：updateFrequency に関わらず THROTTLED_UPDATE_FREQUENCY で送信。
+     *
+     * <h3>VehicleTrackerEntryMixin との複合動作について</h3>
+     * <p>
+     * {@code sendLocationToAllClients} は CrossTie 内で 2 つの Mixin が作用する：
+     * <ol>
+     *   <li><b>このMixin（HEAD/cancel）：</b>
+     *       {@code ticks % 3 != 0} の場合はメソッド全体をキャンセルし、
+     *       {@code VehicleTrackerEntryMixin} の {@code @Redirect} にも到達しない。</li>
+     *   <li><b>VehicleTrackerEntryMixin（@Redirect）：</b>
+     *       通過した場合（3tick周期）に {@code sendToAll} を個別送信へ置き換え。
+     *       追跡中プレイヤーには毎回 {@code sendTo}、非追跡プレイヤーには
+     *       {@code ticks % 10 == 0} のみ送信する。</li>
+     * </ol>
+     * この結果、<b>非追跡プレイヤーへの位置パケット送信は実質 3 × 10 = 30tick（1.5秒）に1回</b>となる。
+     * 追跡中プレイヤーへは 3tick に1回。これは意図した設計である。
+     * </p>
      */
     @Inject(method = "sendLocationToAllClients", at = @At("HEAD"), cancellable = true)
     private void crosstie$throttleSend(java.util.List<?> par1, CallbackInfo ci) {

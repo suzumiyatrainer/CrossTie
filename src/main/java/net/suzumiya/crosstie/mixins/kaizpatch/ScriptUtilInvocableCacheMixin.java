@@ -3,9 +3,6 @@ package net.suzumiya.crosstie.mixins.kaizpatch;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import javax.script.Bindings;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
@@ -16,7 +13,6 @@ import javax.script.SimpleScriptContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Unique;
-
 
 @Mixin(targets = "jp.ngt.ngtlib.io.ScriptUtil", remap = false)
 public abstract class ScriptUtilInvocableCacheMixin {
@@ -30,16 +26,11 @@ public abstract class ScriptUtilInvocableCacheMixin {
             return crosstie$engineFactory;
         }
 
-        ClassLoader[] loaders = {
-                Thread.currentThread().getContextClassLoader(),
-                ScriptUtilInvocableCacheMixin.class.getClassLoader(),
-                ClassLoader.getSystemClassLoader()
-        };
+        ClassLoader[] loaders = { Thread.currentThread().getContextClassLoader(),
+                ScriptUtilInvocableCacheMixin.class.getClassLoader(), ClassLoader.getSystemClassLoader() };
 
-        String[] candidates = {
-                "jdk.nashorn.api.scripting.NashornScriptEngineFactory",
-                "org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory"
-        };
+        String[] candidates = { "jdk.nashorn.api.scripting.NashornScriptEngineFactory",
+                "org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory" };
         for (ClassLoader loader : loaders) {
             if (loader == null) {
                 continue;
@@ -66,7 +57,8 @@ public abstract class ScriptUtilInvocableCacheMixin {
             for (String candidate : candidates) {
                 try {
                     Class<?> factoryClass = Class.forName(candidate, true, loader);
-                    javax.script.ScriptEngineFactory factory = (javax.script.ScriptEngineFactory) factoryClass.getDeclaredConstructor().newInstance();
+                    javax.script.ScriptEngineFactory factory = (javax.script.ScriptEngineFactory) factoryClass
+                            .getDeclaredConstructor().newInstance();
                     if ("DummyNashorn (Blocked by CrossTie)".equals(factory.getEngineName())) {
                         continue;
                     }
@@ -98,11 +90,8 @@ public abstract class ScriptUtilInvocableCacheMixin {
             }
         }
 
-        ClassLoader[] loaders = {
-                Thread.currentThread().getContextClassLoader(),
-                ScriptUtilInvocableCacheMixin.class.getClassLoader(),
-                ClassLoader.getSystemClassLoader()
-        };
+        ClassLoader[] loaders = { Thread.currentThread().getContextClassLoader(),
+                ScriptUtilInvocableCacheMixin.class.getClassLoader(), ClassLoader.getSystemClassLoader() };
 
         String[] names = { "nashorn", "JavaScript", "javascript", "js", "ECMAScript", "ecmascript", "rhino" };
         for (ClassLoader classLoader : loaders) {
@@ -148,8 +137,9 @@ public abstract class ScriptUtilInvocableCacheMixin {
     /**
      * @author CrossTie
      * @reason Optimized script execution using ThreadLocal and ScriptContext Proxy
-     *         to prevent concurrent execution crashes, variables leakage, and ClassLoader overheads
-     *         while avoiding Nashorn's CompiledScript ReferenceError bugs.
+     *         to prevent concurrent execution crashes, variables leakage, and
+     *         ClassLoader overheads while avoiding Nashorn's CompiledScript
+     *         ReferenceError bugs.
      */
     @Overwrite
     public static ScriptEngine doScript(String script) {
@@ -182,9 +172,7 @@ public abstract class ScriptUtilInvocableCacheMixin {
     @Unique
     private static ScriptEngine crosstie$createEngineProxy(final ScriptEngine realEngine, final ScriptContext context) {
         Class<?>[] interfaces = new Class<?>[] { ScriptEngine.class, Invocable.class };
-        return (ScriptEngine) Proxy.newProxyInstance(
-                ScriptUtilInvocableCacheMixin.class.getClassLoader(),
-                interfaces,
+        return (ScriptEngine) Proxy.newProxyInstance(ScriptUtilInvocableCacheMixin.class.getClassLoader(), interfaces,
                 new InvocationHandler() {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -261,8 +249,7 @@ public abstract class ScriptUtilInvocableCacheMixin {
                             throw e.getCause();
                         }
                     }
-                }
-        );
+                });
     }
 
     /**

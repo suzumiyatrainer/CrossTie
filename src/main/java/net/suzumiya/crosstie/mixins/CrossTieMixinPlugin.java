@@ -279,9 +279,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.VehicleTrackerThrottleMixin");
             mixins.add("rtm.CommonProxySoundRangeOptimizationMixin");
             mixins.add("rtm.TileEntityInsulatorOptimizationMixin");
-            mixins.add("rtm.ElectricalWiringDecorativeMixin");
-            mixins.add("rtm.RenderElectricalWiringOptimizationMixin");
-            mixins.add("rtm.TileEntityEWConnectionMixin");
+            // ElectricalWiringDecorativeMixin / TileEntityEWConnectionMixin は
+            // クライアント・サーバー共通であり、下部の「RTM サーバー側」ブロックで一元登録。
+            // RenderElectricalWiringOptimizationMixin はクライアント描画専用のため
+            // isClient ブロック内（L343）でのみ登録する。ここには追加しない。
             mixins.add("rtm.EntityTrainBaseSpeedSyncMixin");
             mixins.add("rtm.EntityTrainBaseOptimizationMixin");
             mixins.add("rtm.TileEntityPoleOptimizationMixin");
@@ -354,6 +355,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.BasicVehiclePartsRendererMixin");
                 mixins.add("rtm.ItemWithModelNbtSyncGuardMixin");
                 mixins.add("rtm.MixinSoundAPIEntityTrainBase");
+                // クライアント側の車両位置をLerp補間してマルチプレイのカクカクを緩和
+                // VehicleTrackerのデフォルト3tick更新に合わせて係数0.2〜0.25が望ましいが
+                // 現在0.35で設定中。オーバーシュートが気になる場合は値を下げること。
+                mixins.add("rtm.EntityTrainClientSmoothingMixin");
 
                 // GL_SELECT (マウスピッキング) 回避パッチ
                 //
@@ -406,13 +411,16 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         }
 
         // RTM サーバー側 Mixin（クライアント・サーバー共通）
+        // ※ ElectricalWiringDecorativeMixin / TileEntityEWConnectionMixin をここに集約。
+        //   上部 RTM ブロック（L276）での誤二重登録は廃止済み。
         if (isModPresent("RTM")) {
             mixins.add("rtm.ElectricalWiringDecorativeMixin");
             mixins.add("rtm.TileEntityEWConnectionMixin");
             mixins.add("rtm.EntityTrainDetectorThrottleMixin");
             mixins.add("rtm.DataEntryMixin");
             mixins.add("rtm.DataMapMixin");
-            mixins.add("rtm.VehicleTrackerEntryMixin");
+            // VehicleTrackerEntryMixin は mixins.crosstie.json の "mixins" 配列にて
+            // 静的登録済みのため、ここでの重複登録は廃止。
             mixins.add("rtm.TileEntityEWThrottleMixin");
         }
 
