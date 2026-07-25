@@ -51,7 +51,7 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 
 | 모드명 | 권장 버전 | 구분 |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha7` | **코어** |
+| **CrossTie** | `1.0.0-Alpha8` | **코어** |
 | **UniMixins** | `0.3.1` | **필수** |
 | **KaizPatchX** | `1.10.0` | 권장 |
 | **Angelica** | `2.1.49` | 권장 |

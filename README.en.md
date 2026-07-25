@@ -51,7 +51,7 @@ Recommended mod versions for a smooth experience.
 
 | Mod Name | Recommended Version | Category |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha7` | **Core** |
+| **CrossTie** | `1.0.0-Alpha8` | **Core** |
 | **UniMixins** | `0.3.1` | **Required** |
 | **KaizPatchX** | `1.10.0` | Recommended |
 | **Angelica** | `2.1.49` | Recommended |

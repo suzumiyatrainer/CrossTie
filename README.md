@@ -51,7 +51,7 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 
 | Mod名 | 推奨バージョン | 区分 |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha7` | **本体** |
+| **CrossTie** | `1.0.0-Alpha8` | **本体** |
 | **UniMixins** | `0.3.1` | **必須** |
 | **KaizPatchX** | `1.10.0` | 推奨 |
 | **Angelica** | `2.1.49` | 推奨 |

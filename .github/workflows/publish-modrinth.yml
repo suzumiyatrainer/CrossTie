@@ -18,55 +18,55 @@ jobs:
       ORG_GRADLE_PROJECT_privateMavenPassword: ${{ secrets.PRIVATE_MAVEN_PASSWORD }}
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    # 提供されたベースに合わせ JDK 25 をセットアップ
-    - name: Set up JDK 25
-      uses: actions/setup-java@v4
-      with:
-        java-version: '25'
-        distribution: 'temurin'
-        cache: gradle
+      # 提供されたベースに合わせ JDK 25 をセットアップ
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: "25"
+          distribution: "temurin"
+          cache: gradle
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-    - name: Clean Corrupted Gradle Cache Metadata (JSON)
-      run: find ${{ github.workspace }}/.gradle-user-home -name "*.json" -type f -delete || true
+      - name: Clean Corrupted Gradle Cache Metadata (JSON)
+        run: find ${{ github.workspace }}/.gradle-user-home -name "*.json" -type f -delete || true
 
-    # Gradleビルドを実行して製品版JARを生成
-    - name: Build with Gradle
-      run: ./gradlew build --no-daemon --no-configuration-cache
+      # Gradleビルドを実行して製品版JARを生成
+      - name: Build with Gradle
+        run: ./gradlew build --no-daemon --no-configuration-cache
 
-    # Modrinthへの公開処理
-    - name: Publish to Modrinth
-      uses: Kir-Antipov/mc-publish@v3
-      with:
-        # Modrinthのアクセストークン
-        modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
-        
-        # 指定されたcrosstieのプロジェクトID
-        modrinth-id: "xrwNprGB"
-        
-        # build.gradleでbase.archivesName.set('CrossTie')が指定されているため、
-        # 生成されるJARファイル名は「CrossTie-バージョン.jar」となります。
-        # GitHubのタグ名（例: 1.0.0-Alpha7）を動的に当てはめます。
-        files: "build/libs/CrossTie-${{ github.event.release.tag_name }}.jar"
-        
-        # タイトルと変更ログをGitHubのリリースからそのまま同期
-        name: "CrossTie ${{ github.event.release.tag_name }}"
-        changelog: ${{ github.event.release.body }}
-        
-        version: ${{ github.event.release.tag_name }}
-        
-        # リリースの種類（GitHub側がプレリリースなら 'beta'、正式版なら 'release' に自動判定）
-        version-type: ${{ github.event.release.prerelease && 'beta' || 'release' }}
+      # Modrinthへの公開処理
+      - name: Publish to Modrinth
+        uses: Kir-Antipov/mc-publish@v3
+        with:
+          # Modrinthのアクセストークン
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
 
-        # 対象環境等のメタデータ設定
-        game-versions: "1.7.10"
-        loaders: "forge"
-        environments: "client | server"
+          # 指定されたcrosstieのプロジェクトID
+          modrinth-id: "xrwNprGB"
 
-        # 必須前提Modとして UniMixins を指定
-        modrinth-dependencies: |
-          unimixins:required
+          # build.gradleでbase.archivesName.set('CrossTie')が指定されているため、
+          # 生成されるJARファイル名は「CrossTie-バージョン.jar」となります。
+          # GitHubのタグ名（例: 1.0.0-Alpha8）を動的に当てはめます。
+          files: "build/libs/CrossTie-${{ github.event.release.tag_name }}.jar"
+
+          # タイトルと変更ログをGitHubのリリースからそのまま同期
+          name: "CrossTie ${{ github.event.release.tag_name }}"
+          changelog: ${{ github.event.release.body }}
+
+          version: ${{ github.event.release.tag_name }}
+
+          # リリースの種類（GitHub側がプレリリースなら 'beta'、正式版なら 'release' に自動判定）
+          version-type: ${{ github.event.release.prerelease && 'beta' || 'release' }}
+
+          # 対象環境等のメタデータ設定
+          game-versions: "1.7.10"
+          loaders: "forge"
+          environment: "client | server"
+
+          # 必須前提Modとして UniMixins を指定
+          modrinth-dependencies: |
+            unimixins:required

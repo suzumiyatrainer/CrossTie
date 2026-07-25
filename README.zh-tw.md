@@ -51,7 +51,7 @@ CrossTie 將橫跨多個模組（例如 RTM / NGTLib / MCTE (KaizPatchX)、Angel
 
 | 模組名稱 | 推薦版本 | 類別 |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha7` | **核心** |
+| **CrossTie** | `1.0.0-Alpha8` | **核心** |
 | **UniMixins** | `0.3.1` | **必備** |
 | **KaizPatchX** | `1.10.0` | 推薦 |
 | **Angelica** | `2.1.49` | 推薦 |
