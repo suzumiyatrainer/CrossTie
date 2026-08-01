@@ -1,7 +1,7 @@
 # KaizPatchX関連 パフォーマンス最適化仕様書
 
 ## 1. 概要
-KaizPatchX（RealTrainMod (RTM)、NGTLib、MCTE 等を含む `KaizPatchX-1.10.0` パッケージ群）におけるパフォーマンス低下の原因を根本から解決し、処理を最適化するためのパッチ群です。
+KaizPatchX（RealTrainMod (RTM)、NGTLib、MCTE 等を含む `KaizPatchX-1.10.1` パッケージ群）におけるパフォーマンス低下の原因を根本から解決し、処理を最適化するためのパッチ群です。
 大量の列車やレール、架線、大規模ブロック置換が存在する環境でのFPS（描画パフォーマンス）およびMSPT（サーバー処理負荷）を大幅に向上させます。
 
 ---

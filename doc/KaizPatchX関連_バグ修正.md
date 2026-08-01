@@ -1,7 +1,7 @@
 # KaizPatchX関連 バグ修正仕様書
 
 ## 1. 概要
-KaizPatchX（RealTrainMod (RTM)、NGTLib、MCTE 等を含む `KaizPatchX-1.10.0` パッケージ群）において、特定の条件下で発生する描画や処理の不具合（バグ）を修正するためのパッチ群です。
+KaizPatchX（RealTrainMod (RTM)、NGTLib、MCTE 等を含む `KaizPatchX-1.10.1` パッケージ群）において、特定の条件下で発生する描画や処理の不具合（バグ）を修正するためのパッチ群です。
 バグが元々発生していた技術的背景、具体的な修正アプローチ、および修正結果について記載しています。
 
 ---

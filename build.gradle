@@ -27,7 +27,7 @@ eclipse {
 def privateMavenUrl = (findProperty('privateMavenUrl') ?: '').toString().trim()
 def privateMavenUser = (findProperty('privateMavenUser') ?: '').toString().trim()
 def privateMavenPassword = (findProperty('privateMavenPassword') ?: '').toString().trim()
-def rtmCoordinate = (findProperty('rtmCoordinate') ?: 'com.github.Kai-Z-JP:KaizPatchX:v1.10.0:dev').toString().trim()
+def rtmCoordinate = (findProperty('rtmCoordinate') ?: 'com.github.Kai-Z-JP:KaizPatchX:v1.10.1:dev').toString().trim()
 def usePrivateMaven = !privateMavenUrl.isEmpty()
 def forceSafeNetty = (findProperty('forceSafeNetty') ?: 'false').toString().toBoolean()
 def forceSafeScala = (findProperty('forceSafeScala') ?: 'false').toString().toBoolean()
@@ -168,11 +168,11 @@ dependencies {
 
     // Angelica + Iris (for mixin compilation) via JitPack.
     // Iris classes are bundled inside the Angelica jar.
-    def angelicaVersion = (findProperty('angelicaVersion') ?: '2.1.51').toString().trim()
+    def angelicaVersion = (findProperty('angelicaVersion') ?: '2.1.59').toString().trim()
     compileOnly("com.github.GTNewHorizons:Angelica:${angelicaVersion}")
 
     // Hodgepodge via JitPack
-    def hodgepodgeVersion = (findProperty('hodgepodgeVersion') ?: '2.7.171').toString().trim()
+    def hodgepodgeVersion = (findProperty('hodgepodgeVersion') ?: '2.7.179').toString().trim()
     compileOnly("com.github.GTNewHorizons:Hodgepodge:${hodgepodgeVersion}")
 
     // WorldEdit
