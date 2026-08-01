@@ -52,6 +52,7 @@ public abstract class VehicleTrackerThrottleMixin {
     private void crosstie$throttleSend(java.util.List<?> par1, CallbackInfo ci) {
         VehicleTrackerEntry self = (VehicleTrackerEntry) (Object) this;
         if (self.ticks % THROTTLED_UPDATE_FREQUENCY != 0) {
+            ++self.ticks; // オリジナルの ++this.ticks がスキップされるため手動インクリメント
             ci.cancel();
         }
     }

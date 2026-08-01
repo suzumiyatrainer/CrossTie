@@ -6,7 +6,11 @@
   "refmap": "mixins.crosstie.refmap.json",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [],
+  "mixins": [
+    "worldedit.MixinBaseBlock",
+    "worldedit.MixinSchematicWriter",
+    "worldedit.MixinSchematicReader"
+  ],
   "client": [
     "mcte.late.RenderMiniatureAngelicaLightMixin",
     "mcte.late.RenderItemMiniatureAngelicaLightMixin",

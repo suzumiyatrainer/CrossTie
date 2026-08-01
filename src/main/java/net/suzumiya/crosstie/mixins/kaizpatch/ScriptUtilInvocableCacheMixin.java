@@ -185,7 +185,9 @@ public abstract class ScriptUtilInvocableCacheMixin {
                                 Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
                                 Object funcObj = bindings.get(funcName);
                                 if (funcObj == null) {
-                                    throw new NoSuchMethodException("No such function: " + funcName);
+                                    // 関数が定義されていない場合は NoSuchMethodException を new/throw せず
+                                    // null を即座に返すことで描画・Updateホットパスでの大量の例外インスタンス生成オーバーヘッドを排除
+                                    return null;
                                 }
                                 synchronized (realEngine) {
                                     ScriptContext oldContext = realEngine.getContext();
@@ -260,8 +262,23 @@ public abstract class ScriptUtilInvocableCacheMixin {
     public static Object doScriptFunction(ScriptEngine se, String func, Object... args) {
         try {
             return ((Invocable) se).invokeFunction(func, args);
-        } catch (NoSuchMethodException | ScriptException e) {
+        } catch (NoSuchMethodException e) {
+            return null;
+        } catch (ScriptException e) {
             throw new RuntimeException("Script exec error : " + func, e);
+        }
+    }
+
+    /**
+     * @author CrossTie
+     * @reason Fast path for doScriptIgnoreError without creating Exception stack traces for missing functions.
+     */
+    @Overwrite
+    public static Object doScriptIgnoreError(ScriptEngine se, String func, Object... args) {
+        try {
+            return doScriptFunction(se, func, args);
+        } catch (Throwable e) {
+            return null;
         }
     }
 }
