@@ -6,12 +6,13 @@ import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import java.nio.ByteOrder;
 
 @Mixin(value = NGTTessellator.class, remap = false)
 public abstract class NGTTessellatorMixin {
 
-    @org.spongepowered.asm.mixin.Unique
+    @Unique
     private static int crosstie$whiteTexture = -1;
 
     @Shadow
@@ -44,17 +45,37 @@ public abstract class NGTTessellatorMixin {
         return 0;
     }
 
+    @Unique
+    private static volatile java.lang.reflect.Field crosstie$shaderPackLoadedField = null;
+    @Unique
+    private static volatile boolean crosstie$shaderFieldLookupDone = false;
+
     private boolean crosstie$isShaderEnabled() {
         if (jp.ngt.ngtlib.util.NGTUtilClient.usingShader()) {
             return true;
         }
-        try {
-            Class<?> clazz = Class.forName("shadersmod.client.Shaders");
-            java.lang.reflect.Field field = clazz.getDeclaredField("shaderPackLoaded");
-            return field.getBoolean(null);
-        } catch (Throwable t) {
-            return false;
+        // shadersmod.client.Shaders クラスとフィールドは起動時に1回だけ解決してキャッシュする。
+        // draw() はフレームごとに数百〜数千回呼ばれる描画ホットパスのため、
+        // 毎回 Class.forName + getDeclaredField を実行すると FPS に深刻な影響が出る。
+        if (!crosstie$shaderFieldLookupDone) {
+            crosstie$shaderFieldLookupDone = true;
+            try {
+                Class<?> clazz = Class.forName("shadersmod.client.Shaders");
+                java.lang.reflect.Field field = clazz.getDeclaredField("shaderPackLoaded");
+                field.setAccessible(true);
+                crosstie$shaderPackLoadedField = field;
+            } catch (Throwable ignored) {
+                // shadersmod が存在しない環境では null のまま = false を返す
+            }
         }
+        if (crosstie$shaderPackLoadedField != null) {
+            try {
+                return crosstie$shaderPackLoadedField.getBoolean(null);
+            } catch (Throwable t) {
+                return false;
+            }
+        }
+        return false;
     }
 
     /**

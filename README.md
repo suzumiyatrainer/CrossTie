@@ -34,7 +34,7 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 | **Gradle** | `9.6.1` |
 | **必須Mod** | `UniMixins 0.3.1+` |
 | **ビルドシステム** | RetroFuturaGradle 2.0.2 |
-| **最終確認** | `2026-07-22` |
+| **最終確認** | `2026-07-25` |
 
 ### 🔍 内部構造インデックス
 * **Mixin 制御**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -51,7 +51,7 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 
 | Mod名 | 推奨バージョン | 区分 |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha7` | **本体** |
+| **CrossTie** | `1.0.0-Alpha8` | **本体** |
 | **UniMixins** | `0.3.1` | **必須** |
 | **KaizPatchX** | `1.10.0` | 推奨 |
 | **Angelica** | `2.1.49` | 推奨 |

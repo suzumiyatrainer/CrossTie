@@ -1,26 +1,18 @@
 package net.suzumiya.crosstie.mixins.worldedit;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(targets = "com.sk89q.worldedit.blocks.BaseBlock", remap = false)
 public class MixinBaseBlock {
-    @Shadow
-    private short id;
 
     /**
-     * @author Suzumiya (CrossTie)
-     * @reason Overrides the 4095 hardcoded ID limit to support extended block IDs up to 32767 for NEID compatibility.
+     * Overrides the hardcoded 4095 block ID limit in WorldEdit's BaseBlock#internalSetId
+     * to support extended block IDs up to 32767 for NEID compatibility.
      */
-    @Overwrite
-    protected final void internalSetId(int id) {
-        if (id < 0) {
-            throw new IllegalArgumentException("Can't have a block ID below 0");
-        }
-        if (id > 32767) {
-            throw new IllegalArgumentException("Can't have a block ID above 32767 (" + id + " given)");
-        }
-        this.id = (short) id;
+    @ModifyConstant(method = "internalSetId", constant = @Constant(intValue = 4095), remap = false, require = 0)
+    private int modifyMaxBlockId(int original) {
+        return 32767;
     }
 }

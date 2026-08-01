@@ -23,7 +23,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * {@code require = 0} のためサイレントスルーとなり一切機能していなかった。
  * このため当該コードは削除した。
  */
-@Mixin(targets = "jp.ngt.rtm.entity.train.EntityTrainBase", remap = false)
+@SuppressWarnings("rawtypes")
+@Mixin(targets = "jp.ngt.rtm.entity.vehicle.EntityVehicleBase", remap = false)
 public abstract class EntityTrainBaseOptimizationMixin {
 
     @Unique
@@ -39,7 +40,7 @@ public abstract class EntityTrainBaseOptimizationMixin {
      * クライアント側でプレイヤーから 256m 以上離れた車両の onUpdate を
      * DISTANT_SKIP_INTERVAL ティックに1回だけ実行する。
      */
-    @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true, require = 0, remap = true)
+    @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private void crosstie$skipDistantUpdate(CallbackInfo ci) {
         if (!CrossTieConfig.trainDistantCullingEnabled) {
             return;
