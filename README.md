@@ -54,9 +54,9 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 | **CrossTie** | `1.0.0-Alpha8` | **本体** |
 | **UniMixins** | `0.3.1` | **必須** |
 | **KaizPatchX** | `1.10.1` | 推奨 |
-| **Angelica** | `2.1.49+` | 推奨 |
-| **GTNHLib** | `0.11.23+` | 推奨 |
-| **Hodgepodge** | `2.7.171+` | 任意 |
+| **Angelica** | `2.1.59+` | 推奨 |
+| **GTNHLib** | `0.11.34+` | 推奨 |
+| **Hodgepodge** | `2.7.179+` | 任意 |
 | **ArchaicFix** | `0.8.0+` | 任意 |
 | **ShaderFixer** | `5.4+` | 任意 |
 

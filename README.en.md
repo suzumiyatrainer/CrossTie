@@ -54,9 +54,9 @@ Recommended mod versions for a smooth experience.
 | **CrossTie** | `1.0.0-Alpha8` | **Core** |
 | **UniMixins** | `0.3.1` | **Required** |
 | **KaizPatchX** | `1.10.1` | Recommended |
-| **Angelica** | `2.1.49+` | Recommended |
-| **GTNHLib** | `0.11.23+` | Recommended |
-| **Hodgepodge** | `2.7.171+` | Optional |
+| **Angelica** | `2.1.59+` | Recommended |
+| **GTNHLib** | `0.11.34+` | Recommended |
+| **Hodgepodge** | `2.7.179+` | Optional |
 | **ArchaicFix** | `0.8.0+` | Optional |
 | **ShaderFixer** | `5.4+` | Optional |
 

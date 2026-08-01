@@ -54,9 +54,9 @@ CrossTie 将跨越多个模组（如 RTM / NGTLib / MCTE (KaizPatchX)、Angelica
 | **CrossTie** | `1.0.0-Alpha8` | **核心** |
 | **UniMixins** | `0.3.1` | **必装** |
 | **KaizPatchX** | `1.10.1` | 推荐 |
-| **Angelica** | `2.1.49+` | 推荐 |
-| **GTNHLib** | `0.11.23+` | 推荐 |
-| **Hodgepodge** | `2.7.171+` | 可选 |
+| **Angelica** | `2.1.59+` | 推荐 |
+| **GTNHLib** | `0.11.34+` | 推荐 |
+| **Hodgepodge** | `2.7.179+` | 可选 |
 | **ArchaicFix** | `0.8.0+` | 可选 |
 | **ShaderFixer** | `5.4+` | 可选 |
 
