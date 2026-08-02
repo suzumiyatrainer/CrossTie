@@ -50,7 +50,7 @@ jobs:
 
           # build.gradleでbase.archivesName.set('CrossTie')が指定されているため、
           # 生成されるJARファイル名は「CrossTie-バージョン.jar」となります。
-          # GitHubのタグ名（例: 1.0.0-Alpha8）を動的に当てはめます。
+          # GitHubのタグ名（例: 1.0.0-Alpha9）を動的に当てはめます。
           files: "build/libs/CrossTie-${{ github.event.release.tag_name }}.jar"
 
           # タイトルと変更ログをGitHubのリリースからそのまま同期

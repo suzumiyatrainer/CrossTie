@@ -13,17 +13,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * EntityTrainBase の総合最適化:
  *
  * <ul>
- *   <li><b>遠距離間引き</b> - クライアント側でプレイヤーから 256m 以上離れた車両の更新頻度を低減</li>
+ * <li><b>遠距離間引き</b> - クライアント側でプレイヤーから 256m 以上離れた車両の更新頻度を低減</li>
  * </ul>
  *
  * <p>
- * 旧バージョンに存在した {@code getBlock()} キャッシュ (@Redirect) は、
- * {@code EntityTrainBase} に {@code onUpdate()} が定義されていないため
- * （実際は {@code EntityVehicleBase.onVehicleUpdate()} で処理される）、
- * {@code require = 0} のためサイレントスルーとなり一切機能していなかった。
- * このため当該コードは削除した。
+ * 旧バージョンに存在した {@code getBlock()} キャッシュ (@Redirect) は、 {@code EntityTrainBase} に
+ * {@code onUpdate()} が定義されていないため （実際は
+ * {@code EntityVehicleBase.onVehicleUpdate()} で処理される）、 {@code require = 0}
+ * のためサイレントスルーとなり一切機能していなかった。 このため当該コードは削除した。
  */
-@SuppressWarnings("rawtypes")
 @Mixin(targets = "jp.ngt.rtm.entity.vehicle.EntityVehicleBase", remap = false)
 public abstract class EntityTrainBaseOptimizationMixin {
 
@@ -37,8 +35,7 @@ public abstract class EntityTrainBaseOptimizationMixin {
     private int crosstie$distantSkipCounter = 0;
 
     /**
-     * クライアント側でプレイヤーから 256m 以上離れた車両の onUpdate を
-     * DISTANT_SKIP_INTERVAL ティックに1回だけ実行する。
+     * クライアント側でプレイヤーから 256m 以上離れた車両の onUpdate を DISTANT_SKIP_INTERVAL ティックに1回だけ実行する。
      */
     @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private void crosstie$skipDistantUpdate(CallbackInfo ci) {

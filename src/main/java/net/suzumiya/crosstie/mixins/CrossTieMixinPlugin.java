@@ -201,9 +201,19 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                         + hasAngelicaGlsm;
             }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.minecraft.")) {
-            boolean hasGtnhLib = isModPresent("GTNHLib");
-            shouldApply = isClient && hasGtnhLib;
-            debugReason = "isClient=" + isClient + ", GTNHLib=" + hasGtnhLib;
+            if (mixinClassName.endsWith(".ChatComponentTextNullGuardMixin")
+                    || mixinClassName.endsWith(".ChatComponentStyleNullGuardMixin")) {
+                shouldApply = true;
+                debugReason = "always=true";
+            } else {
+                boolean hasGtnhLib = isModPresent("GTNHLib");
+                shouldApply = isClient && hasGtnhLib;
+                debugReason = "isClient=" + isClient + ", GTNHLib=" + hasGtnhLib;
+            }
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.hodgepodge.")) {
+            boolean hasHodgepodge = isModPresent("Hodgepodge");
+            shouldApply = isClient && hasHodgepodge;
+            debugReason = "isClient=" + isClient + ", Hodgepodge=" + hasHodgepodge;
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.worldedit.")) {
             boolean hasWorldEdit = isModPresent("WorldEdit");
             shouldApply = hasWorldEdit;
@@ -241,6 +251,15 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
+
+        // Minecraft ChatComponent null guards
+        mixins.add("minecraft.ChatComponentTextNullGuardMixin");
+        mixins.add("minecraft.ChatComponentStyleNullGuardMixin");
+
+        // Hodgepodge
+        if (isClient && isModPresent("Hodgepodge")) {
+            mixins.add("hodgepodge.ChatHandlerNullGuardMixin");
+        }
 
         // GTNHLib - always present
         mixins.add("gtnhlib.ObjectPoolerThreadSafeMixin");
