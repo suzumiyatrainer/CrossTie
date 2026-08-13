@@ -466,9 +466,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         // JourneyMap
         if (isClient && isModPresent("journeymap")) {
-            mixins.add("journeymap.DataCacheMixin");
-            mixins.add("journeymap.WaypointBeaconRendererMixin");
-            mixins.add("journeymap.WaypointDecorationRendererMixin");
+            // mixins.add("journeymap.DataCacheMixin");
+            // mixins.add("journeymap.WaypointBeaconRendererMixin");
+            // mixins.add("journeymap.WaypointDecorationRendererMixin");
         }
 
         // WorldEdit mixins are handled in Late Mixin (mixins.crosstie.late.json) to
