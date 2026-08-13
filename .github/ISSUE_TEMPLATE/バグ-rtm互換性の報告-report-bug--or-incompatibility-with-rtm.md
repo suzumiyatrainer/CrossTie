@@ -14,7 +14,7 @@ assignees: suzumiyatrainer
 **環境｜Environment**
 (注：これは例です、実際は書き換えてください)
 (Info：This is example, please replace it.)
-CrossTie: 1.0.0-Alpha10
+CrossTie: 1.0.0-Alpha11
 RTM(Original)/KaizPatchX: KaizPatchX-1.10.1
 UniMixins: 0.3.1
 Java: JDK8
