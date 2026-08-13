@@ -27,7 +27,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         logDetectedCompatMods();
 
         // Prevent Nashorn compiled classes from going through LaunchClassLoader's ASM
-        // transformers, and add them to exclusions so they are delegated to AppClassLoader
+        // transformers, and add them to exclusions so they are delegated to
+        // AppClassLoader
         try {
             if (net.minecraft.launchwrapper.Launch.classLoader != null) {
                 Object classLoader = net.minecraft.launchwrapper.Launch.classLoader;
@@ -37,21 +38,22 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 regTransEx.invoke(classLoader, "jdk.nashorn.internal.");
                 regTransEx.invoke(classLoader, "jdk.nashorn.api.scripting.");
                 regTransEx.invoke(classLoader, "org.openjdk.nashorn.");
-                
+
                 java.lang.reflect.Method addClassEx = classLoader.getClass().getMethod("addClassLoaderExclusion",
                         String.class);
                 addClassEx.invoke(classLoader, "jdk.nashorn.");
                 addClassEx.invoke(classLoader, "org.openjdk.nashorn.");
-                
+
                 // Clear invalidClasses cache in case it was already attempted and failed
                 try {
-                    java.lang.reflect.Field invalidClassesField = classLoader.getClass().getDeclaredField("invalidClasses");
+                    java.lang.reflect.Field invalidClassesField = classLoader.getClass()
+                            .getDeclaredField("invalidClasses");
                     invalidClassesField.setAccessible(true);
                     ((java.util.Set<?>) invalidClassesField.get(classLoader)).clear();
                 } catch (Exception e) {
                     System.err.println("[CrossTie] Failed to clear invalidClasses: " + e.getMessage());
                 }
-                
+
                 System.out.println(
                         "[CrossTie] Registered Nashorn transformer and classloader exceptions in LaunchClassLoader via reflection");
             }
@@ -263,7 +265,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 + ", KaizPatch=" + isModPresent("KaizPatch") + ", MinFo=" + isModPresent("MinFo") + ", MCTE="
                 + isModPresent("MCTE") + ", LiteLoader=" + isModPresent("LiteLoader") + ", MacroMod="
                 + isModPresent("MacroMod") + ", OptiFine=" + isModPresent("OptiFine") + ", FastCraft="
-                + isModPresent("FastCraft") + ", WebCTC=" + isModPresent("WebCTC") + ", JourneyMap=" 
+                + isModPresent("FastCraft") + ", WebCTC=" + isModPresent("WebCTC") + ", JourneyMap="
                 + isModPresent("journeymap") + ", nativeRenderGlobalDisplayLists="
                 + isNativeRenderGlobalDisplayListsEnabled());
     }
@@ -452,7 +454,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.TileEntityEWBroadcastOptimizationMixin");
         }
 
-
         if (isModPresent("NGTLib")) {
             mixins.add("ngtlib.PacketNBTPlayerItemGuardMixin");
         }
@@ -470,7 +471,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("journeymap.WaypointDecorationRendererMixin");
         }
 
-        // WorldEdit mixins are handled in Late Mixin (mixins.crosstie.late.json) to prevent early
+        // WorldEdit mixins are handled in Late Mixin (mixins.crosstie.late.json) to
+        // prevent early
         // classloading crashes
 
         // ProjectRed mixins are handled in CrossTieLateMixinLoader to prevent early
