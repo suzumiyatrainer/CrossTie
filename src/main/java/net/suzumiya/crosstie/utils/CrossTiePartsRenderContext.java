@@ -25,8 +25,23 @@ public final class CrossTiePartsRenderContext {
      * より大きい場合はコンテキスト内にいる。 int[1] を用いてオートボクシングを回避する。
      */
     private static final ThreadLocal<int[]> DEPTH = ThreadLocal.withInitial(() -> new int[1]);
+    private static final ThreadLocal<Object> CURRENT_VEHICLE = new ThreadLocal<>();
 
     private CrossTiePartsRenderContext() {
+    }
+
+    /**
+     * 現在描画中の EntityVehicleBase を設定する。
+     */
+    public static void setCurrentVehicle(Object vehicle) {
+        CURRENT_VEHICLE.set(vehicle);
+    }
+
+    /**
+     * 現在描画中の EntityVehicleBase を取得する。
+     */
+    public static Object getCurrentVehicle() {
+        return CURRENT_VEHICLE.get();
     }
 
     /**

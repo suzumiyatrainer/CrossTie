@@ -17,9 +17,9 @@ public class CrossTie {
     /**
      * Pre-Initialization イベントハンドラ。
      *
-     * <p>Forge の {@link cpw.mods.fml.common.config.Configuration Configuration} を使い
-     * {@code config/crosstie.cfg} を自動生成する。
-     * 初回起動時はデフォルト値でファイルが作成される。
+     * <p>
+     * Forge の {@link cpw.mods.fml.common.config.Configuration Configuration} を使い
+     * {@code config/crosstie.cfg} を自動生成する。 初回起動時はデフォルト値でファイルが作成される。
      *
      * @param event FMLPreInitializationEvent
      */
@@ -42,15 +42,18 @@ public class CrossTie {
     public void init(cpw.mods.fml.common.event.FMLInitializationEvent event) {
         if (event.getSide() == cpw.mods.fml.relauncher.Side.CLIENT) {
             net.suzumiya.crosstie.client.CrossTieKeyBindings.init();
-            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(new net.suzumiya.crosstie.gui.CrossTieGuiEventHandler());
-            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(new net.suzumiya.crosstie.client.WireFastRemoveTracker());
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS
+                    .register(new net.suzumiya.crosstie.gui.CrossTieGuiEventHandler());
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS
+                    .register(new net.suzumiya.crosstie.client.WireFastRemoveTracker());
         }
     }
 
     /**
      * Server Starting イベントハンドラ。
      *
-     * <p>{@code /crosstie} コマンドをサーバーに登録する。
+     * <p>
+     * {@code /crosstie} コマンドをサーバーに登録する。
      *
      * @param event FMLServerStartingEvent
      */

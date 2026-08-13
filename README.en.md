@@ -15,7 +15,7 @@ A comprehensive optimization and compatibility patch mod for RTM (RealTrainMod) 
 ---
 
 ### 📝 Project Overview
-CrossTie provides **rendering load reduction, update frequency suppression, and compatibility fixes** across multiple mods such as RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GTNHLib, Hodgepodge, LiteLoader / Macro / Keybind Mod, WorldEdit, ProjectRed, CustomNPC+, and more — all in a single JAR.
+CrossTie provides **rendering load reduction, update frequency suppression, and compatibility fixes** across multiple mods such as RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GTNHLib, Hodgepodge, LiteLoader / Macro / Keybind Mod, WorldEdit, ProjectRed, CustomNPC+, JourneyMap, and more — all in a single JAR.
 
 > 💡 **Auto-Detection Feature**: Target mods are automatically detected at launch, and the corresponding patches are enabled only if they exist.
 
@@ -41,7 +41,7 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 * **Late Mixin Control**: [`CrossTieLateMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieLateMixinPlugin.java)
 * **ASM CoreMod**: [`CrossTieCorePlugin.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieCorePlugin.java)
 * **ASM Transformer**: [`CrossTieClassTransformer.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieClassTransformer.java)
-* **Detectable Mods**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `WorldEdit`, `ProjectRed`, `CustomNPC+`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`
+* **Detectable Mods**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `WorldEdit`, `ProjectRed`, `CustomNPC+`, `JourneyMap`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`
 
 ---
 

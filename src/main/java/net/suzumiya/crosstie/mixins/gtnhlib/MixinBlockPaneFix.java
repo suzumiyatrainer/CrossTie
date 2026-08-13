@@ -8,8 +8,16 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import org.spongepowered.asm.mixin.Unique;
+import java.lang.reflect.Field;
+
 @Mixin(value = Block.class)
 public abstract class MixinBlockPaneFix {
+
+    @Unique
+    private static Field crosstie$isModeledField;
+    @Unique
+    private static boolean crosstie$fieldLookupAttempted = false;
 
     /**
      * GTNHLibが実行時に追加する nhlib$isModeled メソッドに介入します。
@@ -29,11 +37,19 @@ public abstract class MixinBlockPaneFix {
     @Inject(method = "nhlib$setModeled", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private void crosstie$fixPaneSetModeled(boolean modeled, CallbackInfo ci) {
         if ((Object) this instanceof BlockPane) {
-            try {
-                java.lang.reflect.Field field = Block.class.getDeclaredField("nhlib$isModeled");
-                field.setAccessible(true);
-                field.setBoolean(this, false);
-            } catch (Throwable ignored) {
+            if (!crosstie$fieldLookupAttempted) {
+                crosstie$fieldLookupAttempted = true;
+                try {
+                    crosstie$isModeledField = Block.class.getDeclaredField("nhlib$isModeled");
+                    crosstie$isModeledField.setAccessible(true);
+                } catch (Throwable ignored) {
+                }
+            }
+            if (crosstie$isModeledField != null) {
+                try {
+                    crosstie$isModeledField.setBoolean(this, false);
+                } catch (Throwable ignored) {
+                }
             }
             ci.cancel();
         }

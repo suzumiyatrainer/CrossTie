@@ -33,7 +33,6 @@ public abstract class AngelicaBlockMaterialMappingCaseFixMixin {
                     if (regNamespace.equalsIgnoreCase(queryNamespace) && regName.equalsIgnoreCase(queryName)) {
                         Object blockObj = Block.blockRegistry.getObject(key);
                         if (blockObj instanceof Block && blockObj != Blocks.air) {
-                            System.out.println("[CrossTie DEBUG] Found block " + key + " for " + id);
                             cir.setReturnValue((Block) blockObj);
                             return;
                         }
@@ -42,7 +41,6 @@ public abstract class AngelicaBlockMaterialMappingCaseFixMixin {
                     if (key.equalsIgnoreCase(queryName)) {
                         Object blockObj = Block.blockRegistry.getObject(key);
                         if (blockObj instanceof Block && blockObj != Blocks.air) {
-                            System.out.println("[CrossTie DEBUG] Found block " + key + " for " + id);
                             cir.setReturnValue((Block) blockObj);
                             return;
                         }
@@ -50,6 +48,5 @@ public abstract class AngelicaBlockMaterialMappingCaseFixMixin {
                 }
             }
         }
-        System.out.println("[CrossTie DEBUG] Block NOT found for " + id);
     }
 }

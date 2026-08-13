@@ -6,7 +6,7 @@ plugins {
 }
 
 // Mod properties from gradle.properties
-version = '1.0.0-Alpha9'
+version = '1.0.0-Alpha10'
 group = project.modGroup
 base.archivesName.set('CrossTie')
 
@@ -75,6 +75,10 @@ repositories {
         name = 'EngineHub'
         url = 'https://maven.enginehub.org/repo/'
     }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
     if (usePrivateMaven) {
         maven {
             name = 'Private Maven'
@@ -128,6 +132,27 @@ configurations {
     nashornLib
 }
 
+// GitHub ReleaseからWebCTCをダウンロードする設定（CI・ローカル共通）
+def webctcJarFile = file("$buildDir/downloaded-libs/WebCTC-1.7.10-v1.2.0.jar")
+def downloadWebCTC = tasks.register('downloadWebCTC') {
+    outputs.file(webctcJarFile)
+    doLast {
+        if (!webctcJarFile.exists()) {
+            webctcJarFile.parentFile.mkdirs()
+            println "Downloading WebCTC jar from GitHub Release..."
+            new URL("https://github.com/WebCTC/WebCTC/releases/download/v1.2.0/WebCTC-1.7.10-v1.2.0.jar").withInputStream { input ->
+                webctcJarFile.withOutputStream { output ->
+                    output << input
+                }
+            }
+        }
+    }
+}
+
+// Gradleのプロジェクト評価前にダウンロードを保証
+tasks.withType(JavaCompile).configureEach {
+    dependsOn downloadWebCTC
+}
 
 dependencies {
     constraints {
@@ -168,11 +193,11 @@ dependencies {
 
     // Angelica + Iris (for mixin compilation) via JitPack.
     // Iris classes are bundled inside the Angelica jar.
-    def angelicaVersion = (findProperty('angelicaVersion') ?: '2.1.59').toString().trim()
+    def angelicaVersion = (findProperty('angelicaVersion') ?: '2.1.61').toString().trim()
     compileOnly("com.github.GTNewHorizons:Angelica:${angelicaVersion}")
 
     // Hodgepodge via JitPack
-    def hodgepodgeVersion = (findProperty('hodgepodgeVersion') ?: '2.7.179').toString().trim()
+    def hodgepodgeVersion = (findProperty('hodgepodgeVersion') ?: '2.7.186').toString().trim()
     compileOnly("com.github.GTNewHorizons:Hodgepodge:${hodgepodgeVersion}")
 
     // WorldEdit
@@ -189,9 +214,15 @@ dependencies {
     def customNpcVersion = (findProperty('customNpcVersion') ?: 'master-SNAPSHOT').toString().trim()
     compileOnly rfg.deobf("com.github.KAMKEEL:CustomNPC-Plus:${customNpcVersion}")
 
+    // WebCTC: GitHub Release から自動取得したファイルを rfg.deobf に渡す
+    compileOnly rfg.deobf(files(webctcJarFile))
+
     // IFTTTUtilMixin用: ATSAssistModが実行時に提供するJacksonのDatabindを
     // コンパイル時のみ参照する(CrossTie本体には同梱しない)
     compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
+
+    // Journeymap Integration
+    compileOnly rfg.deobf("maven.modrinth:lfHFW1mp:cxw6VoUX")
 }
 
 tasks.withType(JavaCompile) {

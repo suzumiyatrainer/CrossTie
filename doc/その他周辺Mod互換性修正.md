@@ -118,3 +118,29 @@ CustomNPC+（カスタムNPC追加Mod）において、Java 8 環境での起動
 - **概要**:
   ArchitectureCraft（`gcewing.architecture`）のベースモデルレンダラー（`BaseModelRenderer`）において、ブロック描画時の不可視面計算のキャッシュおよび`Vector3`/`Trans3`オブジェクトのアロケーション削減を行うフックが存在します。
 
+---
+
+## 8. JourneyMap 関連の互換性修正と最適化
+
+### 8.1 列車名表示（ターゲットマーカー）の直接描画と競合修正
+- **対象ファイル**: `WaypointBeaconRendererMixin.java`, `DataCacheMixin.java`
+- **問題の背景**:
+  一部の環境や古い実装において、JourneyMap 上に列車名（TargetTrainId）を表示させる際、別スレッドから共有リスト（Stringリスト等）を操作してレンダラー側で読み取る方式がとられていました。これにより `ConcurrentModificationException` によるクラッシュや、データの同期ズレ、無駄なリスト確保によるメモリ消費が発生していました。
+- **修正内容**:
+  JourneyMap の 3Dウェイポイント/ビーコンレンダラー（`WaypointBeaconRenderer`）の描画処理に直接介入し、共有リストを使用せずに `EntityTrainBase` の持つ `trainName` などを OpenGL を用いて直接 JourneyMap のコンテキスト上に描画する方式へと根本から変更しました。
+- **結果**:
+  マルチスレッド環境下でもクラッシュや同期ズレが発生せず、安全かつ軽量に列車のマーカーや名前が JourneyMap の画面上に表示されるようになります。
+
+---
+
+## 9. Hodgepodge 関連のバグ修正
+
+### 9.1 チャットGUI表示時のクラッシュ（NullGuard）修正
+- **対象ファイル**: `ChatHandlerNullGuardMixin.java`, `ChatComponentStyleNullGuardMixin.java`, `ChatComponentTextNullGuardMixin.java`
+- **問題の背景**:
+  最適化Mod「Hodgepodge」を導入した環境において、MinecraftのチャットGUIを開いた際や特定のチャットメッセージ（チャットスタイル）を受信・処理した際に、`NullPointerException` が発生してゲームがクラッシュする問題がありました。
+- **修正内容**:
+  チャットのスタイルやテキスト処理のコア部分に対してNullガード（値がnullだった場合の安全な早期リターン処理やフォールバック）を注入し、Hodgepodgeの内部最適化処理とバニラの描画処理の間の不整合を吸収しました。
+- **結果**:
+  Hodgepodge導入環境下でも、チャットGUIを安全に開くことができ、クラッシュすることなくプレイを継続できます。
+

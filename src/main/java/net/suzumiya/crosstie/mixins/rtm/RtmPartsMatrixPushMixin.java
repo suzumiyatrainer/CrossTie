@@ -27,6 +27,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * となっており、 バイパスは一度も適用されたことがなかった。<br>
  * 実行時の {@code Class.forName} 方式に変えると Angelica が検出されて全パーツが Immediate Mode
  * 描画に強制され、FPS が 165 → 20 以下まで崩壊したため削除した。
+ *
+ * <p>
+ * 【バグ修正: ドア残像】 DisplayList コンパイル中（{@code GLHelper.isCompiling() == true}）に
+ * {@code glPushMatrix}/{@code glPopMatrix} が記録されてしまうと、 後から {@code glCallList}
+ * で再生したときに外側の {@code glTranslatef} による
+ * ドア移動変換がリセットされ、ドアが元位置（閉じた位置）に重複描画される残像バグが発生する。 コンパイル中はフックをスキップして行列操作を
+ * DisplayList に焼き込まないようにする。
  */
 @Mixin(value = Parts.class, remap = false)
 public class RtmPartsMatrixPushMixin {

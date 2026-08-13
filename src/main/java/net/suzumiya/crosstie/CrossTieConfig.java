@@ -59,7 +59,8 @@ public final class CrossTieConfig {
             "disableSignalCulling", "fixOptiFineRailBrightness", "fixOptiFineWireNormalize",
             "fixOptiFineWireShadowPass",
             // Features
-            "enableWireFastRemove"));
+            "enableWireFastRemove",
+            "standingRoomEnabled"));
 
     /** config_version プロパティの名前 */
     private static final String PROP_CONFIG_VERSION = "config_version";
@@ -100,6 +101,9 @@ public final class CrossTieConfig {
 
     /** Rキー＋右クリックでのワイヤー物理削除機能を有効にするかどうか。 */
     public static boolean enableWireFastRemove;
+
+    /** 列車屋根上への立ち乗り追従機能を有効にするかどうか。 */
+    public static boolean standingRoomEnabled;
 
     // ---- 設定項目 (Performance) ---- //
 
@@ -275,6 +279,10 @@ public final class CrossTieConfig {
         enableWireFastRemove = config.getBoolean("enableWireFastRemove", CAT_FEATURES, true,
                 "Rキー＋右クリックでのワイヤー物理削除機能を有効にします。");
 
+        standingRoomEnabled = config.getBoolean("standingRoomEnabled", CAT_FEATURES, true,
+                "列車の屋根上（TRAIN_HEIGHT 以上の位置）に立つプレイヤーを列車の移動に追従させる立ち乗り機能を有効にします。"
+                        + " サーバー側のみで動作します。");
+
         // ---- 2. Performance カテゴリ ---- //
         trainDistantCullingEnabled = config.getBoolean("trainDistantCullingEnabled", CAT_PERFORMANCE, true,
                 "256m以上離れたTrain Entityのクライアント側更新頻度を低減します。");
@@ -344,6 +352,7 @@ public final class CrossTieConfig {
         enableDiagnostics = false;
         enableSoundDebug = false;
         enableWireFastRemove = true;
+        standingRoomEnabled = true;
         trainDistantCullingEnabled = true;
         trainSpeedSyncEnabled = true;
         railTesrThrottleEnabled = true;

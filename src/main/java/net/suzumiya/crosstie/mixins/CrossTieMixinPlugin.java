@@ -222,6 +222,14 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasCustomNpc = isModPresent("CustomNpc");
             shouldApply = hasCustomNpc;
             debugReason = "CustomNpc=" + hasCustomNpc;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.webctc.")) {
+            boolean hasWebCtc = isModPresent("WebCTC");
+            shouldApply = hasWebCtc;
+            debugReason = "WebCTC=" + hasWebCtc;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.journeymap.")) {
+            boolean hasJourneyMap = isModPresent("journeymap");
+            shouldApply = isClient && hasJourneyMap;
+            debugReason = "isClient=" + isClient + ", JourneyMap=" + hasJourneyMap;
         } else {
             shouldApply = true;
             debugReason = "default=true";
@@ -240,7 +248,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 + ", KaizPatch=" + isModPresent("KaizPatch") + ", MinFo=" + isModPresent("MinFo") + ", MCTE="
                 + isModPresent("MCTE") + ", LiteLoader=" + isModPresent("LiteLoader") + ", MacroMod="
                 + isModPresent("MacroMod") + ", OptiFine=" + isModPresent("OptiFine") + ", FastCraft="
-                + isModPresent("FastCraft") + ", nativeRenderGlobalDisplayLists="
+                + isModPresent("FastCraft") + ", WebCTC=" + isModPresent("WebCTC") + ", JourneyMap=" 
+                + isModPresent("journeymap") + ", nativeRenderGlobalDisplayLists="
                 + isNativeRenderGlobalDisplayListsEnabled());
     }
 
@@ -282,6 +291,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.EntityTrainBaseOptimizationMixin");
             mixins.add("rtm.TileEntityPoleOptimizationMixin");
             mixins.add("rtm.TileEntityEWUpdateOptimizationMixin");
+            // F-01: 列車屋根上への立ち乗り追従（サーバー側のみ動作）
+            mixins.add("rtm.TrainStandingMixin");
+            mixins.add("rtm.EntityVehiclePartCollisionNullMixin");
         }
 
         // KaizPatch / NGTScriptUtil
@@ -351,6 +363,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.BasicVehiclePartsRendererMixin");
                 mixins.add("rtm.ItemWithModelNbtSyncGuardMixin");
                 mixins.add("rtm.MixinSoundAPIEntityTrainBase");
+                mixins.add("rtm.PartsDoorGhostFixMixin");
+                mixins.add("rtm.NGTRenderHelperDoorFilterMixin");
                 // クライアント側の車両位置をLerp補間してマルチプレイのカクカクを緩和
                 // VehicleTrackerのデフォルト3tick更新に合わせて係数0.2〜0.25が望ましいが
                 // 現在0.35で設定中。オーバーシュートが気になる場合は値を下げること。
@@ -427,6 +441,18 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         if (isModPresent("NGTLib")) {
             mixins.add("ngtlib.PacketNBTPlayerItemGuardMixin");
+        }
+
+        // WebCTC
+        if (isModPresent("WebCTC")) {
+            mixins.add("webctc.TileEntityLargeRailCoreOccupancyMixin");
+            mixins.add("webctc.RailCacheDataUpdateOptimizationMixin");
+        }
+
+        // JourneyMap
+        if (isClient && isModPresent("journeymap")) {
+            mixins.add("journeymap.DataCacheMixin");
+            mixins.add("journeymap.WaypointBeaconRendererMixin");
         }
 
         // WorldEdit mixins are handled in Late Mixin (mixins.crosstie.late.json) to prevent early

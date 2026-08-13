@@ -3,6 +3,7 @@ package net.suzumiya.crosstie.mixins.rtm;
 import jp.ngt.rtm.entity.vehicle.RenderVehicleBase;
 import net.minecraft.entity.Entity;
 import net.suzumiya.crosstie.accessors.rtm.IEntityVehicleBaseRenderContextAccessor;
+import net.suzumiya.crosstie.utils.CrossTiePartsRenderContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -33,6 +34,7 @@ public abstract class RenderVehicleBaseContextMixin {
     @Inject(method = "doRender", at = @At("HEAD"), remap = false)
     private void crosstie$setRenderContextOn(Entity par1, double par2, double par4, double par6, float par8, float par9,
             CallbackInfo ci) {
+        CrossTiePartsRenderContext.setCurrentVehicle(par1);
         if (par1 instanceof IEntityVehicleBaseRenderContextAccessor) {
             ((IEntityVehicleBaseRenderContextAccessor) par1).crosstie$setInRenderContext(true);
         }
@@ -41,6 +43,7 @@ public abstract class RenderVehicleBaseContextMixin {
     @Inject(method = "doRender", at = @At("RETURN"), remap = false)
     private void crosstie$setRenderContextOff(Entity par1, double par2, double par4, double par6, float par8,
             float par9, CallbackInfo ci) {
+        CrossTiePartsRenderContext.setCurrentVehicle(null);
         if (par1 instanceof IEntityVehicleBaseRenderContextAccessor) {
             ((IEntityVehicleBaseRenderContextAccessor) par1).crosstie$setInRenderContext(false);
         }

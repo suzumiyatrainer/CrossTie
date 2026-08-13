@@ -15,7 +15,7 @@ Minecraft 1.7.10용 RTM(RealTrainMod) 관련 모드 종합 최적화 및 호환�
 ---
 
 ### 📝 프로젝트 개요
-CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GTNHLib, Hodgepodge, LiteLoader / Macro / Keybind Mod, WorldEdit, ProjectRed, CustomNPC+ 등 여러 모드에 걸친 **렌더링 부하 감소, 업데이트 빈도 억제 및 호환성 수정**을 단일 JAR로 제공합니다.
+CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GTNHLib, Hodgepodge, LiteLoader / Macro / Keybind Mod, WorldEdit, ProjectRed, CustomNPC+, JourneyMap 등 여러 모드에 걸친 **렌더링 부하 감소, 업데이트 빈도 억제 및 호환성 수정**을 단일 JAR로 제공합니다.
 
 > 💡 **자동 감지 기능**: 대상 모드는 시작 시 자동으로 감지되며, 존재하는 경우에만 해당 패치가 활성화됩니다.
 
@@ -41,7 +41,7 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 * **Late Mixin 제어**: [`CrossTieLateMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieLateMixinPlugin.java)
 * **ASM CoreMod**: [`CrossTieCorePlugin.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieCorePlugin.java)
 * **ASM Transformer**: [`CrossTieClassTransformer.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieClassTransformer.java)
-* **감지 가능 모드**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `WorldEdit`, `ProjectRed`, `CustomNPC+`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`
+* **감지 가능 모드**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `WorldEdit`, `ProjectRed`, `CustomNPC+`, `JourneyMap`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`
 
 ---
 

@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(targets = "com.mitchej123.hodgepodge.client.chat.ChatHandler", remap = false)
 public abstract class ChatHandlerNullGuardMixin {
 
-    @Inject(method = "tryCompactMessage", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "tryCompactMessage", at = @At("HEAD"), cancellable = true, require = 0)
     private static void crosstie$onTryCompactMessageNullGuard(IChatComponent imsg, List<ChatLine> chatLines,
             CallbackInfoReturnable<Boolean> cir) {
         if (imsg == null || chatLines == null || chatLines.isEmpty()) {
@@ -24,7 +24,7 @@ public abstract class ChatHandlerNullGuardMixin {
         }
     }
 
-    @Inject(method = "areMessagesIdentical", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "areMessagesIdentical", at = @At("HEAD"), cancellable = true, require = 0)
     private static void crosstie$onAreMessagesIdenticalNullGuard(IChatComponent imsg, IChatComponent prevMsg,
             CallbackInfoReturnable<Boolean> cir) {
         if (imsg == null || prevMsg == null || imsg.getSiblings() == null || prevMsg.getSiblings() == null) {
