@@ -52,7 +52,8 @@ public abstract class RenderMarkerBlockBaseMixin {
     private static boolean crosstie$textureStateRedirectedGrid = false;
 
     @org.spongepowered.asm.mixin.injection.Inject(method = "renderGrid", at = @At("HEAD"))
-    private void onRenderGridHead(jp.ngt.rtm.rail.TileEntityMarker marker, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+    private void onRenderGridHead(jp.ngt.rtm.rail.TileEntityMarker marker,
+            org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         if (crosstie$isShaderEnabled()) {
             crosstie$savedTextureIdGrid = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
             GL11.glEnable(GL11.GL_TEXTURE_2D);
@@ -62,7 +63,8 @@ public abstract class RenderMarkerBlockBaseMixin {
     }
 
     @org.spongepowered.asm.mixin.injection.Inject(method = "renderGrid", at = @At("RETURN"))
-    private void onRenderGridReturn(jp.ngt.rtm.rail.TileEntityMarker marker, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+    private void onRenderGridReturn(jp.ngt.rtm.rail.TileEntityMarker marker,
+            org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         if (crosstie$textureStateRedirectedGrid) {
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, crosstie$savedTextureIdGrid);
             GL11.glDisable(GL11.GL_TEXTURE_2D);

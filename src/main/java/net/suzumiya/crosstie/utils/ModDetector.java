@@ -67,6 +67,9 @@ public class ModDetector {
 
         // WorldEdit
         MOD_PATTERNS.put("WorldEdit", new String[] { "worldedit" });
+
+        // JourneyMap
+        MOD_PATTERNS.put("journeymap", new String[] { "journeymap" });
     }
 
     private final File mcDataDir;

@@ -94,3 +94,4 @@ CrossTie.code-workspace
 jarcontents.txt
 memo.txt
 .agents/
+.tmp/

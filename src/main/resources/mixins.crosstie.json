@@ -9,9 +9,11 @@
     "mixins": [
         "angelica.AngelicaRebuildSyncRTMRailMixin",
         "customnpc.ScriptControllerInitMixin",
+        "rtm.TrainStandingMixin",
         "rtm.VehicleTrackerEntryMixin"
     ],
     "client": [
+        "client.CameraTiltMixin",
         "angelica.AngelicaCloudRenderingFixMixin",
         "angelica.AngelicaRenderDistanceWaterFixMixin",
         "angelica.IdMapOrderFixMixin",

@@ -1,4 +1,4 @@
-package net.suzumiya.crosstie.util;
+package net.suzumiya.crosstie.utils;
 
 public class NGTRenderState {
     private static final ThreadLocal<Integer> renderDepth = new ThreadLocal<Integer>() {

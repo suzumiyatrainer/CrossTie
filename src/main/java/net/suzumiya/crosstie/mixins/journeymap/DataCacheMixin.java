@@ -17,7 +17,7 @@ import com.google.common.cache.Cache;
 public abstract class DataCacheMixin {
 
     @Shadow
-    final Cache<Long, ChunkMD> chunkMetadata = null;
+    Cache<Long, ChunkMD> chunkMetadata;
 
     /**
      * @author CrossTie

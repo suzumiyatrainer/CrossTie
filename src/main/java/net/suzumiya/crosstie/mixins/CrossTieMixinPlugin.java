@@ -27,18 +27,33 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         logDetectedCompatMods();
 
         // Prevent Nashorn compiled classes from going through LaunchClassLoader's ASM
-        // transformers
+        // transformers, and add them to exclusions so they are delegated to AppClassLoader
         try {
             if (net.minecraft.launchwrapper.Launch.classLoader != null) {
                 Object classLoader = net.minecraft.launchwrapper.Launch.classLoader;
-                java.lang.reflect.Method regTransEx = classLoader.getClass().getMethod("registerTransformerException",
+                java.lang.reflect.Method regTransEx = classLoader.getClass().getMethod("addTransformerExclusion",
                         String.class);
 
                 regTransEx.invoke(classLoader, "jdk.nashorn.internal.");
                 regTransEx.invoke(classLoader, "jdk.nashorn.api.scripting.");
                 regTransEx.invoke(classLoader, "org.openjdk.nashorn.");
+                
+                java.lang.reflect.Method addClassEx = classLoader.getClass().getMethod("addClassLoaderExclusion",
+                        String.class);
+                addClassEx.invoke(classLoader, "jdk.nashorn.");
+                addClassEx.invoke(classLoader, "org.openjdk.nashorn.");
+                
+                // Clear invalidClasses cache in case it was already attempted and failed
+                try {
+                    java.lang.reflect.Field invalidClassesField = classLoader.getClass().getDeclaredField("invalidClasses");
+                    invalidClassesField.setAccessible(true);
+                    ((java.util.Set<?>) invalidClassesField.get(classLoader)).clear();
+                } catch (Exception e) {
+                    System.err.println("[CrossTie] Failed to clear invalidClasses: " + e.getMessage());
+                }
+                
                 System.out.println(
-                        "[CrossTie] Registered Nashorn transformer exceptions in LaunchClassLoader via reflection");
+                        "[CrossTie] Registered Nashorn transformer and classloader exceptions in LaunchClassLoader via reflection");
             }
         } catch (Throwable t) {
             System.err.println(
@@ -291,8 +306,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.EntityTrainBaseOptimizationMixin");
             mixins.add("rtm.TileEntityPoleOptimizationMixin");
             mixins.add("rtm.TileEntityEWUpdateOptimizationMixin");
-            // F-01: 列車屋根上への立ち乗り追従（サーバー側のみ動作）
-            mixins.add("rtm.TrainStandingMixin");
+            // F-01: 列車屋根上への立ち乗り追従（サーバー側のみ動作） - 削除済み
             mixins.add("rtm.EntityVehiclePartCollisionNullMixin");
         }
 
@@ -453,6 +467,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         if (isClient && isModPresent("journeymap")) {
             mixins.add("journeymap.DataCacheMixin");
             mixins.add("journeymap.WaypointBeaconRendererMixin");
+            mixins.add("journeymap.WaypointDecorationRendererMixin");
         }
 
         // WorldEdit mixins are handled in Late Mixin (mixins.crosstie.late.json) to prevent early
