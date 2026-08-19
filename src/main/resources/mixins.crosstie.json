@@ -25,6 +25,7 @@
         "rtm.PartsRendererCheckMouseActionGuardMixin",
         "rtm.PartsRendererPickPassGuardMixin",
         "rtm.TileEntityCrossingGateNoCullingMixin",
-        "rtm.TileEntitySignalNoCullingMixin"
+        "rtm.TileEntitySignalNoCullingMixin",
+        "client.GuiMainMenuPanoramaMixin"
     ]
 }

@@ -115,6 +115,11 @@ public class CrossTieClassTransformer implements IClassTransformer {
             return patchScriptUtil(basicClass);
         }
 
+        // FML Loader: sortModList() の先頭で ModID の大文字小文字の差異を自動正規化
+        if (isClass(transformedName, name, "cpw.mods.fml.common.Loader", null)) {
+            return patchFmlLoader(basicClass);
+        }
+
         // AngelicaConfig は ASM パッチしない。
         // GTNHLib の config システムが static フィールドを初期化時にリセットするため、
         // クラスロード時のフィールド書き換えは効果がありません。
@@ -272,6 +277,34 @@ public class CrossTieClassTransformer implements IClassTransformer {
 
         if (changed) {
             System.out.println("[CrossTie] Patched ScriptUtil.doScript(String) -> ScriptUtilFallback.doScript(String)");
+        }
+        return changed ? writeClass(classNode) : basicClass;
+    }
+
+    /**
+     * FML {@code Loader.sortModList()} の先頭に、ModID の大文字小文字の差異を正規化するフックを挿入。
+     */
+    private byte[] patchFmlLoader(byte[] basicClass) {
+        ClassNode classNode = new ClassNode();
+        new ClassReader(basicClass).accept(classNode, 0);
+
+        boolean changed = false;
+        for (Object methodObject : classNode.methods) {
+            MethodNode method = (MethodNode) methodObject;
+            if ("sortModList".equals(method.name) && "()V".equals(method.desc)) {
+                InsnList inject = new InsnList();
+                inject.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                inject.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
+                        "net/suzumiya/crosstie/compat/FmlDependencyCompat",
+                        "normalizeModRequirements",
+                        "(Lcpw/mods/fml/common/Loader;)V", false));
+                method.instructions.insert(inject);
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            System.out.println("[CrossTie] Patched Loader.sortModList() to normalize mod dependencies/requirements");
         }
         return changed ? writeClass(classNode) : basicClass;
     }

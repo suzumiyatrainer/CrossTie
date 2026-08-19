@@ -60,7 +60,8 @@ public final class CrossTieConfig {
             "fixOptiFineWireShadowPass",
             // Features
             "enableWireFastRemove",
-            "standingRoomEnabled"));
+            "standingRoomEnabled",
+            "enableCustomTitleScreen"));
 
     /** config_version プロパティの名前 */
     private static final String PROP_CONFIG_VERSION = "config_version";
@@ -104,6 +105,9 @@ public final class CrossTieConfig {
 
     /** 列車屋根上への立ち乗り追従機能を有効にするかどうか。 */
     public static boolean standingRoomEnabled;
+
+    /** カスタムタイトル画面(ランダムパノラマ)機能を有効にするかどうか。 */
+    public static boolean enableCustomTitleScreen;
 
     // ---- 設定項目 (Performance) ---- //
 
@@ -283,6 +287,9 @@ public final class CrossTieConfig {
                 "列車の屋根上（TRAIN_HEIGHT 以上の位置）に立つプレイヤーを列車の移動に追従させる立ち乗り機能を有効にします。"
                         + " サーバー側のみで動作します。");
 
+        enableCustomTitleScreen = config.getBoolean("enableCustomTitleScreen", CAT_FEATURES, true,
+                "タイトル画面のパノラマ背景をCrossTieオリジナルのランダムな画像に置き換えます。");
+
         // ---- 2. Performance カテゴリ ---- //
         trainDistantCullingEnabled = config.getBoolean("trainDistantCullingEnabled", CAT_PERFORMANCE, true,
                 "256m以上離れたTrain Entityのクライアント側更新頻度を低減します。");
@@ -353,6 +360,7 @@ public final class CrossTieConfig {
         enableSoundDebug = false;
         enableWireFastRemove = true;
         standingRoomEnabled = true;
+        enableCustomTitleScreen = true;
         trainDistantCullingEnabled = true;
         trainSpeedSyncEnabled = true;
         railTesrThrottleEnabled = true;

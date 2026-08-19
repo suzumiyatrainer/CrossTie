@@ -48,6 +48,10 @@ public class GuiReloadingWaitScreen extends GuiScreen {
             this.isFinished = true;
             this.okButton.enabled = true;
             this.okButton.visible = true;
+            
+            // Finish reloading and atomic swap on the main thread
+            net.suzumiya.crosstie.gui.RTMReloadPacksLogic.finishReloadOnMainThread();
+            
             if (!this.hasError) {
                 try {
                     net.minecraft.util.ResourceLocation soundLoc = new net.minecraft.util.ResourceLocation("crosstie", "sounds/rtmreloaded.wav");

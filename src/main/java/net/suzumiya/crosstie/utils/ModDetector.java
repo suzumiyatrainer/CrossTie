@@ -50,6 +50,7 @@ public class ModDetector {
 
         // Incompatible mods
         MOD_PATTERNS.put("MinFo", new String[] { "minfo" });
+        MOD_PATTERNS.put("PanoramaMaker", new String[] { "panoramamaker", "aglpm" });
 
         // OptiFine / FastCraft (brightness fix targets)
         MOD_PATTERNS.put("OptiFine", new String[] { "optifine" });

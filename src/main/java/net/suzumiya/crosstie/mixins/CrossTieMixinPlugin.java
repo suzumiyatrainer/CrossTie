@@ -26,6 +26,21 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         logDetectedCompatMods();
 
+        // Angelica and PanoramaMaker compatibility
+        // if (isModPresent("PanoramaMaker")) {
+        // try {
+        // Class<?> angelicaConfig =
+        // Class.forName("com.gtnewhorizons.angelica.config.AngelicaConfig");
+        // java.lang.reflect.Field field =
+        // angelicaConfig.getField("enablePanoramaBlurShader");
+        // field.set(null, false);
+        // System.out.println("[CrossTie] Disabled Angelica's Panorama Blur because
+        // PanoramaMaker is installed.");
+        // } catch (Throwable t) {
+        // // Ignore
+        // }
+        // }
+
         // Prevent Nashorn compiled classes from going through LaunchClassLoader's ASM
         // transformers, and add them to exclusions so they are delegated to
         // AppClassLoader
@@ -173,6 +188,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 shouldApply = isClient && hasAngelicaGlsm;
                 debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm
                         + ", nativeLists=forced_for_rtm_parts";
+            } else if (mixinClassName.endsWith(".IrisLoadingCompleteFixMixin")) {
+                shouldApply = isClient && hasAnyAngelica;
+                debugReason = "isClient=" + isClient + ", Angelica(GLSM)?=" + hasAnyAngelica;
             } else if (mixinClassName.endsWith(".IdMapOrderFixMixin")
                     || mixinClassName.endsWith(".AngelicaBlockMaterialMappingCaseFixMixin")
                     || mixinClassName.endsWith(".AngelicaItemMaterialHelperCaseFixMixin")) {
@@ -266,7 +284,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 + isModPresent("MCTE") + ", LiteLoader=" + isModPresent("LiteLoader") + ", MacroMod="
                 + isModPresent("MacroMod") + ", OptiFine=" + isModPresent("OptiFine") + ", FastCraft="
                 + isModPresent("FastCraft") + ", WebCTC=" + isModPresent("WebCTC") + ", JourneyMap="
-                + isModPresent("journeymap") + ", nativeRenderGlobalDisplayLists="
+                + isModPresent("journeymap") + ", PanoramaMaker=" + isModPresent("PanoramaMaker")
+                + ", nativeRenderGlobalDisplayLists="
                 + isNativeRenderGlobalDisplayListsEnabled());
     }
 
@@ -285,6 +304,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         // Hodgepodge
         if (isClient && isModPresent("Hodgepodge")) {
             mixins.add("hodgepodge.ChatHandlerNullGuardMixin");
+            mixins.add("hodgepodge.MinecraftPreloadMixin");
         }
 
         // GTNHLib - always present
@@ -346,6 +366,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             // Angelica
             if (isModPresent("AngelicaGlsm")) {
                 mixins.add("angelica.AngelicaRenderGlobalDisplayListCrashMixin");
+                mixins.add("angelica.IrisLoadingCompleteFixMixin");
                 // mixins.add("angelica.SimpleWorldRendererMixin"); //
                 // 現在のAngelica/Celeritasにはターゲットメソッドが存在しないため、クラッシュ回避のため無効化
             }
@@ -385,6 +406,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 // VehicleTrackerのデフォルト3tick更新に合わせて係数0.2〜0.25が望ましいが
                 // 現在0.35で設定中。オーバーシュートが気になる場合は値を下げること。
                 mixins.add("rtm.EntityTrainClientSmoothingMixin");
+                
+                mixins.add("rtm.ModelPackManagerReloadMixin");
+                mixins.add("rtm.TextureManagerReloadMixin");
 
                 // GL_SELECT (マウスピッキング) 回避パッチ
                 //
@@ -466,9 +490,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         // JourneyMap
         if (isClient && isModPresent("journeymap")) {
+            mixins.add("journeymap.WaypointBeaconRendererMixin");
+            mixins.add("journeymap.WaypointDecorationRendererMixin");
             // mixins.add("journeymap.DataCacheMixin");
-            // mixins.add("journeymap.WaypointBeaconRendererMixin");
-            // mixins.add("journeymap.WaypointDecorationRendererMixin");
         }
 
         // WorldEdit mixins are handled in Late Mixin (mixins.crosstie.late.json) to

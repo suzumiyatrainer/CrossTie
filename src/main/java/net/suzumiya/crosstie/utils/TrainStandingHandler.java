@@ -15,11 +15,11 @@ import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 
 public class TrainStandingHandler {
-    private static final double SURFACE_MARGIN = 0.2;
-    private static final double RIDE_MARGIN = 1.0;
-    private static final double SIDE_MARGIN = 0.15;
-    private static final double Y_CORRECTION_FACTOR = 0.3;
-    private static final double MAX_Y_CORRECTION = 0.5;
+    // private static final double SURFACE_MARGIN = 0.2;
+    // private static final double RIDE_MARGIN = 1.0;
+    // private static final double SIDE_MARGIN = 0.15;
+    // private static final double Y_CORRECTION_FACTOR = 0.3;
+    // private static final double MAX_Y_CORRECTION = 0.5;
     private static final Set<UUID> ridingPlayers = Collections.newSetFromMap(new WeakHashMap<>());
     private static EntityTrainBase clientStandingTrain = null;
 
@@ -141,6 +141,7 @@ public class TrainStandingHandler {
         double localWidth = localVec.xCoord;
         double widthMargin = alreadyRiding ? halfWidth + 0.6 : halfWidth;
         double lengthMargin = alreadyRiding ? halfLength + 0.5 : halfLength;
+        @SuppressWarnings("unused")
         boolean bl = horizontalOverlap = Math.abs(localWidth) <= widthMargin && Math.abs(localLength) <= lengthMargin;
         if (!horizontalOverlap) {
             return false;
