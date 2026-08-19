@@ -31,10 +31,10 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
-| **Gradle** | `9.6.1` |
+| **Gradle** | `9.7.0` |
 | **필수 모드** | `UniMixins 0.3.1+` |
-| **빌드 시스템** | RetroFuturaGradle 2.0.2 |
-| **최종 확인** | `2026-08-13` |
+| **빌드 시스템** | RetroFuturaGradle 2.0.3 |
+| **최종 확인** | `2026-08-19` |
 
 ### 🔍 내부 구조 인덱스
 * **Mixin 제어**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)

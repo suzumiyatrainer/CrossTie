@@ -31,10 +31,10 @@ CrossTie 将跨越多个模组（如 RTM / NGTLib / MCTE (KaizPatchX)、Angelica
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
-| **Gradle** | `9.6.1` |
+| **Gradle** | `9.7.0` |
 | **前置模组** | `UniMixins 0.3.1+` |
-| **构建系统** | RetroFuturaGradle 2.0.2 |
-| **最后确认** | `2026-08-13` |
+| **构建系统** | RetroFuturaGradle 2.0.3 |
+| **最后确认** | `2026-08-19` |
 
 ### 🔍 内部结构索引
 * **Mixin 控制**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
