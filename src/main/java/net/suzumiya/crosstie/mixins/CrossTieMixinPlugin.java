@@ -330,6 +330,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.TileEntityEWUpdateOptimizationMixin");
             // F-01: 列車屋根上への立ち乗り追従（サーバー側のみ動作） - 削除済み
             mixins.add("rtm.EntityVehiclePartCollisionNullMixin");
+            mixins.add("rtm.BlockElectricalWiringBreakBlockMixin");
+            mixins.add("rtm.BlockLargeRailBaseBreakBlockMixin");
         }
 
         // KaizPatch / NGTScriptUtil
@@ -476,6 +478,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.TileEntityMarkerBroadcastOptimizationMixin");
             // P-09: TileEntityElectricalWiring の sendToAll を sendToAllAround に変更
             mixins.add("rtm.TileEntityEWBroadcastOptimizationMixin");
+            // P-10: Point#checkRSInput() の毎 tick・毎フレーム二重呼び出しを解消
+            // onUpdate() の先頭で1回だけ checkRSInput() を呼びキャッシュし、
+            // 同 tick 内の onUpdate() 本体と getActiveRailMap() からはキャッシュを参照する。
+            // 分岐レールが通常レールより4倍重い(~11.4% vs ~3.02%)原因の主要部を削減。
+            mixins.add("rtm.PointRSCacheMixin");
         }
 
         if (isModPresent("NGTLib")) {

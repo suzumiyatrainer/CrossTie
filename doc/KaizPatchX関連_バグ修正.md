@@ -44,6 +44,15 @@ KaizPatchX（RealTrainMod (RTM)、NGTLib、MCTE 等を含む `KaizPatchX-1.10.1`
 - **結果**:
   一部のモデルデータの読み込みに問題が発生した場合でもゲーム全体のクラッシュを回避し、安全に継続動作させることができます。
 
+### 2.4 MCTE等による特殊ブロック一括破壊時のクラッシュ修正
+- **対象ファイル**: `BlockLargeRailBaseBreakBlockMixin.java`, `BlockElectricalWiringBreakBlockMixin.java`
+- **問題の背景**:
+  MCTEの範囲編集などで、レール（LargeRail）や電線（ElectricalWiring）が置かれている領域を一括で削除・置換した際、TileEntityがすでに消失している状態でブロック破壊処理（`breakBlock`）が呼び出され、`NullPointerException` が発生してサーバーがクラッシュする問題がありました。
+- **修正内容**:
+  ブロック破壊処理の開始時にTileEntityの存在と型を安全にチェックし、不正な状態（Null等）の場合は残りの処理を安全にスキップするガードロジックを追加しました。
+- **結果**:
+  MCTEなどの外部ツールでレールや電線を含む領域を一括消去・編集しても、クラッシュすることなく安全に処理が完了するようになります。
+
 ---
 
 ## 3. 描画・レンダリング関連のバグ修正

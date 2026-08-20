@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 @Mixin(value = ModelPackManager.class, remap = false)
 public class ModelPackManagerReloadMixin {
 

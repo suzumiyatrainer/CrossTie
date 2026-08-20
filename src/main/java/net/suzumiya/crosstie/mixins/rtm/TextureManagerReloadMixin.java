@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings({"unchecked"})
 @Mixin(value = TextureManager.class, remap = false)
 public class TextureManagerReloadMixin {
 

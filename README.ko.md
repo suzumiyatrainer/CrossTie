@@ -34,7 +34,7 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 | **Gradle** | `9.7.0` |
 | **필수 모드** | `UniMixins 0.3.1+` |
 | **빌드 시스템** | RetroFuturaGradle 2.0.3 |
-| **최종 확인** | `2026-08-19` |
+| **최종 확인** | `2026-08-21` |
 
 ### 🔍 내부 구조 인덱스
 * **Mixin 제어**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -51,7 +51,7 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 
 | 모드명 | 권장 버전 | 구분 |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha9` | **코어** |
+| **CrossTie** | `1.0.0-Alpha12` | **코어** |
 | **UniMixins** | `0.3.1` | **필수** |
 | **KaizPatchX** | `1.10.1` | 권장 |
 | **Angelica** | `2.1.59+` | 권장 |
@@ -71,11 +71,11 @@ CrossTie는 RTM 관련 모드군(KaizPatchX)과 성능 최적화 모드군 사�
    * 자세히: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 2. **⏳ TPS / 서버 부하 최적화**
-   * 애자 및 가선주의 불필요한 Tick 업데이트(`updateEntity`) 완전 스킵, Train Entity 업데이트 빈도 최적화, 네트워크/음향 패킷 전송 수신 거리 고속 판정, MCTE 대규모 블록 교체 Diff 판정, GTNHLib 객체 풀 스레드 안전화 등.
+   * 애자 및 가선주의 불필요한 Tick 업데이트(`updateEntity`) 완전 스킵, Train Entity 업데이트 빈도 최적화, 네트워크/음향 패킷 전송 수신 거리 고속 판정, MCTE 대규모 블록 교체 Diff 판정, GTNHLib 객체 풀 스레드 안전화, 분기 레일의 레드스톤 입력 상태 캐싱 등.
    * 자세히: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 호환성 및 렌더링 버그 수정**
-   * Angelica 및 OptiFine 환경에서의 RTM/MCTE 렌더링 버그 수정(동적 광원·1.12.2 매니페스트 마커 현대화), 차량 파츠 호버 데이터 혼선 방지, 대나무 모드 온천수에 셰이더 수면 효과 적용, 기타 주변 모드 충돌 수정.
+   * Angelica 및 OptiFine 환경에서의 RTM/MCTE 렌더링 버그 수정(동적 광원·1.12.2 매니페스트 마커 현대화), 차량 파츠 호버 데이터 혼선 방지, 대나무 모드 온천수에 셰이더 수면 효과 적용, MCTE 등에서 특수 블록 일괄 파괴 시 크래시 수정, 기타 주변 모드 충돌 수정.
    * 자세히:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)

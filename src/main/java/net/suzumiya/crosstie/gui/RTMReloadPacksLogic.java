@@ -4,16 +4,10 @@ import cpw.mods.fml.relauncher.Side;
 import jp.ngt.rtm.modelpack.ModelPackLoadThread;
 import jp.ngt.rtm.modelpack.ModelPackManager;
 import jp.ngt.rtm.modelpack.texture.TextureManager;
-import jp.ngt.rtm.modelpack.texture.TextureProperty;
-import jp.ngt.ngtlib.renderer.model.IModelNGT;
 import net.minecraft.client.Minecraft;
 import net.suzumiya.crosstie.CrossTie;
-import org.lwjgl.opengl.GL11;
-
 import java.lang.reflect.Field;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RTMReloadPacksLogic {
@@ -23,36 +17,38 @@ public class RTMReloadPacksLogic {
     public static Thread reloadPacks() {
         // Reset state
         currentCacheMessage = null;
-        
+
         Thread wrapperThread = new Thread(() -> {
             try {
                 currentCacheMessage = "crosstie.gui.reloadPacks.clearing_caches";
-                
+
                 // --- DOUBLE BUFFERING START ---
-                // We use Reflection to access the Mixin injected fields and original private fields
+                // We use Reflection to access the Mixin injected fields and original private
+                // fields
                 CrossTie.LOGGER.info("Preparing Double Buffering maps...");
-                
+
                 // ModelPackManager
                 Map<?, ?> oldAllModelSetMap = cloneNestedMap(ModelPackManager.INSTANCE, "allModelSetMap");
                 Map<?, ?> oldSmpModelSetMap = cloneNestedMap(ModelPackManager.INSTANCE, "smpModelSetMap");
                 Map<?, ?> oldModelFileMap = cloneMap(ModelPackManager.INSTANCE, "modelFileMap");
                 Map<?, ?> oldResourceMap = cloneNestedMap(ModelPackManager.INSTANCE, "resourceMap");
                 Map<?, ?> oldScriptCache = cloneMap(ModelPackManager.INSTANCE, "scriptCache");
-                
+
                 setField(ModelPackManager.INSTANCE, "crosstie$oldAllModelSetMap", oldAllModelSetMap);
                 setField(ModelPackManager.INSTANCE, "crosstie$oldSmpModelSetMap", oldSmpModelSetMap);
                 setField(ModelPackManager.INSTANCE, "crosstie$oldModelFileMap", oldModelFileMap);
                 setField(ModelPackManager.INSTANCE, "crosstie$oldResourceMap", oldResourceMap);
                 setField(ModelPackManager.INSTANCE, "crosstie$oldScriptCache", oldScriptCache);
-                
+
                 setField(ModelPackManager.INSTANCE, "crosstie$isReloading", true);
-                
+
                 // TextureManager
                 Map<?, ?> oldAllTextureMap = cloneNestedMap(TextureManager.INSTANCE, "allTextureMap");
                 setField(TextureManager.INSTANCE, "crosstie$oldAllTextureMap", oldAllTextureMap);
                 setField(TextureManager.INSTANCE, "crosstie$isReloading", true);
 
-                // Now we can safely clear the original maps because the render thread reads from old maps
+                // Now we can safely clear the original maps because the render thread reads
+                // from old maps
                 clearNestedMapField(ModelPackManager.INSTANCE, "allModelSetMap");
                 clearNestedMapField(ModelPackManager.INSTANCE, "smpModelSetMap");
                 clearMapField(ModelPackManager.INSTANCE, "modelFileMap");
@@ -67,7 +63,8 @@ public class RTMReloadPacksLogic {
                     Object instance = cachedPolyClass.getField("INSTANCE").get(null);
                     clearMapField(instance, "trackedModels");
 
-                    Class<?> lruClass = Class.forName("jp.kaiz.kaizpatch.fixrtm.model.CachedPolygonModel$LoadedModelLru");
+                    Class<?> lruClass = Class
+                            .forName("jp.kaiz.kaizpatch.fixrtm.model.CachedPolygonModel$LoadedModelLru");
                     Field lruInstanceField = lruClass.getDeclaredField("INSTANCE");
                     lruInstanceField.setAccessible(true);
                     Object lruInstance = lruInstanceField.get(null);
@@ -77,7 +74,8 @@ public class RTMReloadPacksLogic {
                     totalWeightField.setAccessible(true);
                     totalWeightField.set(lruInstance, 0L);
                 } catch (Exception e) {
-                    CrossTie.LOGGER.warn("Failed to clear KaizPatchX caches. Might not be installed or version changed.", e);
+                    CrossTie.LOGGER
+                            .warn("Failed to clear KaizPatchX caches. Might not be installed or version changed.", e);
                 }
 
                 currentCacheMessage = "crosstie.gui.reloadPacks.reloading_fileloader";
@@ -104,10 +102,11 @@ public class RTMReloadPacksLogic {
 
                 thread.start();
                 thread.join();
-                
+
                 jp.ngt.rtm.RTMConfig.loadSpeed = oldLoadSpeed;
 
-                // Done loading. We don't swap maps here, we wait for the GUI to call finishReloadOnMainThread().
+                // Done loading. We don't swap maps here, we wait for the GUI to call
+                // finishReloadOnMainThread().
                 CrossTie.LOGGER.info("Successfully loaded new RTM models into background caches.");
             } catch (Exception e) {
                 CrossTie.LOGGER.error("Failed to reload RTM model packs dynamically.", e);
@@ -124,33 +123,35 @@ public class RTMReloadPacksLogic {
             // Turn off double buffering, letting the render thread read the NEW maps
             setField(ModelPackManager.INSTANCE, "crosstie$isReloading", false);
             setField(TextureManager.INSTANCE, "crosstie$isReloading", false);
-            
+
             // Force redraw of entities
             forceUpdateAllEntities();
-            
+
             CrossTie.LOGGER.info("Successfully completed atomic swap for RTM reload.");
         } catch (Exception e) {
             CrossTie.LOGGER.error("Failed to finish reload on main thread", e);
         }
     }
 
-
-
     private static void forceUpdateAllEntities() {
         if (Minecraft.getMinecraft().theWorld != null) {
             for (Object obj : Minecraft.getMinecraft().theWorld.loadedEntityList) {
                 if (obj instanceof jp.ngt.rtm.entity.train.EntityTrainBase) {
                     try {
-                        java.lang.reflect.Method m = jp.ngt.rtm.entity.train.EntityTrainBase.class.getDeclaredMethod("onModelChanged");
+                        java.lang.reflect.Method m = jp.ngt.rtm.entity.train.EntityTrainBase.class
+                                .getDeclaredMethod("onModelChanged");
                         m.setAccessible(true);
                         m.invoke(obj);
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                 } else if (obj instanceof jp.ngt.rtm.entity.vehicle.EntityVehicleBase) {
                     try {
-                        java.lang.reflect.Method m = jp.ngt.rtm.entity.vehicle.EntityVehicleBase.class.getDeclaredMethod("onModelChanged");
+                        java.lang.reflect.Method m = jp.ngt.rtm.entity.vehicle.EntityVehicleBase.class
+                                .getDeclaredMethod("onModelChanged");
                         m.setAccessible(true);
                         m.invoke(obj);
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                    }
                 }
             }
         }
@@ -199,6 +200,7 @@ public class RTMReloadPacksLogic {
         }
     }
 
+    @SuppressWarnings("unused")
     private static Object getField(Object instance, String fieldName) {
         try {
             Field field = instance.getClass().getDeclaredField(fieldName);
@@ -262,7 +264,8 @@ public class RTMReloadPacksLogic {
                             if (zipFile instanceof java.util.zip.ZipFile) {
                                 ((java.util.zip.ZipFile) zipFile).close();
                             }
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -272,7 +275,8 @@ public class RTMReloadPacksLogic {
             java.lang.reflect.Method getFilesMethod = fixFileLoaderClass.getMethod("getFiles");
             java.util.List<java.io.File> files = (java.util.List<java.io.File>) getFilesMethod.invoke(instance);
 
-            java.lang.reflect.Method loadModelPackMethod = fixFileLoaderClass.getDeclaredMethod("loadModelPack", java.io.File.class);
+            java.lang.reflect.Method loadModelPackMethod = fixFileLoaderClass.getDeclaredMethod("loadModelPack",
+                    java.io.File.class);
             loadModelPackMethod.setAccessible(true);
 
             Map<String, java.util.Set<Object>> newPacks = new java.util.HashMap<>();
@@ -308,7 +312,8 @@ public class RTMReloadPacksLogic {
                     existingPacks.clear();
                     existingPacks.putAll(newPacks);
                     updatedPacks = true;
-                } else if (field.getName().equals("allModelPacks") && java.util.Set.class.isAssignableFrom(field.getType())) {
+                } else if (field.getName().equals("allModelPacks")
+                        && java.util.Set.class.isAssignableFrom(field.getType())) {
                     field.setAccessible(true);
                     java.util.Set<Object> existingAllPacks = (java.util.Set<Object>) field.get(null);
                     existingAllPacks.clear();
@@ -324,13 +329,15 @@ public class RTMReloadPacksLogic {
                                 zipFileField.setAccessible(true);
                                 Object zipFileObj = zipFileField.get(pack);
                                 if (zipFileObj instanceof java.util.zip.ZipFile) {
-                                    java.util.Enumeration<? extends java.util.zip.ZipEntry> entries = ((java.util.zip.ZipFile) zipFileObj).entries();
+                                    java.util.Enumeration<? extends java.util.zip.ZipEntry> entries = ((java.util.zip.ZipFile) zipFileObj)
+                                            .entries();
                                     while (entries.hasMoreElements()) {
                                         java.util.zip.ZipEntry entry = entries.nextElement();
                                         existingIgnoreCaseMap.put(entry.getName().toLowerCase(), entry.getName());
                                     }
                                 }
-                            } catch (Exception ignored) {}
+                            } catch (Exception ignored) {
+                            }
                         }
                     }
                 }
@@ -353,7 +360,8 @@ public class RTMReloadPacksLogic {
         try {
             Class<?> cacheClass = Class.forName("jp.kaiz.kaizpatch.fixrtm.caching.ModelPackBasedCache");
             java.io.File cacheDir = new java.io.File(Minecraft.getMinecraft().mcDataDir, "fixrtm-cache/PolygonModel");
-            java.io.File scriptedCacheDir = new java.io.File(Minecraft.getMinecraft().mcDataDir, "fixrtm-cache/ScriptedPolygonModel");
+            java.io.File scriptedCacheDir = new java.io.File(Minecraft.getMinecraft().mcDataDir,
+                    "fixrtm-cache/ScriptedPolygonModel");
             Class<?> pairClass = Class.forName("kotlin.Pair");
             java.lang.reflect.Constructor<?> cacheConstructor = cacheClass.getConstructors()[0];
             Object pairArray = java.lang.reflect.Array.newInstance(pairClass, 1);
@@ -384,7 +392,8 @@ public class RTMReloadPacksLogic {
                 } else if (field.getName().equals("scriptedCache")) {
                     field.setAccessible(true);
                     Object oldScriptedCache = field.get(null);
-                    Map<Object, Object> oldScriptedCachesMap = (Map<Object, Object>) cachesMapField.get(oldScriptedCache);
+                    Map<Object, Object> oldScriptedCachesMap = (Map<Object, Object>) cachesMapField
+                            .get(oldScriptedCache);
                     Map<Object, Object> newScriptedMap = (Map<Object, Object>) cachesMapField.get(newScriptedCache);
                     oldScriptedCachesMap.clear();
                     oldScriptedCachesMap.putAll(newScriptedMap);
@@ -417,7 +426,8 @@ public class RTMReloadPacksLogic {
                         ((java.util.Collection<?>) value).clear();
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             CrossTie.LOGGER.info("Successfully recreated CachedPolygonModel caches.");
         } catch (Exception e) {

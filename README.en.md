@@ -34,7 +34,7 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | **Gradle** | `9.7.0` |
 | **Required Mod** | `UniMixins 0.3.1+` |
 | **Build System** | RetroFuturaGradle 2.0.3 |
-| **Last Checked** | `2026-08-19` |
+| **Last Checked** | `2026-08-21` |
 
 ### 🔍 Internal Structure Index
 * **Mixin Control**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -51,7 +51,7 @@ Recommended mod versions for a smooth experience.
 
 | Mod Name | Recommended Version | Category |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha9` | **Core** |
+| **CrossTie** | `1.0.0-Alpha12` | **Core** |
 | **UniMixins** | `0.3.1` | **Required** |
 | **KaizPatchX** | `1.10.1` | Recommended |
 | **Angelica** | `2.1.59+` | Recommended |
@@ -71,11 +71,11 @@ CrossTie collectively solves and provides the following **4 core features** rega
    * Details: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 2. **⏳ TPS / Server Load Optimization**
-   * Complete skip of unnecessary TileEntity tick updates (`updateEntity`) for insulators and poles, Train Entity update frequency optimization, fast hearing distance checks for network/sound packets, MCTE large-scale block replacement Diff checks, GTNHLib object pool thread-safety, etc.
+   * Complete skip of unnecessary TileEntity tick updates (`updateEntity`) for insulators and poles, Train Entity update frequency optimization, fast hearing distance checks for network/sound packets, MCTE large-scale block replacement Diff checks, GTNHLib object pool thread-safety, caching of redstone input states for branched rails, etc.
    * Details: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 Compatibility & Rendering Bug Fixes**
-   * RTM/MCTE rendering bug fixes under Angelica or OptiFine (dynamic lighting, 1.12.2 manifest marker modernization), vehicle part hover data corruption guards, shader water effects for Bamboo Spa Water, and compatibility fixes for other surrounding mods.
+   * RTM/MCTE rendering bug fixes under Angelica or OptiFine (dynamic lighting, 1.12.2 manifest marker modernization), vehicle part hover data corruption guards, shader water effects for Bamboo Spa Water, crash fix when breaking special blocks in bulk with MCTE, and compatibility fixes for other surrounding mods.
    * Details:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)

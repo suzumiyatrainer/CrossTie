@@ -34,7 +34,7 @@ CrossTie 將橫跨多個模組（例如 RTM / NGTLib / MCTE (KaizPatchX)、Angel
 | **Gradle** | `9.7.0` |
 | **必備模組** | `UniMixins 0.3.1+` |
 | **建置系統** | RetroFuturaGradle 2.0.3 |
-| **最後確認** | `2026-08-19` |
+| **最後確認** | `2026-08-21` |
 
 ### 🔍 內部結構索引
 * **Mixin 控制**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -51,7 +51,7 @@ CrossTie 將橫跨多個模組（例如 RTM / NGTLib / MCTE (KaizPatchX)、Angel
 
 | 模組名稱 | 推薦版本 | 類別 |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha9` | **核心** |
+| **CrossTie** | `1.0.0-Alpha12` | **核心** |
 | **UniMixins** | `0.3.1` | **必備** |
 | **KaizPatchX** | `1.10.1` | 推薦 |
 | **Angelica** | `2.1.59+` | 推薦 |
@@ -71,11 +71,11 @@ CrossTie 統整解決了 RTM 相關模組（KaizPatchX）與效能最佳化模�
    * 詳情: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 2. **⏳ TPS / 伺服器負載最佳化**
-   * 完全跳過絕緣子與電線桿不必要的 Tick 更新（`updateEntity`）、列車實體更新頻率最佳化、網路/音效封包傳送聽覺距離高速判定、MCTE 大規模方塊替換 Diff 判定、GTNHLib 物件池執行緒安全化等。
+   * 完全跳過絕緣子與電線桿不必要的 Tick 更新（`updateEntity`）、列車實體更新頻率最佳化、網路/音效封包傳送聽覺距離高速判定、MCTE 大規模方塊替換 Diff 判定、GTNHLib 物件池執行緒安全化、分支鐵軌的紅石輸入狀態快取化等。
    * 詳情: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 相容性與渲染錯誤修復**
-   * 修復在 Angelica 或 OptiFine 環境下的 RTM/MCTE 渲染錯誤（動態光源、1.12.2 Manifest 標記現代化）、列車部件懸停資料串擾防護、竹 Mod 溫泉水應用光影水面效果、以及其他周邊模組的衝突。
+   * 修復在 Angelica 或 OptiFine 環境下的 RTM/MCTE 渲染錯誤（動態光源、1.12.2 Manifest 標記現代化）、列車部件懸停資料串擾防護、竹 Mod 溫泉水應用光影水面效果、修復 MCTE 等工具批次破壞特殊方塊時的崩潰問題、以及其他周邊模組的衝突。
    * 詳情:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)
