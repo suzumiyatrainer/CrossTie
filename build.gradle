@@ -219,7 +219,7 @@ dependencies {
 
     // IFTTTUtilMixin用: ATSAssistModが実行時に提供するJacksonのDatabindを
     // コンパイル時のみ参照する(CrossTie本体には同梱しない)
-    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
+    compileOnly 'com.fasterxml.jackson.core:jackson-databind:2.22.2'
 
     // Journeymap Integration
     compileOnly rfg.deobf("maven.modrinth:lfHFW1mp:cxw6VoUX")
