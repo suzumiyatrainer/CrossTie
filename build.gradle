@@ -174,7 +174,7 @@ dependencies {
     nashornLib('org.openjdk.nashorn:nashorn-core:15.7')
 
     // Annotation processor for Mixins
-    annotationProcessor('com.google.guava:guava:33.6.0-jre')
+    annotationProcessor('com.google.guava:guava:33.7.0-jre')
     annotationProcessor('com.google.code.gson:gson:2.14.0')
 
     // ASM
