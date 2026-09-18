@@ -71,6 +71,12 @@ public class ModDetector {
 
         // JourneyMap
         MOD_PATTERNS.put("journeymap", new String[] { "journeymap" });
+
+        // WebCTC
+        MOD_PATTERNS.put("WebCTC", new String[] { "webctc" });
+
+        // lwjgl3ify (LWJGL 2 to LWJGL 3 / SDL compatibility layer)
+        MOD_PATTERNS.put("lwjgl3ify", new String[] { "lwjgl3ify" });
     }
 
     private final File mcDataDir;

@@ -134,7 +134,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         boolean shouldApply;
         String debugReason = "";
 
-        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.bamboo.")) {
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.lwjgl3ify.")) {
+            boolean hasLwjgl3ify = isModPresent("lwjgl3ify");
+            shouldApply = isClient && hasLwjgl3ify;
+            debugReason = "isClient=" + isClient + ", lwjgl3ify=" + hasLwjgl3ify;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.bamboo.")) {
             boolean hasBamboo = isModPresent("Bamboo");
             shouldApply = isClient && hasBamboo;
             debugReason = "isClient=" + isClient + ", Bamboo=" + hasBamboo;
@@ -200,6 +204,15 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 shouldApply = isClient && hasAnyAngelica;
                 debugReason = "isClient=" + isClient + ", Angelica(GLSM)?=" + hasAnyAngelica;
             }
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.ngtlib.")) {
+            boolean hasNgtLib = isModPresent("NGTLib");
+            if (mixinClassName.endsWith(".TextureSetMixin")) {
+                shouldApply = isClient && hasNgtLib;
+                debugReason = "isClient=" + isClient + ", NGTLib=" + hasNgtLib;
+            } else {
+                shouldApply = hasNgtLib;
+                debugReason = "NGTLib=" + hasNgtLib;
+            }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.rtm.")) {
             boolean hasAngelicaGlsm = isModPresent("AngelicaGlsm");
             boolean hasRtm = isModPresent("RTM");
@@ -210,6 +223,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                     || mixinClassName.endsWith(".RenderVehicleBaseContextMixin")
                     || mixinClassName.endsWith(".PartsRendererCheckMouseActionGuardMixin")
                     || mixinClassName.endsWith(".PartsRendererPickPassGuardMixin")
+                    || mixinClassName.endsWith(".ModelObjectMixin")
                     || mixinClassName.endsWith(".MixinSoundAPIEntityTrainBase")) {
                 // クライアント専用パッチ/API: クライアントかつRTM存在時のみ適用
                 shouldApply = isClient && hasRtm;
@@ -285,8 +299,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 + isModPresent("MacroMod") + ", OptiFine=" + isModPresent("OptiFine") + ", FastCraft="
                 + isModPresent("FastCraft") + ", WebCTC=" + isModPresent("WebCTC") + ", JourneyMap="
                 + isModPresent("journeymap") + ", PanoramaMaker=" + isModPresent("PanoramaMaker")
-                + ", nativeRenderGlobalDisplayLists="
-                + isNativeRenderGlobalDisplayListsEnabled());
+                + ", nativeRenderGlobalDisplayLists=" + isNativeRenderGlobalDisplayListsEnabled());
     }
 
     @Override
@@ -332,6 +345,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.EntityVehiclePartCollisionNullMixin");
             mixins.add("rtm.BlockElectricalWiringBreakBlockMixin");
             mixins.add("rtm.BlockLargeRailBaseBreakBlockMixin");
+            mixins.add("rtm.RailPropertyAutoSplitLegacyMixin");
+            mixins.add("rtm.EntityFloorSeatCollisionMixin");
+            mixins.add("rtm.EntityVehicleBaseFixRiderPosMixin");
         }
 
         // KaizPatch / NGTScriptUtil
@@ -359,6 +375,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         // Client-side mixins
         if (isClient) {
+            // lwjgl3ify - キーマップ互換パッチ (NGTOBuilder 等の isKeyDown 問題を修正)
+            // (Moved to Early Mixin)
+
             // OptiFine / FastCraft - LargeRail brightness fix (Angelicaがある場合は追加しない)
             if ((isModPresent("OptiFine") || isModPresent("FastCraft")) && !isModPresent("AngelicaGlsm")) {
                 mixins.add("optifine.RailBrightnessDisplayListSafeMixin");
@@ -374,11 +393,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             }
 
             // Bamboo
-            // if (isModPresent("Bamboo")) {
-            // // Bamboo関連のMixinは未完成のため一旦無効化
-            // mixins.add("bamboo.BambooRenderCampfireMixin");
-            // mixins.add("bamboo.MixinBlockSpaWater");
-            // }
+            if (isModPresent("Bamboo")) {
+                // Bamboo関連のMixinは未完成のため一旦無効化
+                // mixins.add("bamboo.BambooRenderCampfireMixin");
+                // mixins.add("bamboo.MixinBlockSpaWater");
+            }
 
             // GTNHLib client icons
             if (isModPresent("GTNHLib")) {
@@ -408,9 +427,15 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 // VehicleTrackerのデフォルト3tick更新に合わせて係数0.2〜0.25が望ましいが
                 // 現在0.35で設定中。オーバーシュートが気になる場合は値を下げること。
                 mixins.add("rtm.EntityTrainClientSmoothingMixin");
-                
+
                 mixins.add("rtm.ModelPackManagerReloadMixin");
                 mixins.add("rtm.TextureManagerReloadMixin");
+                mixins.add("rtm.ModelObjectMixin");
+                mixins.add("rtm.MixinRenderUtil");
+
+                if (isModPresent("NGTLib")) {
+                    mixins.add("ngtlib.TextureSetMixin");
+                }
 
                 // GL_SELECT (マウスピッキング) 回避パッチ
                 //
@@ -490,24 +515,21 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         }
 
         // WebCTC
-        if (isModPresent("WebCTC")) {
-            mixins.add("webctc.TileEntityLargeRailCoreOccupancyMixin");
-            mixins.add("webctc.RailCacheDataUpdateOptimizationMixin");
-        }
+        // if (isModPresent("WebCTC")) {
+        // mixins.add("webctc.TileEntityLargeRailCoreOccupancyMixin");
+        // mixins.add("webctc.RailCacheDataUpdateOptimizationMixin");
+        // mixins.add("webctc.TeConRuntimeManagerScriptEngineMixin");
+        // }
 
         // JourneyMap
         if (isClient && isModPresent("journeymap")) {
             mixins.add("journeymap.WaypointBeaconRendererMixin");
             mixins.add("journeymap.WaypointDecorationRendererMixin");
             // mixins.add("journeymap.DataCacheMixin");
+            // ScreenEventHandler.onScreenMousePressedEvent NPE修正:
+            // RenderBackends.get() が null のまま呼ばれると NPE になるため早期 return を挿入
+            mixins.add("journeymap.ScreenEventHandlerMixin");
         }
-
-        // WorldEdit mixins are handled in Late Mixin (mixins.crosstie.late.json) to
-        // prevent early
-        // classloading crashes
-
-        // ProjectRed mixins are handled in CrossTieLateMixinLoader to prevent early
-        // classloading crashes
 
         System.out.println(
                 "[CrossTieMixin] Dynamic mixin count: " + mixins.size() + " / " + (isClient ? "CLIENT" : "SERVER"));

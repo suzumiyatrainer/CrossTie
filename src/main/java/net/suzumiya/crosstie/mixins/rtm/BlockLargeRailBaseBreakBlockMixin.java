@@ -3,7 +3,6 @@ package net.suzumiya.crosstie.mixins.rtm;
 import jp.ngt.rtm.rail.BlockLargeRailBase;
 import jp.ngt.rtm.rail.TileEntityLargeRailBase;
 import jp.ngt.rtm.rail.TileEntityLargeRailCore;
-import jp.ngt.rtm.rail.util.RailMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.Material;
@@ -21,7 +20,13 @@ public abstract class BlockLargeRailBaseBreakBlockMixin extends BlockContainer {
 
     /**
      * @author Suzumiya
-     * @reason MCTE paste class cast exception fix & performance optimization
+     * @reason MCTE paste class cast exception fix & KaizPatchX 1.10.3 TileEntityLargeRailSectionCore 対応
+     *
+     * <p>KaizPatchX 1.10.3 では、チャンク境界を越えるロングレールが複数の
+     * {@code TileEntityLargeRailSectionCore} に自動分割される。
+     * {@code breakLogicalRail()} は {@code TileEntityLargeRailSectionCore} で override されており、
+     * グループ全体（複数チャンクにまたがる全 SectionCore）を走査して正しく破壊する。
+     * 旧来の手動 RailMap ループでは SectionCore グループの他 Core を破壊できない。
      */
     @Overwrite
     public void breakBlock(World world, int x, int y, int z, Block block, int meta) {
@@ -31,15 +36,10 @@ public abstract class BlockLargeRailBaseBreakBlockMixin extends BlockContainer {
             TileEntityLargeRailCore core = tile0.getRailCore();
             if (!world.isRemote && core != null && !core.breaking) {
                 core.breaking = true;
-                RailMap[] maps = core.getAllRailMaps();
-                if (maps != null) {
-                    for (int i = 0; i < maps.length; i++) {
-                        RailMap rm = maps[i];
-                        if (rm != null) {
-                            rm.breakRail(world, core.getProperty(), core);
-                        }
-                    }
-                }
+                // KaizPatchX 1.10.3: TileEntityLargeRailSectionCore の breakLogicalRail() が
+                // グループ全体のチャンク分割レールをまとめて破壊する。
+                // 通常の TileEntityLargeRailCore では元の RailMap ループと同等の動作をする。
+                core.breakLogicalRail();
             }
         }
         super.breakBlock(world, x, y, z, block, meta);

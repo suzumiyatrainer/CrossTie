@@ -1,6 +1,5 @@
-{
-	"modListVersion": 2,
-	"modList": [{
+[
+	{
 		"modid": "${modId}",
 		"name": "${modName}",
 		"description": "RealTrainMod Optimizer Mod",
@@ -8,14 +7,10 @@
 		"mcversion": "${minecraftVersion}",
 		"url": "https://github.com/suzumiyatrainer/CrossTie",
 		"updateUrl": "",
-		"authorList": ["SuzumiyaTrainer"],
+		"authorList": [ ${authorList} ],
 		"credits": "",
 		"logoFile": "logo.png",
 		"screenshots": [],
-		"parent": "",
-		"requiredMods": [],
-		"dependencies": [],
-		"dependants": [],
-		"useDependencyInformation": false
-	}]
-}
+		"dependencies": []
+	}
+]

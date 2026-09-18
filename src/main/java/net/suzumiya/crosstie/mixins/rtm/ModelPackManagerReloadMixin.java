@@ -85,4 +85,9 @@ public class ModelPackManagerReloadMixin {
             cir.setReturnValue(new ResourceLocation(domain, path));
         }
     }
+
+    @Inject(method = "reload", at = @At("HEAD"))
+    private void onReloadStart(org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        net.suzumiya.crosstie.utils.texture.CrossTieTextureOverrideManager.clearAll();
+    }
 }

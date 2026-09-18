@@ -26,6 +26,7 @@
         "rtm.PartsRendererPickPassGuardMixin",
         "rtm.TileEntityCrossingGateNoCullingMixin",
         "rtm.TileEntitySignalNoCullingMixin",
-        "client.GuiMainMenuPanoramaMixin"
+        "client.GuiMainMenuPanoramaMixin",
+        "rtm.RailRenderSamplingMixin"
     ]
 }

@@ -15,7 +15,8 @@ import java.util.Objects;
 /**
  * DataMap の状態更新において、Suzu Throttle Lib と同様の
  * パケットキャッシュ（間引き）処理をコアレベルで適用する Mixin。
- * 値が変更されていない場合は処理をキャンセルし、無駄なパケット送信を防ぐ。
+ * SYNC_FLAG (flag & 1) が立っている場合のみ値比較によるキャンセルを行い、
+ * 無駄なパケット送信を防ぐ。flag=0（ローカル書き込みのみ）の場合はキャンセルしない。
  */
 @Mixin(value = DataMap.class, remap = false)
 public abstract class DataMapMixin {
@@ -24,6 +25,9 @@ public abstract class DataMapMixin {
 
     @Inject(method = "set(Ljp/ngt/rtm/modelpack/state/DataMap$DataKey;Ljp/ngt/rtm/modelpack/state/DataEntry;I)V", at = @At("HEAD"), cancellable = true)
     private void onSet(@Coerce Object key, DataEntry<?> value, int flag, CallbackInfo ci) {
+        // SYNC_FLAG (= DataMap.SYNC_FLAG = 1) が立っている時のみキャッシュによるキャンセルを行う。
+        // flag=0（ローカルのみ書き込み）はキャンセルしない（JS Throttle Lib と同等の挙動）。
+        if ((flag & 1) == 0) return;
         DataEntry<?> current = this.map.get(key);
         if (current != null && Objects.equals(current.get(), value.get())) {
             // 値が変更されていない場合は Map の更新およびパケット送信をキャンセルする

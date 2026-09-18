@@ -1,14 +1,20 @@
 plugins {
     id 'java-library'
-    id 'com.gtnewhorizons.retrofuturagradle' version '2.0.3'
+    id 'com.gtnewhorizons.retrofuturagradle' version '2.0.4'
     id 'idea'
     id 'eclipse'
 }
 
 // Mod properties from gradle.properties
-version = '1.0.0-Alpha12'
-group = project.modGroup
-base.archivesName.set('CrossTie')
+ext.modName = findProperty('modName')
+ext.modId = findProperty('modId')
+ext.modGroup = findProperty('modGroup')
+ext.modVersion = findProperty('modVersion')
+ext.modAuthor = findProperty('modAuthor')
+ext.minecraftVersion = findProperty('minecraftVersion')
+
+group = ext.modGroup
+version = ext.modVersion
 
 eclipse {
     classpath {
@@ -27,20 +33,13 @@ eclipse {
 def privateMavenUrl = (findProperty('privateMavenUrl') ?: '').toString().trim()
 def privateMavenUser = (findProperty('privateMavenUser') ?: '').toString().trim()
 def privateMavenPassword = (findProperty('privateMavenPassword') ?: '').toString().trim()
-def rtmCoordinate = (findProperty('rtmCoordinate') ?: 'com.github.Kai-Z-JP:KaizPatchX:v1.10.1:dev').toString().trim()
+def rtmCoordinate = (findProperty('rtmCoordinate') ?: 'com.github.Kai-Z-JP:KaizPatchX:v1.10.4:dev').toString().trim()
 def usePrivateMaven = !privateMavenUrl.isEmpty()
 def forceSafeNetty = (findProperty('forceSafeNetty') ?: 'false').toString().toBoolean()
 def forceSafeScala = (findProperty('forceSafeScala') ?: 'false').toString().toBoolean()
 
 minecraft {
     mcVersion = '1.7.10'
-
-    // Inject properties into mcmod.info
-    injectedTags = [
-        'VERSION': project.version,
-        'MODID': project.modId,
-        'MODNAME': project.modName
-    ]
     
     // UniMixins configuration
     // Enable mixins if usesMixins is true in gradle.properties
@@ -97,7 +96,7 @@ configurations.configureEach {
         force 'com.google.code.gson:gson:2.14.0'
         force 'org.apache.commons:commons-compress:1.28.0'
         force 'commons-io:commons-io:2.22.0'
-        force 'org.yaml:snakeyaml:2.6'
+        force 'org.yaml:snakeyaml:2.7'
         force 'junit:junit:4.13.2'
 
         // Log4j: Force to 2.17.2 (last Java-8-compatible patched release) to close all Log4j CVEs.
@@ -121,9 +120,9 @@ configurations.configureEach {
             force 'io.netty:netty-all:4.0.56.Final'
         }
         if (forceSafeScala) {
-            force 'org.scala-lang:scala-library:3.8.4'
-            force 'org.scala-lang:scala-compiler:3.8.4'
-            force 'org.scala-lang:scala-reflect:3.8.4'
+            force 'org.scala-lang:scala-library:3.9.0'
+            force 'org.scala-lang:scala-compiler:3.9.0'
+            force 'org.scala-lang:scala-reflect:3.9.0'
         }
     }
 }
@@ -174,7 +173,7 @@ dependencies {
     nashornLib('org.openjdk.nashorn:nashorn-core:15.7')
 
     // Annotation processor for Mixins
-    annotationProcessor('com.google.guava:guava:33.7.0-jre')
+    annotationProcessor('com.google.guava:guava:33.7.1-jre')
     annotationProcessor('com.google.code.gson:gson:2.14.0')
 
     // ASM
@@ -199,6 +198,12 @@ dependencies {
     // Hodgepodge via JitPack
     def hodgepodgeVersion = (findProperty('hodgepodgeVersion') ?: '2.7.186').toString().trim()
     compileOnly("com.github.GTNewHorizons:Hodgepodge:${hodgepodgeVersion}")
+
+    // lwjgl3ify via JitPack
+    compileOnly("com.github.GTNewHorizons:lwjgl3ify:3.0.32")
+    // lwjgl3ify のビルドスクリプト固有の設定(patchedMinecraft)により、SDLなどの推移的依存が解決されないため直接追加
+    compileOnly("org.lwjgl:lwjgl:3.4.2")
+    compileOnly("org.lwjgl:lwjgl-sdl:3.4.2")
 
     // WorldEdit
     compileOnly 'com.sk89q.worldedit:worldedit-core:6.1.4-SNAPSHOT'
@@ -249,7 +254,9 @@ tasks.named('jar') {
         if (details.relativePath.pathString.startsWith('META-INF/services/')) {
             String name = details.name
             return !name.equals('com.gtnewhorizon.gtnhmixins.ILateMixinLoader') &&
-                   !name.equals('io.github.tox1cozz.mixinbooterlegacy.ILateMixinLoader')
+                   !name.equals('io.github.tox1cozz.mixinbooterlegacy.ILateMixinLoader') &&
+                   !name.equals('com.gtnewhorizon.gtnhmixins.IEarlyMixinLoader') &&
+                   !name.equals('io.github.tox1cozz.mixinbooterlegacy.IEarlyMixinLoader')
         }
         return false;
     }
@@ -287,26 +294,39 @@ jar {
 }
 
 processResources {
-    def mod_version = project.version
+    // gradle.properties からプロパティを取得
     def mod_id = project.modId
     def mod_name = project.modName
-    def mc_version = '1.7.10'
+    def mod_version = project.modVersion
+    def mc_version = project.minecraftVersion
+    def mod_author = project.modAuthor
 
-    inputs.property 'modVersion', mod_version
-    inputs.property 'minecraftVersion', mc_version
+    // 変更検知用プロパティの登録
     inputs.property 'modId', mod_id
     inputs.property 'modName', mod_name
+    inputs.property 'modVersion', mod_version
+    inputs.property 'minecraftVersion', mc_version
+    inputs.property 'modAuthor', mod_author
 
+    // mcmod.info 内の変数を置換
     filesMatching('mcmod.info') {
         expand(
+            'modId': mod_id,
+            'modName': mod_name,
             'modVersion': mod_version,
             'minecraftVersion': mc_version,
-            'modId': mod_id,
-            'modName': mod_name
+            // カンマ区切りの文字列を JSON 配列形式 ["Author1", "Author2"] に変換
+            'authorList': mod_author.split(',').collect { "\"${it.trim()}\"" }.join(', ')
         )
     }
     
     filesMatching('fmlbranding.properties') {
+        expand(
+            'modVersion': mod_version
+        )
+    }
+    
+    filesMatching('**/crosstie_version.properties') {
         expand(
             'modVersion': mod_version
         )

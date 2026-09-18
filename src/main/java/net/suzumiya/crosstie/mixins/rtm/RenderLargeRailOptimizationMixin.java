@@ -88,7 +88,10 @@ public abstract class RenderLargeRailOptimizationMixin {
     private void crosstie$cullAndThrottle(TileEntity tileEntity, double d0, double d1, double d2, float f,
             CallbackInfo ci) {
 
-        if (tileEntity == null || !"jp.ngt.rtm.rail.TileEntityLargeRailCore".equals(tileEntity.getClass().getName())) {
+        if (tileEntity == null || !(tileEntity instanceof jp.ngt.rtm.rail.TileEntityLargeRailCore)) {
+            // TileEntityLargeRailCore および全サブクラス（TileEntityLargeRailSectionCore 含む）にのみ適用。
+            // KaizPatchX 1.10.3 以前の getClass().getName() 厳密一致チェックは
+            // SectionCore（jp.kaiz.kaizpatch.rtm.rail.TileEntityLargeRailSectionCore）を除外していた。
             return;
         }
 

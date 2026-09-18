@@ -23,7 +23,7 @@ public abstract class RailTessellateOptimizationMixin {
      *         calls when the segment coordinate hasn't changed from previous.
      */
     @Overwrite
-    private void tessellateParts(jp.ngt.rtm.rail.TileEntityLargeRailCore tileEntity, java.nio.FloatBuffer matrix, int[] brightness, java.util.List<jp.ngt.ngtlib.renderer.model.GroupObject> gObjList) {
+    private void tessellateParts(jp.ngt.rtm.rail.TileEntityLargeRailCore tileEntity, java.nio.FloatBuffer matrix, int[] brightness, java.util.List<jp.ngt.ngtlib.renderer.model.GroupObject> gObjList, jp.ngt.rtm.render.RailRenderGeometry geometry) {
         tessellator.startDrawing(0x0004); // GL11.GL_TRIANGLES = 0x0004
         int capacity = matrix.capacity() >> 4;
 
@@ -44,8 +44,13 @@ public abstract class RailTessellateOptimizationMixin {
             // setBrightness once per segment
             tessellator.setBrightness(brightness[i]);
 
+            // KaizPatchX 1.10.3+: shouldRenderRailStartCap()/shouldRenderRailEndCap() を使用して
+            // TileEntityLargeRailSectionCore の中間セクション端面の余分な描画を防ぐ。
+            boolean isStartCap = i == 0 && tileEntity.shouldRenderRailStartCap();
+            boolean isEndCap = i == capacity - 1 && tileEntity.shouldRenderRailEndCap();
+
             // Skip end segments for side groups only if any side groups exist
-            boolean skipSides = hasSideGroups && !(i == 0 || i == capacity - 1);
+            boolean skipSides = hasSideGroups && !isStartCap && !isEndCap;
 
             for (jp.ngt.ngtlib.renderer.model.GroupObject group : gObjList) {
                 if (skipSides && group.name.startsWith("side")) {
@@ -56,7 +61,7 @@ public abstract class RailTessellateOptimizationMixin {
                 // script == null means BasicRailPartsRenderer (no-script renderer)
                 // whose shouldRenderObject() always returns true, so skip the call entirely.
                 if (script != null && !((Boolean) jp.ngt.ngtlib.io.ScriptUtil.doScriptFunction(
-                        script, "shouldRenderObject", tileEntity, group.name, capacity, i))) {
+                        script, "shouldRenderObject", tileEntity, group.name, geometry.getLogicalSampleCount(), geometry.getLogicalIndices()[i]))) {
                     continue;
                 }
 
