@@ -138,10 +138,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasLwjgl3ify = isModPresent("lwjgl3ify");
             shouldApply = isClient && hasLwjgl3ify;
             debugReason = "isClient=" + isClient + ", lwjgl3ify=" + hasLwjgl3ify;
-        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.bamboo.")) {
-            boolean hasBamboo = isModPresent("Bamboo");
-            shouldApply = isClient && hasBamboo;
-            debugReason = "isClient=" + isClient + ", Bamboo=" + hasBamboo;
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.gtnhlib.")) {
             boolean hasGtnhLib = isModPresent("GTNHLib");
             if (mixinClassName.endsWith(".ObjectPoolerThreadSafeMixin")) {
@@ -390,13 +386,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("angelica.IrisLoadingCompleteFixMixin");
                 // mixins.add("angelica.SimpleWorldRendererMixin"); //
                 // 現在のAngelica/Celeritasにはターゲットメソッドが存在しないため、クラッシュ回避のため無効化
-            }
-
-            // Bamboo
-            if (isModPresent("Bamboo")) {
-                // Bamboo関連のMixinは未完成のため一旦無効化
-                // mixins.add("bamboo.BambooRenderCampfireMixin");
-                // mixins.add("bamboo.MixinBlockSpaWater");
             }
 
             // GTNHLib client icons

@@ -63,9 +63,6 @@ public class ModDetector {
         // CustomNPC+
         MOD_PATTERNS.put("CustomNpc", new String[] { "customnpc" });
 
-        // Bamboo
-        MOD_PATTERNS.put("Bamboo", new String[] { "bamboo" });
-
         // WorldEdit
         MOD_PATTERNS.put("WorldEdit", new String[] { "worldedit" });
 
