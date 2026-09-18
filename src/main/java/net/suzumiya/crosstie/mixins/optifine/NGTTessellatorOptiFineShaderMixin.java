@@ -1,4 +1,4 @@
-package net.suzumiya.crosstie.mixins.rtm;
+package net.suzumiya.crosstie.mixins.optifine;
 
 import jp.ngt.ngtlib.renderer.NGTTessellator;
 import net.minecraft.client.renderer.Tessellator;
@@ -10,40 +10,22 @@ import org.spongepowered.asm.mixin.Unique;
 import java.nio.ByteOrder;
 
 @Mixin(value = NGTTessellator.class, remap = false)
-public abstract class NGTTessellatorMixin {
-
+public abstract class NGTTessellatorOptiFineShaderMixin {
     @Unique
     private static int crosstie$whiteTexture = -1;
 
-    @Shadow
-    private int vertexCount;
-    @Shadow
-    private int drawMode;
-    @Shadow
-    private boolean hasNormals;
-    @Shadow
-    private boolean hasBrightness;
-    @Shadow
-    private boolean hasColor;
-    @Shadow
-    private boolean hasTexture;
-    @Shadow
-    private int[] rawBuffer;
-    @Shadow
-    private int rawBufferSize;
-    @Shadow
-    private int rawBufferIndex;
-
-    @Shadow
-    public abstract void reset();
-
-    @Shadow
-    private boolean isDrawing;
-
-    @Shadow
-    private int drawVertexArray() {
-        return 0;
-    }
+    @Shadow private int vertexCount;
+    @Shadow private int drawMode;
+    @Shadow private boolean hasNormals;
+    @Shadow private boolean hasBrightness;
+    @Shadow private boolean hasColor;
+    @Shadow private boolean hasTexture;
+    @Shadow private int[] rawBuffer;
+    @Shadow private int rawBufferSize;
+    @Shadow private int rawBufferIndex;
+    @Shadow public abstract void reset();
+    @Shadow private boolean isDrawing;
+    @Shadow private int drawVertexArray() { return 0; }
 
     @Unique
     private static volatile java.lang.reflect.Field crosstie$shaderPackLoadedField = null;
@@ -54,9 +36,6 @@ public abstract class NGTTessellatorMixin {
         if (jp.ngt.ngtlib.util.NGTUtilClient.usingShader()) {
             return true;
         }
-        // shadersmod.client.Shaders クラスとフィールドは起動時に1回だけ解決してキャッシュする。
-        // draw() はフレームごとに数百〜数千回呼ばれる描画ホットパスのため、
-        // 毎回 Class.forName + getDeclaredField を実行すると FPS に深刻な影響が出る。
         if (!crosstie$shaderFieldLookupDone) {
             crosstie$shaderFieldLookupDone = true;
             try {
@@ -64,9 +43,7 @@ public abstract class NGTTessellatorMixin {
                 java.lang.reflect.Field field = clazz.getDeclaredField("shaderPackLoaded");
                 field.setAccessible(true);
                 crosstie$shaderPackLoadedField = field;
-            } catch (Throwable ignored) {
-                // shadersmod が存在しない環境では null のまま = false を返す
-            }
+            } catch (Throwable ignored) {}
         }
         if (crosstie$shaderPackLoadedField != null) {
             try {
@@ -89,39 +66,20 @@ public abstract class NGTTessellatorMixin {
         }
         this.isDrawing = false;
 
-        if (jp.kaiz.kaizpatch.compat.AngelicaCompat.isAvailable() || crosstie$isShaderEnabled()) {
+        if (crosstie$isShaderEnabled()) {
             return drawWithMinecraftTessellator();
         } else {
             return drawVertexArray();
         }
     }
 
-    /**
-     * @author Suzumiya
-     * @reason AngelicaやOptiFine+Shader環境で、MCのTessellatorに頂点データを流し込む。
-     *
-     * <p>ただし、OptiFine+Shader環境下では、GL_TRIANGLE_STRIP などのストリップ系プリミティブを
-     * そのままMC Tessellator（のOptiFineフック）に流し込むと、インデックス再構築が壊れて
-     * 描画が完全に消失する（透明化する）問題が発生する。
-     * これを防ぐため、GL_TRIANGLE_STRIP / GL_TRIANGLE_FAN / GL_LINE_STRIP などの
-     * ストリップ形式の描画モードを、MC Tessellatorにはそれぞれ GL_TRIANGLES / GL_LINES
-     * に展開・変換して流し込むことで安全に描画できるようにする。</p>
-     *
-     * <p>また、OptiFine+Shader環境では、GL_TEXTURE_2D が無効化された状態で
-     * MC Tessellatorに描画を渡すと、G-Bufferパスからジオメトリが破棄されて透明になってしまう。
-     * このため、一時的に GL_TEXTURE_2D を有効化し、テクスチャ座標(UV)を持たない頂点に対しても
-     * ダミーのUV(0,0)を割り当てて mc.addVertexWithUV() を呼び出すことで、
-     * 通常のテクスチャ付きオブジェクトとして認識させて描画を正常化する。</p>
-     */
-    @Overwrite
+    @Unique
     private int drawWithMinecraftTessellator() {
         Tessellator mc = Tessellator.instance;
 
-        // Shader有効かつGL_TEXTURE_2Dが無効の場合、
-        // 一時的にGL_TEXTURE_2Dを有効化してG-Bufferパスに正常にジオメトリを通す
         boolean textureDisabledByScript = false;
         int previousTexture = 0;
-        if (crosstie$isShaderEnabled() && !GL11.glIsEnabled(GL11.GL_TEXTURE_2D)) {
+        if (!GL11.glIsEnabled(GL11.GL_TEXTURE_2D)) {
             previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
             GL11.glEnable(GL11.GL_TEXTURE_2D);
             textureDisabledByScript = true;
@@ -143,13 +101,9 @@ public abstract class NGTTessellatorMixin {
             for (int i = 0; i < this.vertexCount - 2; i++) {
                 int idx0, idx1, idx2;
                 if ((i & 1) == 0) {
-                    idx0 = i;
-                    idx1 = i + 1;
-                    idx2 = i + 2;
+                    idx0 = i; idx1 = i + 1; idx2 = i + 2;
                 } else {
-                    idx0 = i + 1;
-                    idx1 = i;
-                    idx2 = i + 2;
+                    idx0 = i + 1; idx1 = i; idx2 = i + 2;
                 }
                 crosstie$addVertexToMc(mc, idx0);
                 crosstie$addVertexToMc(mc, idx1);
@@ -177,13 +131,11 @@ public abstract class NGTTessellatorMixin {
 
         int result = mc.draw();
 
-        // 状態を復元する
         if (textureDisabledByScript) {
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
             GL11.glDisable(GL11.GL_TEXTURE_2D);
         }
 
-        // バッファサイズの縮小（メモリ節約）
         if (this.rawBufferSize > 0x20000 && this.rawBufferIndex < (this.rawBufferSize >> 3)) {
             this.rawBufferSize = 0x10000;
             this.rawBuffer = new int[this.rawBufferSize];
@@ -193,61 +145,40 @@ public abstract class NGTTessellatorMixin {
         return result;
     }
 
+    @Unique
     private void crosstie$addVertexToMc(Tessellator mc, int i) {
         int base = i * 8;
-
-        // 法線を設定
         if (this.hasNormals) {
             int n = this.rawBuffer[base + 6];
             float nx = ((byte) (n & 0xFF)) / 127.0f;
             float ny = ((byte) ((n >> 8) & 0xFF)) / 127.0f;
             float nz = ((byte) ((n >> 16) & 0xFF)) / 127.0f;
             mc.setNormal(nx, ny, nz);
-        } else if (crosstie$isShaderEnabled()) {
+        } else {
             mc.setNormal(0.0F, 1.0F, 0.0F);
         }
-
-        // ブライトネスを設定
         if (this.hasBrightness) {
             mc.setBrightness(this.rawBuffer[base + 7]);
         }
-
-        // 色を設定
         if (this.hasColor) {
             int c = this.rawBuffer[base + 5];
             int r, g, b, a;
             if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
-                r = c & 0xFF;
-                g = (c >> 8) & 0xFF;
-                b = (c >> 16) & 0xFF;
-                a = (c >> 24) & 0xFF;
+                r = c & 0xFF; g = (c >> 8) & 0xFF; b = (c >> 16) & 0xFF; a = (c >> 24) & 0xFF;
             } else {
-                r = (c >> 24) & 0xFF;
-                g = (c >> 16) & 0xFF;
-                b = (c >> 8) & 0xFF;
-                a = c & 0xFF;
+                r = (c >> 24) & 0xFF; g = (c >> 16) & 0xFF; b = (c >> 8) & 0xFF; a = c & 0xFF;
             }
             mc.setColorRGBA(r, g, b, a);
         }
-
-        // 頂点座標を取得
         float x = Float.intBitsToFloat(this.rawBuffer[base]);
         float y = Float.intBitsToFloat(this.rawBuffer[base + 1]);
         float z = Float.intBitsToFloat(this.rawBuffer[base + 2]);
-
-        // テクスチャ座標付きで頂点を追加
         if (this.hasTexture) {
             float u = Float.intBitsToFloat(this.rawBuffer[base + 3]);
             float v = Float.intBitsToFloat(this.rawBuffer[base + 4]);
             mc.addVertexWithUV(x, y, z, u, v);
         } else {
-            if (crosstie$isShaderEnabled()) {
-                // Shader有効時はGL_TEXTURE_2D無効+UVなしだと描画が消えるため、
-                // ダミーのUV(0,0)を付与してマインクラフトTessellator経由でG-Bufferに通す
-                mc.addVertexWithUV(x, y, z, 0.0F, 0.0F);
-            } else {
-                mc.addVertex(x, y, z);
-            }
+            mc.addVertexWithUV(x, y, z, 0.0F, 0.0F);
         }
     }
 }
