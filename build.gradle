@@ -202,8 +202,8 @@ dependencies {
     // lwjgl3ify via JitPack
     compileOnly("com.github.GTNewHorizons:lwjgl3ify:3.0.32")
     // lwjgl3ify のビルドスクリプト固有の設定(patchedMinecraft)により、SDLなどの推移的依存が解決されないため直接追加
-    compileOnly("org.lwjgl:lwjgl:3.4.2")
-    compileOnly("org.lwjgl:lwjgl-sdl:3.4.2")
+    compileOnly("org.lwjgl:lwjgl:3.4.3")
+    compileOnly("org.lwjgl:lwjgl-sdl:3.4.3")
 
     // WorldEdit
     compileOnly 'com.sk89q.worldedit:worldedit-core:6.1.4-SNAPSHOT'
