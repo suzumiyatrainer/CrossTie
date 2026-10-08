@@ -192,7 +192,7 @@ dependencies {
 
     // Angelica + Iris (for mixin compilation) via JitPack.
     // Iris classes are bundled inside the Angelica jar.
-    def angelicaVersion = (findProperty('angelicaVersion') ?: '2.1.61').toString().trim()
+    def angelicaVersion = (findProperty('angelicaVersion') ?: '2.2.30').toString().trim()
     compileOnly("com.github.GTNewHorizons:Angelica:${angelicaVersion}")
 
     // Hodgepodge via JitPack

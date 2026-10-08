@@ -401,6 +401,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 }
             }
 
+            if (isModPresent("AngelicaGlsm") || isModPresent("Angelica")) {
+                // B-01: バックグラウンドでワールドを開いた際のブラックスクリーン修正
+                // Angelica の FpsReducer が未レンダリング状態でポーズメニューを開くのを防ぐ
+                mixins.add("angelica.FpsReducerMixin");
+            }
+
             if (isModPresent("AngelicaGlsm")) {
                 mixins.add("angelica.AngelicaRenderGlobalDisplayListCrashMixin");
                 mixins.add("angelica.IrisLoadingCompleteFixMixin");
