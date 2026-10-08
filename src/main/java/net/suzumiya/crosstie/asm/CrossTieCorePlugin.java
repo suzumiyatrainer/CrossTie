@@ -9,14 +9,36 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
+import java.util.Set;
 
 @IFMLLoadingPlugin.MCVersion("1.7.10")
 @IFMLLoadingPlugin.Name("CrossTieCore")
-public class CrossTieCorePlugin implements IFMLLoadingPlugin {
+@IFMLLoadingPlugin.SortingIndex(Integer.MIN_VALUE + 4)
+public class CrossTieCorePlugin implements IFMLLoadingPlugin,
+        com.gtnewhorizon.gtnhmixins.IEarlyMixinLoader,
+        io.github.tox1cozz.mixinbooterlegacy.IEarlyMixinLoader {
 
     private static boolean minfoDetected;
     private static ModDetector modDetector;
     private static File mcDataDir;
+
+    @Override
+    public String getMixinConfig() {
+        return "mixins.crosstie.early.json";
+    }
+
+    @Override
+    public List<String> getMixins(Set<String> loadedCoremods) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<String> getMixinConfigs() {
+        // GTNHMixins registers the early config with its selected mixin list.
+        // Avoid queueing the same config a second time through MixinBooterLegacy.
+        return Collections.emptyList();
+    }
 
     public static boolean isMinFoDetected() {
         return minfoDetected;

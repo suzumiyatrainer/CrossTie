@@ -57,6 +57,12 @@ public class CrossTieClassTransformer implements IClassTransformer {
 
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
+        boolean isKeyboardFacade = isClass(transformedName, name, "org.lwjgl.input.Keyboard", null);
+        boolean isLwjgl3ifyKeyboard = isClass(transformedName, name, "org.lwjglx.input.Keyboard", null);
+        if (isKeyboardFacade || isLwjgl3ifyKeyboard) {
+            System.out.println("[CrossTie KeyDebug] Transformer observed target: name=" + name
+                    + " transformedName=" + transformedName + " bytes=" + (basicClass != null));
+        }
         if (transformedName != null
                 && "org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory".equals(transformedName)) {
             boolean shouldBlock = false;
@@ -84,6 +90,12 @@ public class CrossTieClassTransformer implements IClassTransformer {
 
         if (basicClass == null) {
             return basicClass;
+        }
+
+        // org.lwjglx.input.Keyboard may be loaded before Mixin prepares its
+        // configs. Patch it in LaunchClassLoader's transformer chain instead.
+        if (isKeyboardFacade || isLwjgl3ifyKeyboard) {
+            return patchLwjgl3ifyKeyboard(basicClass);
         }
 
         // GTNHLib 0.9.x: MixinBlock_IconWrapper へのパッチ
@@ -132,6 +144,52 @@ public class CrossTieClassTransformer implements IClassTransformer {
         return dottedName.equals(transformedName) || dottedName.equals(name)
                 || dottedName.replace('.', '/').equals(transformedName) || dottedName.replace('.', '/').equals(name)
                 || (internalName != null && (internalName.equals(transformedName) || internalName.equals(name)));
+    }
+
+    private byte[] patchLwjgl3ifyKeyboard(byte[] basicClass) {
+        ClassNode classNode = new ClassNode();
+        new ClassReader(basicClass).accept(classNode, 0);
+
+        boolean changed = false;
+        boolean methodFound = false;
+        for (Object methodObject : classNode.methods) {
+            MethodNode method = (MethodNode) methodObject;
+            if (!"isKeyDown".equals(method.name) || !"(I)Z".equals(method.desc)) {
+                continue;
+            }
+            methodFound = true;
+
+            for (org.objectweb.asm.tree.AbstractInsnNode instruction = method.instructions.getFirst();
+                    instruction != null; ) {
+                org.objectweb.asm.tree.AbstractInsnNode next = instruction.getNext();
+                if (instruction.getOpcode() == Opcodes.IRETURN) {
+                    InsnList hook = new InsnList();
+                    hook.add(new VarInsnNode(Opcodes.ISTORE, 1));
+                    hook.add(new VarInsnNode(Opcodes.ILOAD, 0));
+                    hook.add(new VarInsnNode(Opcodes.ILOAD, 1));
+                    hook.add(new MethodInsnNode(
+                            Opcodes.INVOKESTATIC,
+                            "net/suzumiya/crosstie/compat/lwjgl3ify/Lwjgl3ifyKeyboardCompat",
+                            "mergeIsKeyDownResult",
+                            "(IZ)Z",
+                            false));
+                    hook.add(new InsnNode(Opcodes.IRETURN));
+                    method.instructions.insertBefore(instruction, hook);
+                    method.instructions.remove(instruction);
+                    changed = true;
+                }
+                instruction = next;
+            }
+        }
+
+        if (changed) {
+            System.out.println("[CrossTie] Patched " + classNode.name.replace('/', '.')
+                    + ".isKeyDown(int) with LWJGL3 keymap fallback");
+            return writeClass(classNode);
+        }
+        System.out.println("[CrossTie KeyDebug] Keyboard target matched but isKeyDown(I)Z was "
+                + (methodFound ? "not patchable (no IRETURN found)" : "not found"));
+        return basicClass;
     }
 
     /**
@@ -268,15 +326,19 @@ public class CrossTieClassTransformer implements IClassTransformer {
         boolean changed = false;
         for (Object methodObject : classNode.methods) {
             MethodNode method = (MethodNode) methodObject;
-            if ("doScript".equals(method.name)
-                    && "(Ljava/lang/String;)Ljavax/script/ScriptEngine;".equals(method.desc)) {
-                replaceMethodBody(method, scriptUtilFallbackBody());
-                changed = true;
+            if ("doScript".equals(method.name)) {
+                if ("(Ljava/lang/String;)Ljavax/script/ScriptEngine;".equals(method.desc)) {
+                    replaceMethodBody(method, scriptUtilFallbackBody1());
+                    changed = true;
+                } else if ("(Ljava/lang/String;Ljava/lang/String;)Ljavax/script/ScriptEngine;".equals(method.desc)) {
+                    replaceMethodBody(method, scriptUtilFallbackBody2());
+                    changed = true;
+                }
             }
         }
 
         if (changed) {
-            System.out.println("[CrossTie] Patched ScriptUtil.doScript(String) -> ScriptUtilFallback.doScript(String)");
+            System.out.println("[CrossTie] Patched ScriptUtil.doScript() -> ScriptUtilFallback.doScript()");
         }
         return changed ? writeClass(classNode) : basicClass;
     }
@@ -318,11 +380,24 @@ public class CrossTieClassTransformer implements IClassTransformer {
      *   ARETURN
      * </pre>
      */
-    private InsnList scriptUtilFallbackBody() {
+    private InsnList scriptUtilFallbackBody1() {
         InsnList instructions = new InsnList();
         instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
         instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/suzumiya/crosstie/compat/ScriptUtilFallback",
                 "doScript", "(Ljava/lang/String;)Ljavax/script/ScriptEngine;", false));
+        instructions.add(new InsnNode(Opcodes.ARETURN));
+        return instructions;
+    }
+
+    /**
+     * {@code ScriptUtilFallback.doScript(String, String)} を呼ぶだけのメソッド本体を生成します。
+     */
+    private InsnList scriptUtilFallbackBody2() {
+        InsnList instructions = new InsnList();
+        instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+        instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
+        instructions.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/suzumiya/crosstie/compat/ScriptUtilFallback",
+                "doScript", "(Ljava/lang/String;Ljava/lang/String;)Ljavax/script/ScriptEngine;", false));
         instructions.add(new InsnNode(Opcodes.ARETURN));
         return instructions;
     }

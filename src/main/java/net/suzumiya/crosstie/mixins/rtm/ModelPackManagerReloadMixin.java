@@ -76,6 +76,15 @@ public class ModelPackManagerReloadMixin {
 
     @Inject(method = "getResource(Ljava/lang/String;Ljava/lang/String;)Lnet/minecraft/util/ResourceLocation;", at = @At("HEAD"), cancellable = true)
     public void onGetResource(String domain, String path, CallbackInfoReturnable<ResourceLocation> cir) {
+        // path が null の場合、ConcurrentHashMap.containsKey(null) が NPE を投げるため早期リターン。
+        // テクスチャ定義が不完全なモデルパック（マテリアル名の "default" キーも存在しないケース）で
+        // ModelObject.getMaterials() から null が渡されることがある。
+        if (path == null) {
+            System.err.println("[CrossTie] ModelPackManager.getResource() called with null path (domain=" + domain
+                    + "). Falling back to missingno to prevent NPE.");
+            cir.setReturnValue(new ResourceLocation("minecraft", "missingno"));
+            return;
+        }
         if (crosstie$isReloading) {
             Map<String, ResourceLocation> map = crosstie$oldResourceMap.get(domain);
             if (map != null && map.containsKey(path)) {

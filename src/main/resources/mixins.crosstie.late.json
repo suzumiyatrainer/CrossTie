@@ -13,7 +13,8 @@
     "mcte.late.McteWorldAngelicaLightMixin",
     "mcte.late.NGTRendererMixin",
     "mcte.late.DirectTessellatorNormalMixin",
-    "mcte.late.DirectTessellatorLightMixin"
+    "mcte.late.DirectTessellatorLightMixin",
+    "ctm.MixinTileOverride"
   ],
   "server": []
 }

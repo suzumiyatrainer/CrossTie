@@ -5,6 +5,7 @@ import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.entity.Entity;
 import net.minecraft.tileentity.TileEntity;
 import net.suzumiya.crosstie.CrossTieConfig;
+import net.suzumiya.crosstie.utils.CrossTieDiagnostics;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -87,6 +88,10 @@ public abstract class RenderLargeRailOptimizationMixin {
     @Inject(method = "renderTileEntityAt", at = @At("HEAD"), cancellable = true, remap = true)
     private void crosstie$cullAndThrottle(TileEntity tileEntity, double d0, double d1, double d2, float f,
             CallbackInfo ci) {
+
+        if (CrossTieDiagnostics.isEnabled()) {
+            CrossTieDiagnostics.largeRailRenderCalls.incrementAndGet();
+        }
 
         if (tileEntity == null || !(tileEntity instanceof jp.ngt.rtm.rail.TileEntityLargeRailCore)) {
             // TileEntityLargeRailCore および全サブクラス（TileEntityLargeRailSectionCore 含む）にのみ適用。

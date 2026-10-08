@@ -46,6 +46,8 @@ public class CrossTie {
                     .register(new net.suzumiya.crosstie.gui.CrossTieGuiEventHandler());
             net.minecraftforge.common.MinecraftForge.EVENT_BUS
                     .register(new net.suzumiya.crosstie.client.WireFastRemoveTracker());
+            cpw.mods.fml.common.FMLCommonHandler.instance().bus()
+                    .register(new net.suzumiya.crosstie.client.CrossTieDiagnosticsTicker());
         }
     }
 

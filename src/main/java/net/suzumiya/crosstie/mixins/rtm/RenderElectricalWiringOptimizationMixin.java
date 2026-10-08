@@ -11,6 +11,7 @@ import jp.ngt.rtm.electric.TileEntityInsulator;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.suzumiya.crosstie.CrossTieConfig;
 import net.suzumiya.crosstie.cache.ElectricalWiringCacheManager;
+import net.suzumiya.crosstie.utils.CrossTieDiagnostics;
 import net.suzumiya.crosstie.mixins.CrossTieMixinPlugin;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,6 +36,10 @@ public abstract class RenderElectricalWiringOptimizationMixin {
      */
     @Inject(method = "renderElectricalWiring", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private void crosstie$cullDistantWiring(TileEntityElectricalWiring tileEntity, double par2, double par4, double par6, float par8, CallbackInfo ci) {
+        if (CrossTieDiagnostics.isEnabled()) {
+            CrossTieDiagnostics.electricalWiringRenderCalls.incrementAndGet();
+        }
+
         double distSq = par2 * par2 + par4 * par4 + par6 * par6;
         double maxDistSq = NGTUtil.getChunkLoadDistanceSq();
 

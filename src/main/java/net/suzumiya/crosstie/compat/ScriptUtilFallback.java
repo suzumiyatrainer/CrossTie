@@ -1,9 +1,11 @@
 package net.suzumiya.crosstie.compat;
 
 import java.lang.reflect.Method;
+import java.util.regex.Pattern;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import net.minecraft.launchwrapper.Launch;
 
 /**
  * Fallback script engine provider for RTM/NGTLib when
@@ -16,6 +18,13 @@ import javax.script.ScriptException;
  */
 public final class ScriptUtilFallback {
 
+    // Flip this switch to log the first script entry and lwjgl3ify detection result.
+    private static final boolean DEBUG_MODE = true;
+    private static volatile boolean lwjgl3ifyKeyboardCallRedirectLogged;
+    private static volatile boolean scriptProbeLogged;
+    private static final Pattern LEGACY_KEYBOARD_IS_KEY_DOWN = Pattern.compile(
+            "\\bKeyboard\\s*\\.\\s*isKeyDown\\s*\\(");
+
     private ScriptUtilFallback() {
     }
 
@@ -23,8 +32,18 @@ public final class ScriptUtilFallback {
      * Replacement for {@code ScriptUtil.doScript(String)}.
      */
     public static ScriptEngine doScript(String script) {
+        return doScript(script, "<unnamed script>");
+    }
+
+    /**
+     * Replacement for {@code ScriptUtil.doScript(String, String)}.
+     */
+    public static ScriptEngine doScript(String script, String fileName) {
+        debugFirstScript(script);
+        script = redirectLwjgl3ifyKeyboardCalls(script);
         ScriptEngine engine = createScriptEngine();
         try {
+            engine.put(ScriptEngine.FILENAME, fileName);
             String name = engine.getFactory().getEngineName();
             if (name != null && name.toLowerCase().contains("nashorn")) {
                 try {
@@ -38,6 +57,86 @@ public final class ScriptUtilFallback {
         } catch (ScriptException e) {
             throw new RuntimeException("Script exec error\n" + script, e);
         }
+    }
+
+    /**
+     * Routes legacy LWJGL2 Keyboard package references through CrossTie when
+     * lwjgl3ify is installed. This works even when the LWJGL Keyboard facade
+     * was loaded before LaunchWrapper's transformers were registered.
+     */
+    private static String redirectLwjgl3ifyKeyboardCalls(String script) {
+        if (script == null || !LEGACY_KEYBOARD_IS_KEY_DOWN.matcher(script).find()) {
+            return script;
+        }
+
+        if (!isLwjgl3ifyPresent()) {
+            return script;
+        }
+
+        String redirected = LEGACY_KEYBOARD_IS_KEY_DOWN.matcher(script).replaceAll(
+                "Packages.net.suzumiya.crosstie.compat.lwjgl3ify.KeyboardAdapter.isKeyDown(");
+        if (!lwjgl3ifyKeyboardCallRedirectLogged) {
+            synchronized (ScriptUtilFallback.class) {
+                if (!lwjgl3ifyKeyboardCallRedirectLogged) {
+                    System.out.println("[CrossTie KeyDebug] Redirected Keyboard.isKeyDown script calls to CrossTie adapter");
+                    lwjgl3ifyKeyboardCallRedirectLogged = true;
+                }
+            }
+        }
+        return redirected;
+    }
+
+    private static boolean isLwjgl3ifyPresent() {
+        ClassLoader[] loaders = {
+                Launch.classLoader,
+                Thread.currentThread().getContextClassLoader(),
+                ScriptUtilFallback.class.getClassLoader(),
+                ClassLoader.getSystemClassLoader()
+        };
+        for (ClassLoader loader : loaders) {
+            if (loader == null) {
+                continue;
+            }
+            try {
+                Class.forName("org.lwjglx.input.Keyboard", false, loader);
+                return true;
+            } catch (ClassNotFoundException ignored) {
+                // Try the next loader.
+            } catch (LinkageError ignored) {
+                // A partially installed lwjgl3ify should not break unrelated scripts.
+            }
+        }
+        return false;
+    }
+
+    private static void debugFirstScript(String script) {
+        if (!DEBUG_MODE || scriptProbeLogged) {
+            return;
+        }
+        synchronized (ScriptUtilFallback.class) {
+            if (scriptProbeLogged) {
+                return;
+            }
+            scriptProbeLogged = true;
+        }
+
+        boolean hasLegacyCall = script != null && LEGACY_KEYBOARD_IS_KEY_DOWN.matcher(script).find();
+        StringBuilder loaders = new StringBuilder();
+        ClassLoader[] candidates = {
+                Launch.classLoader,
+                Thread.currentThread().getContextClassLoader(),
+                ScriptUtilFallback.class.getClassLoader(),
+                ClassLoader.getSystemClassLoader()
+        };
+        for (ClassLoader loader : candidates) {
+            if (loaders.length() > 0) {
+                loaders.append(", ");
+            }
+            loaders.append(loader == null ? "null" : loader.getClass().getName());
+        }
+        System.out.println("[CrossTie KeyDebug] ScriptUtilFallback entered; scriptLength="
+                + (script == null ? -1 : script.length()) + " legacyKeyboardCall=" + hasLegacyCall
+                + " loaders=[" + loaders + "] lwjgl3ifyKeyboard=" + isLwjgl3ifyPresent());
     }
 
     /**

@@ -16,12 +16,12 @@ public abstract class EntityTrainBaseMixin {
     public abstract int getNotch();
 
     @Shadow
-    public abstract void setNotch(int notch);
+    public abstract boolean setNotch(int notch);
 
     @Shadow
     public abstract float getSpeed();
 
-    @Inject(method = "updateSpeed", at = @At("HEAD"), remap = false)
+    @Inject(method = "updateSpeed", at = @At("HEAD"), require = 0, remap = false)
     private void onUpdateSpeedHead(CallbackInfo ci) {
         EntityTrainBase train = (EntityTrainBase) (Object) this;
         Object trainController = ATSAssistReflectionHelper.getTrainController(train);

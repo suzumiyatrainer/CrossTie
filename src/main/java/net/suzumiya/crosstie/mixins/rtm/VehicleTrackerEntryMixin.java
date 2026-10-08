@@ -23,19 +23,16 @@ public abstract class VehicleTrackerEntryMixin {
      * @author Antigravity
      * @reason 追跡開始時のNBT同期を、全サーバー一斉送信から対象プレイヤーへの個別送信にリダイレクト
      */
-    @Redirect(method = "tryStartWachingThis(Lnet/minecraft/entity/player/EntityPlayerMP;)V",
-              at = @At(value = "INVOKE", target = "Ljp/ngt/ngtlib/network/PacketNBT;sendToClient(Lnet/minecraft/entity/Entity;)V"))
+    @Redirect(method = "tryStartWachingThis(Lnet/minecraft/entity/player/EntityPlayerMP;)V", at = @At(value = "INVOKE", target = "Ljp/ngt/ngtlib/network/PacketNBT;sendToClient(Lnet/minecraft/entity/Entity;)V"), require = 0)
     private void redirectSendToClient(Entity entity, EntityPlayerMP player) {
         PacketNBT.sendTo(entity, player);
     }
 
     /**
      * @author Antigravity
-     * @reason 車両位置同期パケットの送信処理をリダイレクト
-     * 追跡プレイヤーには毎回送信、追跡外プレイヤーへは10ティック（0.5秒）に1回のみに制限
+     * @reason 車両位置同期パケットの送信処理をリダイレクト 追跡プレイヤーには毎回送信、追跡外プレイヤーへは10ティック（0.5秒）に1回のみに制限
      */
-    @Redirect(method = "sendLocationToAllClients(Ljava/util/List;)V",
-              at = @At(value = "INVOKE", target = "Lcpw/mods/fml/common/network/simpleimpl/SimpleNetworkWrapper;sendToAll(Lcpw/mods/fml/common/network/simpleimpl/IMessage;)V"))
+    @Redirect(method = "sendLocationToAllClients(Ljava/util/List;)V", at = @At(value = "INVOKE", target = "Lcpw/mods/fml/common/network/simpleimpl/SimpleNetworkWrapper;sendToAll(Lcpw/mods/fml/common/network/simpleimpl/IMessage;)V"), require = 0)
     private void redirectSendToAll(SimpleNetworkWrapper wrapper, IMessage message, List<?> trackingPlayers) {
         // 追跡プレイヤーには毎回送信
         if (trackingPlayers != null) {

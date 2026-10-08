@@ -25,7 +25,9 @@ import java.util.function.Function;
  * @param <K> キーの型
  * @param <V> 値の型
  */
-public class CrossTieCasMap<K, V> implements Map<K, V> {
+public class CrossTieCasMap<K, V> extends HashMap<K, V> {
+
+    private static final long serialVersionUID = 1L;
 
     private final AtomicReference<Map<K, V>> ref;
 

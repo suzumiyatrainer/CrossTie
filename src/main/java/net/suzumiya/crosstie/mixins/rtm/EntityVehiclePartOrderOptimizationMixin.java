@@ -45,7 +45,7 @@ public abstract class EntityVehiclePartOrderOptimizationMixin {
      * onUpdate の HEAD で Vehicle が既に設定されていれば sorted=true を強制設定する。 これにより
      * checkEntityOrder 内の O(N)×3 処理が初回以降スキップされる。
      */
-    @Inject(method = "onUpdate", at = @At("HEAD"), require = 0, remap = false)
+    @Inject(method = { "onUpdate", "func_70071_h_" }, at = @At("HEAD"), require = 0, remap = false)
     private void crosstie(CallbackInfo ci) {
         if (!this.sorted && this.getVehicle() != null) {
             // Vehicle が既に設定されている場合、Entity 順序の再整列は不要。

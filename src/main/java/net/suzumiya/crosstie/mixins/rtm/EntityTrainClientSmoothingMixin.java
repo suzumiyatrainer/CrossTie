@@ -1,6 +1,7 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
 import net.minecraft.entity.Entity;
+import net.suzumiya.crosstie.utils.TrainStandingHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,8 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * <p>
  * 【バグ修正】補間処理内で呼び出す {@code setPositionAndRotation} が、目標値記録用の
  * {@code @Inject(at=RETURN)} を再帰的に叩き、補間中の中間座標が次の目標値として
- * 即座に上書きされるため補間が自己相殺していた。{@code crosstie$isApplyingSmooth}
- * フラグで再帰を遮断することで修正する。
+ * 即座に上書きされるため補間が自己相殺していた。{@code crosstie$isApplyingSmooth} フラグで再帰を遮断することで修正する。
  */
 @Mixin(targets = "jp.ngt.rtm.entity.train.EntityTrainBase", remap = false)
 public abstract class EntityTrainClientSmoothingMixin {
@@ -44,10 +44,10 @@ public abstract class EntityTrainClientSmoothingMixin {
     private static final double LERP_ROT = 0.35D;
 
     /**
-     * サーバーから位置・回転が送られてきた時点で「目標位置」を記録します。
-     * 補間適用中（crosstie$isApplyingSmooth == true）の場合はスキップして自己相殺を防ぎます。
+     * サーバーから位置・回転が送られてきた時点で「目標位置」を記録します。 補間適用中（crosstie$isApplyingSmooth ==
+     * true）の場合はスキップして自己相殺を防ぎます。
      */
-    @Inject(method = "setPositionAndRotation", at = @At("RETURN"))
+    @Inject(method = { "setPositionAndRotation", "func_70080_a" }, at = @At("RETURN"), require = 0)
     private void crosstie$recordTarget(double x, double y, double z, float yaw, float pitch, CallbackInfo ci) {
         if (crosstie$isApplyingSmooth) {
             // 補間中に自分自身が呼んだ setPositionAndRotation → 無視
@@ -67,10 +67,15 @@ public abstract class EntityTrainClientSmoothingMixin {
     /**
      * 毎tick、現在の表示位置を目標位置に向けて滑らかに補間します。
      */
-    @Inject(method = "onUpdate", at = @At("TAIL"))
+    @Inject(method = { "onVehicleUpdate", "onUpdate", "func_70071_h_" }, at = @At("TAIL"), require = 0)
     private void crosstie$applySmooth(CallbackInfo ci) {
         Entity self = (Entity) (Object) this;
         if (!self.worldObj.isRemote || !crosstie$hasTarget) {
+            return;
+        }
+        if (self == TrainStandingHandler.getClientStandingTrain()) {
+            // Do not make a standing player chase a separately smoothed train pose.
+            crosstie$hasTarget = false;
             return;
         }
 
@@ -90,8 +95,10 @@ public abstract class EntityTrainClientSmoothingMixin {
 
     private static float wrapTo180(float value) {
         float wrapped = value % 360.0F;
-        if (wrapped > 180.0F) wrapped -= 360.0F;
-        if (wrapped < -180.0F) wrapped += 360.0F;
+        if (wrapped > 180.0F)
+            wrapped -= 360.0F;
+        if (wrapped < -180.0F)
+            wrapped += 360.0F;
         return wrapped;
     }
 }

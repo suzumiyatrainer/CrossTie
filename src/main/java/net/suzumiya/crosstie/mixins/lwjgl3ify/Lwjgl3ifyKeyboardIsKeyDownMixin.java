@@ -47,51 +47,81 @@ public class Lwjgl3ifyKeyboardIsKeyDownMixin {
         cancellable = true
     )
     private static void crosstie$fixKeyMapFallback(int key, CallbackInfoReturnable<Boolean> cir) {
-        // 元の実装がすでに true を返している場合はそのまま通す
-        if (cir.getReturnValue()) {
+        boolean originalResult = cir.getReturnValue();
+        if (originalResult) {
+            net.suzumiya.crosstie.compat.lwjgl3ify.Lwjgl3ifyKeyboardDebug.report(key, true, "source=lwjgl3ify");
             return;
         }
 
-        // KEY_NONE(0) は無条件で false のまま
         if (key == 0) {
+            net.suzumiya.crosstie.compat.lwjgl3ify.Lwjgl3ifyKeyboardDebug.report(key, false, "source=KEY_NONE");
             return;
         }
 
-        // sdlKeyPressedArray が null の場合はスキップ
-        ByteBuffer array = org.lwjglx.input.Keyboard.sdlKeyPressedArray;
-        if (array == null) {
+        ByteBuffer pressed = org.lwjglx.input.Keyboard.sdlKeyPressedArray;
+        if (pressed == null) {
+            net.suzumiya.crosstie.compat.lwjgl3ify.Lwjgl3ifyKeyboardDebug.report(key, false, "source=SDL-state-null");
             return;
         }
 
+        int staticScancode = -1;
+        boolean staticDown = false;
+        int sdlKeycode = -1;
+        int layoutScancode = -1;
+        boolean layoutDown = false;
         try {
-            // lwjglToSdlScancode が SDL_SCANCODE_UNKNOWN(0) を返した場合のフォールバック:
-            // lwjglToSdlKeycode でキーコードを取得し、SDL から動的にスキャンコードを解決する
-            int sdlScancode = org.lwjglx.input.KeyCodes.lwjglToSdlScancode(key);
-
-            if (sdlScancode > 0 && sdlScancode < array.limit()) {
-                // 元の実装と同じパスだが既に false が返っている（内容が 0）→ そのまま
-                return;
+            staticScancode = org.lwjglx.input.KeyCodes.lwjglToSdlScancode(key);
+            if (staticScancode > 0 && staticScancode < pressed.limit()) {
+                staticDown = pressed.get(staticScancode) != 0;
             }
 
-            // SDL_SCANCODE_UNKNOWN または範囲外 → キーコード経由でスキャンコードを動的解決
-            int sdlKeycode = org.lwjglx.input.KeyCodes.lwjglToSdlKeycode(key);
-            if (sdlKeycode == org.lwjgl.sdl.SDLKeycode.SDLK_UNKNOWN || sdlKeycode == -1) {
-                return;
+            sdlKeycode = org.lwjglx.input.KeyCodes.lwjglToSdlKeycode(key);
+            if (sdlKeycode != -1) {
+                try {
+                    Class<?> sdlKeyboard = Class.forName("org.lwjgl.sdl.SDLKeyboard");
+                    java.lang.reflect.Method getScancode = sdlKeyboard.getMethod("SDL_GetScancodeFromKey", int.class, java.nio.ShortBuffer.class);
+                    layoutScancode = (Integer) getScancode.invoke(null, sdlKeycode, null);
+                } catch (Throwable t) {
+                    try {
+                        Class<?> sdlKeyboardX = Class.forName("org.lwjglx.sdl.SDLKeyboard");
+                        java.lang.reflect.Method getScancode = sdlKeyboardX.getMethod("SDL_GetScancodeFromKey", int.class, java.nio.ShortBuffer.class);
+                        layoutScancode = (Integer) getScancode.invoke(null, sdlKeycode, null);
+                    } catch (Throwable t2) {
+                        // ignore
+                    }
+                }
+
+                if (layoutScancode > 0 && layoutScancode < pressed.limit()) {
+                    layoutDown = pressed.get(layoutScancode) != 0;
+                }
             }
 
-            // SDL_GetScancodeFromKey(keycode, mods=null) で現在のキーボードレイアウトに基づく
-            // スキャンコードを動的に取得する
-            int resolvedScancode = org.lwjgl.sdl.SDLKeyboard.SDL_GetScancodeFromKey(sdlKeycode, (java.nio.ShortBuffer) null);
-
-            if (resolvedScancode <= 0 || resolvedScancode >= array.limit()) {
-                return;
-            }
-
-            if (array.get(resolvedScancode) != 0) {
+            boolean result = staticDown || layoutDown;
+            if (result) {
                 cir.setReturnValue(true);
             }
-        } catch (Throwable t) {
-            // 安全性のため例外はすべて握りつぶす（キー入力に失敗してもクラッシュしないように）
+            net.suzumiya.crosstie.compat.lwjgl3ify.Lwjgl3ifyKeyboardDebug.report(
+                key,
+                result,
+                "source=" + (staticDown ? "static-scancode" : layoutDown ? "layout-scancode" : "none")
+                    + " staticScan=" + staticScancode
+                    + " staticDown=" + staticDown
+                    + " sdlKey=" + sdlKeycode
+                    + " layoutScan=" + layoutScancode
+                    + " layoutDown=" + layoutDown
+            );
+        } catch (Throwable error) {
+            net.suzumiya.crosstie.compat.lwjgl3ify.Lwjgl3ifyKeyboardDebug.report(
+                key,
+                false,
+                "source=exception type=" + error.getClass().getSimpleName()
+                    + " message=" + String.valueOf(error.getMessage())
+                    + " staticScan=" + staticScancode
+                    + " staticDown=" + staticDown
+                    + " sdlKey=" + sdlKeycode
+                    + " layoutScan=" + layoutScancode
+                    + " layoutDown=" + layoutDown
+            );
         }
     }
 }

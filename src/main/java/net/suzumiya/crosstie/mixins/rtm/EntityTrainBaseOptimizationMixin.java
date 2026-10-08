@@ -37,7 +37,7 @@ public abstract class EntityTrainBaseOptimizationMixin {
     /**
      * クライアント側でプレイヤーから 256m 以上離れた車両の onUpdate を DISTANT_SKIP_INTERVAL ティックに1回だけ実行する。
      */
-    @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
+    @Inject(method = { "onUpdate", "func_70071_h_" }, at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private void crosstie$skipDistantUpdate(CallbackInfo ci) {
         if (!CrossTieConfig.trainDistantCullingEnabled) {
             return;

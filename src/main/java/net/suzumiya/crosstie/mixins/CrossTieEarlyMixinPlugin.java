@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 public class CrossTieEarlyMixinPlugin implements IMixinConfigPlugin {
+    @SuppressWarnings("unused")
     private boolean isClient;
 
     @Override
@@ -32,6 +33,7 @@ public class CrossTieEarlyMixinPlugin implements IMixinConfigPlugin {
     public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
     }
 
+    @SuppressWarnings("unused")
     private boolean isModPresent(String modName) {
         net.suzumiya.crosstie.utils.ModDetector detector = CrossTieCorePlugin.getModDetector();
         if (detector == null) {
@@ -43,9 +45,6 @@ public class CrossTieEarlyMixinPlugin implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
-        if (isClient && isModPresent("lwjgl3ify")) {
-            mixins.add("lwjgl3ify.Lwjgl3ifyKeyboardIsKeyDownMixin");
-        }
         return mixins;
     }
 

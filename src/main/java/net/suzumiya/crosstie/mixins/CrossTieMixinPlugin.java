@@ -212,6 +212,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.rtm.")) {
             boolean hasRtm = isModPresent("RTM");
             if (mixinClassName.endsWith(".EntityVehicleBaseModelSetGuardMixin")
+                    || mixinClassName.endsWith(".EntityVehicleBasePacketSmoothingMixin")
                     || mixinClassName.endsWith(".RenderVehicleBaseContextMixin")
                     || mixinClassName.endsWith(".PartsRendererCheckMouseActionGuardMixin")
                     || mixinClassName.endsWith(".PartsRendererPickPassGuardMixin")
@@ -267,6 +268,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasWebCtc = isModPresent("WebCTC");
             shouldApply = hasWebCtc;
             debugReason = "WebCTC=" + hasWebCtc;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.dimensionalanchors.")) {
+            // "dimensionalanchors" is typical FML Mod ID, also check jar file name patterns
+            boolean hasDA = isModPresent("DimensionalAnchors") || isModPresent("dimensionalanchors") || isModPresent("dimensional-anchor");
+            shouldApply = hasDA;
+            debugReason = "DimensionalAnchors=" + hasDA;
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.journeymap.")) {
             boolean hasJourneyMap = isModPresent("journeymap");
             shouldApply = isClient && hasJourneyMap;
@@ -291,6 +297,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 + isModPresent("MacroMod") + ", OptiFine=" + isModPresent("OptiFine") + ", FastCraft="
                 + isModPresent("FastCraft") + ", WebCTC=" + isModPresent("WebCTC") + ", JourneyMap="
                 + isModPresent("journeymap") + ", PanoramaMaker=" + isModPresent("PanoramaMaker")
+                + ", lwjgl3ify=" + isModPresent("lwjgl3ify")
                 + ", nativeRenderGlobalDisplayLists=" + isNativeRenderGlobalDisplayListsEnabled());
     }
 
@@ -330,7 +337,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             // RenderElectricalWiringOptimizationMixin はクライアント描画専用のため
             // isClient ブロック内（L343）でのみ登録する。ここには追加しない。
             mixins.add("rtm.EntityTrainBaseSpeedSyncMixin");
-            mixins.add("rtm.EntityTrainChunkLoaderCacheMixin");
             mixins.add("rtm.EntityTrainBaseDataWatcherCacheMixin");
             mixins.add("rtm.EntityTrainBaseOptimizationMixin");
             mixins.add("rtm.EntityTrainBasePhysicsMixin");
@@ -347,6 +353,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.RailPropertyAutoSplitLegacyMixin");
             mixins.add("rtm.EntityFloorSeatCollisionMixin");
             mixins.add("rtm.EntityVehicleBaseFixRiderPosMixin");
+
+            if (isModPresent("KaizPatch")) {
+                mixins.add("kaizpatch.RailTransitionSearchRangeMixin");
+            }
         }
 
         // KaizPatch / NGTScriptUtil
@@ -368,7 +378,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             // CrossTie 内包の CrossTieStampedCache を使用 → GTNHLib・Angelicaの有無を問わず常時適用
             mixins.add("kaizpatch.RailMapCustomCacheMixin");
         }
-        
+
         mixins.add("kaizpatch.ModelPackLoadSpeedMixin");
 
         if (isModPresent("MCTE")) {
@@ -377,8 +387,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         // Client-side mixins
         if (isClient) {
-            // lwjgl3ify - キーマップ互換パッチ (NGTOBuilder 等の isKeyDown 問題を修正)
-            // (Moved to Early Mixin)
+            if (isModPresent("lwjgl3ify")) {
+                mixins.add("lwjgl3ify.Lwjgl3ifyKeyboardIsKeyDownMixin");
+                mixins.add("lwjgl3ify.Lwjgl3ifyKeyboardRedirectMixin");
+            }
 
             // OptiFine / FastCraft - LargeRail brightness fix (Angelicaがある場合は追加しない)
             if ((isModPresent("OptiFine") || isModPresent("FastCraft")) && !isModPresent("AngelicaGlsm")) {
@@ -433,6 +445,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.ModelObjectRenderMixin");
                 mixins.add("rtm.RailPartsRendererMixin");
                 mixins.add("rtm.MixinRenderUtil");
+                mixins.add("rtm.CameraCopyImageSubDataMixin");
+
 
                 if (isModPresent("NGTLib")) {
                     mixins.add("ngtlib.TextureSetMixin");
@@ -487,6 +501,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         // ※ ElectricalWiringDecorativeMixin / TileEntityEWConnectionMixin をここに集約。
         // 上部 RTM ブロック（L276）での誤二重登録は廃止済み。
         if (isModPresent("RTM")) {
+            mixins.add("rtm.TileEntityElectricalWiringInvalidateMixin");
+            mixins.add("rtm.RailMapChunkLoadMixin");
             mixins.add("rtm.ElectricalWiringDecorativeMixin");
             mixins.add("rtm.TileEntityEWConnectionMixin");
             mixins.add("rtm.EntityTrainDetectorThrottleMixin");
@@ -521,6 +537,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         // mixins.add("webctc.RailCacheDataUpdateOptimizationMixin");
         // mixins.add("webctc.TeConRuntimeManagerScriptEngineMixin");
         // }
+
+        // Dimensional Anchors
+        if (isModPresent("DimensionalAnchors") || isModPresent("dimensionalanchors") || isModPresent("dimensional-anchor")) {
+            mixins.add("dimensionalanchors.ChunkLoadInterface132AddChunkMixin");
+        }
 
         // JourneyMap
         if (isClient && isModPresent("journeymap")) {

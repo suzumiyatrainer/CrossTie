@@ -21,6 +21,7 @@
         "angelica.AngelicaItemMaterialHelperCaseFixMixin",
         "optifine.WireColorShaderFixMixin",
         "rtm.EntityVehicleBaseModelSetGuardMixin",
+        "rtm.EntityVehicleBasePacketSmoothingMixin",
         "rtm.RenderVehicleBaseContextMixin",
         "rtm.PartsRendererCheckMouseActionGuardMixin",
         "rtm.PartsRendererPickPassGuardMixin",

@@ -52,6 +52,15 @@ public final class CrossTieDiagnostics {
     /** reflection field lookup キャッシュミス数 */
     public static final AtomicLong reflectionCacheMisses = new AtomicLong();
 
+    /** RTM 大型レール描画の呼び出し数 */
+    public static final AtomicLong largeRailRenderCalls = new AtomicLong();
+
+    /** RTM 電気配線描画の呼び出し数 */
+    public static final AtomicLong electricalWiringRenderCalls = new AtomicLong();
+
+    /** RTM 車両描画の呼び出し数 */
+    public static final AtomicLong vehicleRenderCalls = new AtomicLong();
+
     private CrossTieDiagnostics() {
     }
 
@@ -77,18 +86,18 @@ public final class CrossTieDiagnostics {
             return;
         }
 
-        long nashorn = nashornRenderCalls.getAndSet(0);
-        long dlCompile = displayListCompiles.getAndSet(0);
-        long ngtDraw = ngtTessellatorDraws.getAndSet(0);
-        long setBlock = blockUpdates.getAndSet(0);
-        long markBlock = markBlockForUpdateCalls.getAndSet(0);
-        long notifyBlock = notifyBlockChangeCalls.getAndSet(0);
         long skipped = skippedSetBlockCalls.getAndSet(0);
-        long cacheHit = reflectionCacheHits.getAndSet(0);
-        long cacheMiss = reflectionCacheMisses.getAndSet(0);
 
-        CrossTie.LOGGER.info("[CrossTie Diagnostics] nashorn_render={} dl_compile={} ngt_draw={}"
-                + " setBlock={} markBlock={} notifyBlock={} skipped_setBlock={}" + " refCache_hit={} refCache_miss={}",
-                nashorn, dlCompile, ngtDraw, setBlock, markBlock, notifyBlock, skipped, cacheHit, cacheMiss);
+        long largeRail = largeRailRenderCalls.getAndSet(0);
+        long wiring = electricalWiringRenderCalls.getAndSet(0);
+        long vehicle = vehicleRenderCalls.getAndSet(0);
+        Runtime runtime = Runtime.getRuntime();
+        long usedMemory = runtime.totalMemory() - runtime.freeMemory();
+        long maxMemory = runtime.maxMemory();
+
+        CrossTie.LOGGER.debug("[CrossTie] (診断ログ) interval=60s largeRail_render={} wiring_render={}"
+                + " vehicle_render={} skipped_setBlock={} heap_used_mb={} heap_max_mb={}",
+                largeRail, wiring, vehicle, skipped, usedMemory / (1024L * 1024L),
+                maxMemory / (1024L * 1024L));
     }
 }

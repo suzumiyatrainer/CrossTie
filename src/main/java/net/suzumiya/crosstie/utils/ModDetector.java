@@ -38,12 +38,15 @@ public class ModDetector {
         MOD_PATTERNS.put("UniMixins", new String[] { "unimixins" });
 
         // RTM ecosystem
-        MOD_PATTERNS.put("RTM", new String[] { "rtm", "realtrainmod", "kaizpatch" });
-        MOD_PATTERNS.put("NGTLib", new String[] { "ngtlib", "kaizpatch" });
-        MOD_PATTERNS.put("MCTE", new String[] { "mcte", "mcterraineditor", "kaizpatch" });
-        MOD_PATTERNS.put("NGTScriptUtil", new String[] { "ngtlib", "kaizpatch" });
+        // Do not treat KaizPatch as RTM/NGTLib/MCTE. KaizPatch can be installed
+        // without those mods, and enabling their mixins from its filename can make
+        // LaunchClassLoader resolve absent RTM classes during another mod's init.
+        MOD_PATTERNS.put("RTM", new String[] { "rtm", "realtrainmod" });
+        MOD_PATTERNS.put("NGTLib", new String[] { "ngtlib" });
+        MOD_PATTERNS.put("MCTE", new String[] { "mcte", "mcterraineditor" });
+        MOD_PATTERNS.put("NGTScriptUtil", new String[] { "ngtscriptutil", "ngtlib" });
         MOD_PATTERNS.put("KaizPatch", new String[] { "kaizpatch" });
-        MOD_PATTERNS.put("RailMapCustom", new String[] { "rtm", "kaizpatch" });
+        MOD_PATTERNS.put("RailMapCustom", new String[] { "rtm", "realtrainmod", "railmapcustom" });
 
         // ProjectRed
         MOD_PATTERNS.put("ProjectRed", new String[] { "projectred" });
@@ -87,6 +90,15 @@ public class ModDetector {
      * Check if a named mod is detected by scanning mods directories.
      */
     public boolean isModPresent(String modName) {
+        // Check Forge on every call so a filename-based negative cached during
+        // coremod startup does not hide a mod discovered later by FML.
+        try {
+            if (cpw.mods.fml.common.Loader.isModLoaded(modName)) {
+                return true;
+            }
+        } catch (Throwable ignored) {
+            // Coremod detection can run before Forge has finished discovering mods.
+        }
         return cache.computeIfAbsent(modName, this::detectMod);
     }
 

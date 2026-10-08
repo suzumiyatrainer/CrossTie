@@ -12,12 +12,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Reduces RTM train speed DataWatcher churn while keeping server-side logic exact.
+ * Reduces RTM train speed DataWatcher churn while keeping server-side logic
+ * exact.
  *
- * <p>RTM stores authoritative speed in {@code trainSpeed}, but {@code getSpeed()}
- * reads the DataWatcher. Since ATS logic can call {@code getSpeed()} on the server,
- * this mixin returns {@code trainSpeed} server-side and only throttles the networked
- * DataWatcher value used by clients.
+ * <p>
+ * RTM stores authoritative speed in {@code trainSpeed}, but {@code getSpeed()}
+ * reads the DataWatcher. Since ATS logic can call {@code getSpeed()} on the
+ * server, this mixin returns {@code trainSpeed} server-side and only throttles
+ * the networked DataWatcher value used by clients.
  */
 @Mixin(targets = "jp.ngt.rtm.entity.train.EntityTrainBase", remap = false)
 public abstract class EntityTrainBaseSpeedSyncMixin {
@@ -40,7 +42,7 @@ public abstract class EntityTrainBaseSpeedSyncMixin {
     @Unique
     private int crosstie$ticksSinceSpeedSync = 0;
 
-    @Inject(method = "getSpeed", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getSpeed", at = @At("HEAD"), cancellable = true, require = 0)
     private void crosstie$returnAuthoritativeServerSpeed(CallbackInfoReturnable<Float> cir) {
         if (!CrossTieConfig.trainSpeedSyncEnabled) {
             return;
@@ -61,8 +63,7 @@ public abstract class EntityTrainBaseSpeedSyncMixin {
             this.crosstie$ticksSinceSpeedSync++;
 
             if (Float.isNaN(this.crosstie$lastSyncedSpeed)
-                    || Math.abs(this.crosstie$lastSyncedSpeed - newSpeed) > SPEED_SYNC_THRESHOLD
-                    || newSpeed == 0.0F
+                    || Math.abs(this.crosstie$lastSyncedSpeed - newSpeed) > SPEED_SYNC_THRESHOLD || newSpeed == 0.0F
                     || this.crosstie$ticksSinceSpeedSync >= MAX_SPEED_SYNC_INTERVAL_TICKS) {
                 DataWatcher dataWatcher = ((Entity) (Object) this).getDataWatcher();
                 dataWatcher.updateObject(DW_SPEED, newSpeed);
