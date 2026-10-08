@@ -31,10 +31,10 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
-| **Gradle** | `9.7.0` |
+| **Gradle** | `9.8.0` |
 | **必須Mod** | `UniMixins 0.3.1+` |
 | **ビルドシステム** | RetroFuturaGradle 2.0.3 |
-| **最終確認** | `2026-09-25` |
+| **最終確認** | `2026-10-08` |
 
 ### 🔍 内部構造インデックス
 * **Mixin 制御**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -51,12 +51,12 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 
 | Mod名 | 推奨バージョン | 区分 |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha12` | **本体** |
-| **UniMixins** | `0.3.1` | **必須** |
-| **KaizPatchX** | `1.10.1` | 推奨 |
-| **Angelica** | `2.1.59+` | 推奨 |
-| **GTNHLib** | `0.11.34+` | 推奨 |
-| **Hodgepodge** | `2.7.179+` | 任意 |
+| **CrossTie** | `1.0.0-Alpha13` | **本体** |
+| **UniMixins** | `0.3.1+` | **必須** |
+| **KaizPatchX** | `1.10.4` | 推奨 |
+| **Angelica** | `2.2.30+` | 推奨 |
+| **GTNHLib** | `0.11.52+` | 推奨 |
+| **Hodgepodge** | `2.7.193` | 任意 |
 | **ArchaicFix** | `0.8.0+` | 任意 |
 | **ShaderFixer** | `5.4+` | 任意 |
 

@@ -31,10 +31,10 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
-| **Gradle** | `9.7.0` |
+| **Gradle** | `9.8.0` |
 | **Required Mod** | `UniMixins 0.3.1+` |
 | **Build System** | RetroFuturaGradle 2.0.3 |
-| **Last Checked** | `2026-09-25` |
+| **Last Checked** | `2026-10-08` |
 
 ### 🔍 Internal Structure Index
 * **Mixin Control**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -51,12 +51,12 @@ Recommended mod versions for a smooth experience.
 
 | Mod Name | Recommended Version | Category |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha12` | **Core** |
-| **UniMixins** | `0.3.1` | **Required** |
-| **KaizPatchX** | `1.10.1` | Recommended |
-| **Angelica** | `2.1.59+` | Recommended |
-| **GTNHLib** | `0.11.34+` | Recommended |
-| **Hodgepodge** | `2.7.179+` | Optional |
+| **CrossTie** | `1.0.0-Alpha13` | **Core** |
+| **UniMixins** | `0.3.1+` | **Required** |
+| **KaizPatchX** | `1.10.4` | Recommended |
+| **Angelica** | `2.2.30+` | Recommended |
+| **GTNHLib** | `0.11.52+` | Recommended |
+| **Hodgepodge** | `2.7.193` | Optional |
 | **ArchaicFix** | `0.8.0+` | Optional |
 | **ShaderFixer** | `5.4+` | Optional |
 

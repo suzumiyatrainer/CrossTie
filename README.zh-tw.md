@@ -31,10 +31,10 @@ CrossTie 將橫跨多個模組（例如 RTM / NGTLib / MCTE (KaizPatchX)、Angel
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
-| **Gradle** | `9.7.0` |
+| **Gradle** | `9.8.0` |
 | **必備模組** | `UniMixins 0.3.1+` |
 | **建置系統** | RetroFuturaGradle 2.0.3 |
-| **最後確認** | `2026-09-25` |
+| **最後確認** | `2026-10-08` |
 
 ### 🔍 內部結構索引
 * **Mixin 控制**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -51,12 +51,12 @@ CrossTie 將橫跨多個模組（例如 RTM / NGTLib / MCTE (KaizPatchX)、Angel
 
 | 模組名稱 | 推薦版本 | 類別 |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha12` | **核心** |
-| **UniMixins** | `0.3.1` | **必備** |
-| **KaizPatchX** | `1.10.1` | 推薦 |
-| **Angelica** | `2.1.59+` | 推薦 |
-| **GTNHLib** | `0.11.34+` | 推薦 |
-| **Hodgepodge** | `2.7.179+` | 選用 |
+| **CrossTie** | `1.0.0-Alpha13` | **核心** |
+| **UniMixins** | `0.3.1+` | **必備** |
+| **KaizPatchX** | `1.10.4` | 推薦 |
+| **Angelica** | `2.2.30+` | 推薦 |
+| **GTNHLib** | `0.11.52+` | 推薦 |
+| **Hodgepodge** | `2.7.193` | 選用 |
 | **ArchaicFix** | `0.8.0+` | 選用 |
 | **ShaderFixer** | `5.4+` | 選用 |
 
