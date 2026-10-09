@@ -24,6 +24,8 @@ public final class ScriptUtilFallback {
     private static volatile boolean scriptProbeLogged;
     private static final Pattern LEGACY_KEYBOARD_IS_KEY_DOWN = Pattern.compile(
             "\\bKeyboard\\s*\\.\\s*isKeyDown\\s*\\(");
+    private static final Pattern LEGACY_MOUSE_IS_BUTTON_DOWN = Pattern.compile(
+            "\\bMouse\\s*\\.\\s*isButtonDown\\s*\\(");
 
     private ScriptUtilFallback() {
     }
@@ -65,11 +67,20 @@ public final class ScriptUtilFallback {
      * was loaded before LaunchWrapper's transformers were registered.
      */
     private static String redirectLwjgl3ifyKeyboardCalls(String script) {
-        if (script == null || !LEGACY_KEYBOARD_IS_KEY_DOWN.matcher(script).find()) {
+        if (script == null) {
             return script;
         }
 
         if (!isLwjgl3ifyPresent()) {
+            return script;
+        }
+
+        if (LEGACY_MOUSE_IS_BUTTON_DOWN.matcher(script).find()) {
+            script = LEGACY_MOUSE_IS_BUTTON_DOWN.matcher(script).replaceAll(
+                    "Packages.net.suzumiya.crosstie.compat.lwjgl3ify.MouseAdapter.isButtonDown(");
+        }
+
+        if (!LEGACY_KEYBOARD_IS_KEY_DOWN.matcher(script).find()) {
             return script;
         }
 

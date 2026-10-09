@@ -34,7 +34,7 @@ CrossTie 將橫跨多個模組（例如 RTM / NGTLib / MCTE (KaizPatchX)、Angel
 | **Gradle** | `9.8.0` |
 | **必備模組** | `UniMixins 0.3.1+` |
 | **建置系統** | RetroFuturaGradle 2.0.3 |
-| **最後確認** | `2026-10-08` |
+| **最後確認** | `2026-10-09` |
 
 ### 🔍 內部結構索引
 * **Mixin 控制**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -51,7 +51,7 @@ CrossTie 將橫跨多個模組（例如 RTM / NGTLib / MCTE (KaizPatchX)、Angel
 
 | 模組名稱 | 推薦版本 | 類別 |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha13` | **核心** |
+| **CrossTie** | `1.0.0-Alpha14` | **核心** |
 | **UniMixins** | `0.3.1+` | **必備** |
 | **KaizPatchX** | `1.10.4` | 推薦 |
 | **Angelica** | `2.2.30+` | 推薦 |

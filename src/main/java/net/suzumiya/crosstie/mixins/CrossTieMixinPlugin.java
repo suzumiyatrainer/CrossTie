@@ -136,8 +136,21 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.lwjgl3ify.")) {
             boolean hasLwjgl3ify = isModPresent("lwjgl3ify");
-            shouldApply = isClient && hasLwjgl3ify;
-            debugReason = "isClient=" + isClient + ", lwjgl3ify=" + hasLwjgl3ify;
+            if (mixinClassName.endsWith(".GuiSelectModelRenderMixin")) {
+                boolean hasRtm = isModPresent("RTM");
+                boolean hasAngelicaGlsm = isModPresent("AngelicaGlsm");
+                shouldApply = isClient && hasLwjgl3ify && hasRtm && hasAngelicaGlsm;
+                debugReason = "isClient=" + isClient + ", lwjgl3ify=" + hasLwjgl3ify
+                        + ", RTM=" + hasRtm + ", AngelicaGlsm=" + hasAngelicaGlsm;
+            } else if (mixinClassName.endsWith(".RtmLoadSpeedLwjgl3ifyMixin")) {
+                boolean hasRtm = isModPresent("RTM");
+                shouldApply = hasLwjgl3ify && hasRtm;
+                debugReason = "lwjgl3ify=" + hasLwjgl3ify + ", RTM=" + hasRtm;
+            } else {
+                shouldApply = isClient && hasLwjgl3ify;
+                debugReason = "isClient=" + isClient + ", lwjgl3ify=" + hasLwjgl3ify;
+            }
+
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.gtnhlib.")) {
             boolean hasGtnhLib = isModPresent("GTNHLib");
             if (mixinClassName.endsWith(".ObjectPoolerThreadSafeMixin")) {
@@ -381,6 +394,13 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         mixins.add("kaizpatch.ModelPackLoadSpeedMixin");
 
+        // lwjgl3ify 環境では RTM loadSpeed=3 (Fast/Work-Stealing) が不安定なため 2 に制限する。
+        // ModelPackLoadSpeedMixin（最低値保証）と補完関係（こちらは最高値制限）。
+        // クライアント・サーバー共通で RTM が存在し lwjgl3ify が検出された場合のみ適用。
+        if (isModPresent("lwjgl3ify") && isModPresent("RTM")) {
+            mixins.add("lwjgl3ify.RtmLoadSpeedLwjgl3ifyMixin");
+        }
+
         if (isModPresent("MCTE")) {
             mixins.add("kaizpatch.McteWorldSetBlockDiffMixin");
         }
@@ -390,6 +410,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             if (isModPresent("lwjgl3ify")) {
                 mixins.add("lwjgl3ify.Lwjgl3ifyKeyboardIsKeyDownMixin");
                 mixins.add("lwjgl3ify.Lwjgl3ifyKeyboardRedirectMixin");
+                mixins.add("lwjgl3ify.Lwjgl3ifyMouseButtonMixin");
+                // GuiSelectModel モデルプレビューを GLStateManager 経由に切り替え
+                // lwjgl3ify + Angelica 環境での投影行列 desync / ライティング破壊を修正
+                if (isModPresent("RTM") && isModPresent("AngelicaGlsm")) {
+                    mixins.add("lwjgl3ify.GuiSelectModelRenderMixin");
+                }
             }
 
             // OptiFine / FastCraft - LargeRail brightness fix (Angelicaがある場合は追加しない)
@@ -509,6 +535,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         if (isModPresent("RTM")) {
             mixins.add("rtm.TileEntityElectricalWiringInvalidateMixin");
             mixins.add("rtm.RailMapChunkLoadMixin");
+            mixins.add("rtm.TileEntityUnreadSaveDiagnosticMixin"); // 診断専用(挙動不変)
+            mixins.add("rtm.TileEntityModelNameMutationDiagnosticMixin"); // 診断専用(挙動不変)
+            mixins.add("rtm.TileEntityRailPropertyMutationDiagnosticMixin"); // 診断専用(挙動不変)
+            mixins.add("rtm.TileEntityLargeRailCoreInvalidateMixin");
             mixins.add("rtm.ElectricalWiringDecorativeMixin");
             mixins.add("rtm.TileEntityEWConnectionMixin");
             mixins.add("rtm.EntityTrainDetectorThrottleMixin");

@@ -1,15 +1,19 @@
 package net.suzumiya.crosstie.asm;
 
 import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
+import net.minecraft.launchwrapper.Launch;
 import net.suzumiya.crosstie.utils.ModDetector;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 @IFMLLoadingPlugin.MCVersion("1.7.10")
@@ -70,6 +74,11 @@ public class CrossTieCorePlugin implements IFMLLoadingPlugin,
 
     @Override
     public void injectData(Map<String, Object> data) {
+        // macOS + lwjgl3ify 環境では GLFW がメインスレッドを占有するため AWT は headless 必須。
+        // RFB が通常セットするが、非 RFB 起動パスでも動作するよう防御的にここでも設定する。
+        // （LWJGL3ify-rtm-1.0.0 由来）
+        forceHeadlessOnMac();
+
         // Resolve mcDataDir - the Minecraft run directory
         File mcDataDir = null;
         if (data != null) {
@@ -98,6 +107,73 @@ public class CrossTieCorePlugin implements IFMLLoadingPlugin,
 
         if (minfoDetected) {
             disableAngelicaFontRenderer(mcDataDir);
+        }
+
+        // mods/modelpacks/ 内の ZIP / JAR をクラスパスに追加する。
+        // KaizPatchX の FIXFileLoader.getInputStream() が ResourceLocation レベルで
+        // 解決するが、Minecraft 本体のリソースシステムが ZIP 内を参照できるよう
+        // LaunchClassLoader にも登録しておく。（LWJGL3ify-rtm-1.0.0 由来）
+        injectModelpackZips(mcDataDir);
+    }
+
+    /**
+     * macOS かつ {@code java.awt.headless} が未設定の場合にのみ {@code true} をセットする。
+     *
+     * <p>lwjgl3ify は macOS で GLFW がメインスレッドを占有するため AWT を headless にしなければならない。
+     * RTM の {@code ModelPackLoadThread} は headless 時に Swing 進捗ウィンドウをスキップするため、
+     * この設定が RTM 側の Swing クラッシュも合わせて防ぐ。
+     * ユーザーが明示的に設定済みの場合は上書きしない。
+     *
+     * <p><b>原作:</b> LWJGL3ify-rtm-1.0.0 by 325 (LGPL-3.0-or-later)
+     */
+    private static void forceHeadlessOnMac() {
+        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        if (!os.contains("mac")) {
+            return;
+        }
+        if (System.getProperty("java.awt.headless") != null) {
+            return;
+        }
+        System.setProperty("java.awt.headless", "true");
+        System.out.println("[CrossTieCore] macOS を検出しました。lwjgl3ify 互換のため java.awt.headless=true を設定しました。");
+    }
+
+    /**
+     * {@code mods/modelpacks/} 内の {@code *.zip} / {@code *.jar} を
+     * {@link Launch#classLoader} に追加する。
+     *
+     * <p>KaizPatchX の {@code FIXFileLoader} が {@code ResourceLocation} レベルで
+     * モデルパックを解決するが、Minecraft 本体のクラスローダー経由のリソース検索でも
+     * 同 ZIP 内のアセットが参照できるよう classpath に登録する。
+     * 登録順はファイル名の辞書順とし再現性を確保する。
+     *
+     * <p><b>原作:</b> LWJGL3ify-rtm-1.0.0 by 325 (LGPL-3.0-or-later)
+     */
+    private static void injectModelpackZips(File mcDataDir) {
+        if (mcDataDir == null) {
+            return;
+        }
+        File modelpackDir = new File(mcDataDir, "mods/modelpacks");
+        if (!modelpackDir.isDirectory()) {
+            System.out.println("[CrossTieCore] mods/modelpacks ディレクトリが見つかりません: " + modelpackDir.getAbsolutePath());
+            return;
+        }
+        File[] files = modelpackDir.listFiles((dir, name) -> {
+            String lower = name.toLowerCase(Locale.ROOT);
+            return lower.endsWith(".zip") || lower.endsWith(".jar");
+        });
+        if (files == null || files.length == 0) {
+            return;
+        }
+        Arrays.sort(files);
+        for (File archive : files) {
+            try {
+                Launch.classLoader.addURL(archive.toURI().toURL());
+                System.out.println("[CrossTieCore] モデルパックアーカイブをクラスパスに追加しました: " + archive.getName());
+            } catch (MalformedURLException e) {
+                System.err.println("[CrossTieCore] モデルパックアーカイブの追加に失敗しました: "
+                        + archive.getAbsolutePath() + " - " + e.getMessage());
+            }
         }
     }
 
