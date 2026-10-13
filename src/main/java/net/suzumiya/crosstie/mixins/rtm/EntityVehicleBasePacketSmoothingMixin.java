@@ -102,6 +102,7 @@ public abstract class EntityVehicleBasePacketSmoothingMixin {
             // Retain vanilla tracking until enough packet history exists for the delay.
             return;
         }
+        boolean isTrain = self instanceof jp.ngt.rtm.entity.train.EntityTrainBase;
         if (after != null && after.tick > before.tick) {
             float t = (float) ((renderTick - before.tick) / (double) (after.tick - before.tick));
             t = MathHelper.clamp_float(t, 0.0F, 1.0F);
@@ -110,14 +111,18 @@ public abstract class EntityVehicleBasePacketSmoothingMixin {
             self.posZ = before.z + (after.z - before.z) * t;
             self.rotationYaw = before.yaw + MathHelper.wrapAngleTo180_float(after.yaw - before.yaw) * t;
             self.rotationPitch = before.pitch + (after.pitch - before.pitch) * t;
-            self.rotationRoll = before.roll + (after.roll - before.roll) * t;
+            if (!isTrain) {
+                self.rotationRoll = before.roll + (after.roll - before.roll) * t;
+            }
         } else {
             self.posX = before.x;
             self.posY = before.y;
             self.posZ = before.z;
             self.rotationYaw = before.yaw;
             self.rotationPitch = before.pitch;
-            self.rotationRoll = before.roll;
+            if (!isTrain) {
+                self.rotationRoll = before.roll;
+            }
         }
         self.rotationYaw = self.rotationYaw % 360.0F;
         self.rotationPitch = self.rotationPitch % 360.0F;

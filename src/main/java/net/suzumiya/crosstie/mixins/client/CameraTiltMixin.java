@@ -34,6 +34,7 @@ public abstract class CameraTiltMixin {
         }
         float pitch = vehicle.prevRotationPitch + (vehicle.rotationPitch - vehicle.prevRotationPitch) * partialTicks;
         float roll = vehicle.prevRotationRoll + (vehicle.rotationRoll - vehicle.prevRotationRoll) * partialTicks;
+        roll *= TrainCameraController.getRollMultiplier((EntityPlayer)player);
         if (Math.abs(pitch) < 0.001f && Math.abs(roll) < 0.001f) {
             return;
         }
@@ -50,18 +51,28 @@ public abstract class CameraTiltMixin {
         }
         boolean isThirdPerson = mc.gameSettings.thirdPersonView > 0;
         float distance = 0.0f;
+        float pivotHeight = TrainCameraController.getPivotHeight((EntityPlayer)player);
+
         if (isThirdPerson) {
             distance = this.thirdPersonDistanceTemp + (this.thirdPersonDistance - this.thirdPersonDistanceTemp) * partialTicks;
-            GL11.glTranslatef((float)0.0f, (float)0.0f, (float)distance);
+            GL11.glTranslatef(0.0f, 0.0f, distance);
+        } else {
+            // 一人称視点: 目の位置から足元/腰(ピボット)へ原点を下げる
+            GL11.glTranslatef(0.0f, -pivotHeight, 0.0f);
         }
+
         if (Math.abs(camPitch) > 0.001f) {
-            GL11.glRotatef((float)(-camPitch), (float)1.0f, (float)0.0f, (float)0.0f);
+            GL11.glRotatef(-camPitch, 1.0f, 0.0f, 0.0f);
         }
         if (Math.abs(camRoll) > 0.001f) {
-            GL11.glRotatef((float)camRoll, (float)0.0f, (float)0.0f, (float)1.0f);
+            GL11.glRotatef(camRoll, 0.0f, 0.0f, 1.0f);
         }
+
         if (isThirdPerson) {
-            GL11.glTranslatef((float)0.0f, (float)0.0f, (float)(-distance));
+            GL11.glTranslatef(0.0f, 0.0f, -distance);
+        } else {
+            // 一人称視点: ピボットから目の位置へ原点を戻す
+            GL11.glTranslatef(0.0f, pivotHeight, 0.0f);
         }
     }
 }

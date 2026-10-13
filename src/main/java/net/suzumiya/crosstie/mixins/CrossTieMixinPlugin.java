@@ -197,7 +197,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasAngelica = isModPresent("Angelica");
             boolean hasAnyAngelica = hasAngelica || hasAngelicaGlsm;
 
-            if (mixinClassName.endsWith(".AngelicaRenderGlobalDisplayListCrashMixin")) {
+            if (mixinClassName.endsWith(".WeatherColumnsRainOcclusionMixin")
+                    || mixinClassName.endsWith(".WeatherRendererRainOcclusionMixin")) {
+                boolean hasRtm = isModPresent("RTM");
+                shouldApply = isClient && hasAnyAngelica && hasRtm;
+                debugReason = "isClient=" + isClient + ", Angelica=" + hasAnyAngelica + ", RTM=" + hasRtm;
+            } else if (mixinClassName.endsWith(".AngelicaRenderGlobalDisplayListCrashMixin")) {
                 shouldApply = isClient && hasAngelicaGlsm;
                 debugReason = "isClient=" + isClient + ", AngelicaGlsm=" + hasAngelicaGlsm
                         + ", nativeLists=forced_for_rtm_parts";
@@ -260,6 +265,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                     || mixinClassName.endsWith(".ChatComponentStyleNullGuardMixin")) {
                 shouldApply = true;
                 debugReason = "always=true";
+            } else if (mixinClassName.endsWith(".EntityRendererRainOcclusionMixin")
+                    || mixinClassName.endsWith(".WorldPrecipitationHeightOcclusionMixin")) {
+                boolean hasRtm = isModPresent("RTM");
+                shouldApply = isClient && hasRtm;
+                debugReason = "isClient=" + isClient + ", RTM=" + hasRtm;
             } else {
                 boolean hasGtnhLib = isModPresent("GTNHLib");
                 shouldApply = isClient && hasGtnhLib;
@@ -431,6 +441,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 // B-01: バックグラウンドでワールドを開いた際のブラックスクリーン修正
                 // Angelica の FpsReducer が未レンダリング状態でポーズメニューを開くのを防ぐ
                 mixins.add("angelica.FpsReducerMixin");
+
+                if (isModPresent("RTM")) {
+                    mixins.add("angelica.WeatherColumnsRainOcclusionMixin");
+                    mixins.add("angelica.WeatherRendererRainOcclusionMixin");
+                }
             }
 
             if (isModPresent("AngelicaGlsm")) {
@@ -450,6 +465,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
             // RTM client
             if (isModPresent("RTM")) {
+                mixins.add("minecraft.WorldPrecipitationHeightOcclusionMixin");
+                mixins.add("minecraft.EntityRendererRainOcclusionMixin");
                 mixins.add("rtm.RenderElectricalWiringOptimizationMixin");
                 mixins.add("rtm.BlockLinePoleConnectionCacheMixin");
                 mixins.add("rtm.RenderLargeRailOptimizationMixin");
