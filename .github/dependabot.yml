@@ -1,6 +1,5 @@
 version: 2
 updates:
-  # Gradle dependencies
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
@@ -8,5 +7,5 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-    allow:
-      - dependency-type: "all"
+    ignore:
+      - dependency-name: "org.apache.logging.log4j:*"
