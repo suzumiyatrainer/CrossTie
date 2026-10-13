@@ -177,11 +177,11 @@ dependencies {
     annotationProcessor('com.google.code.gson:gson:2.14.0')
 
     // ASM
-    implementation 'org.ow2.asm:asm:9.10.1'
-    implementation 'org.ow2.asm:asm-commons:9.10.1'
-    implementation 'org.ow2.asm:asm-tree:9.10.1'
-    implementation 'org.ow2.asm:asm-analysis:9.10.1'
-    implementation 'org.ow2.asm:asm-util:9.10.1'
+    implementation 'org.ow2.asm:asm:9.11'
+    implementation 'org.ow2.asm:asm-commons:9.11'
+    implementation 'org.ow2.asm:asm-tree:9.11'
+    implementation 'org.ow2.asm:asm-analysis:9.11'
+    implementation 'org.ow2.asm:asm-util:9.11'
 
     // fastutil: Needed for ObjectArrayList type in gtnhlib mixin
     compileOnly('it.unimi.dsi:fastutil:8.5.19')
