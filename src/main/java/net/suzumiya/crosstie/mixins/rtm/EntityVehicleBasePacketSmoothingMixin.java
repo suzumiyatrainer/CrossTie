@@ -76,8 +76,9 @@ public abstract class EntityVehicleBasePacketSmoothingMixin {
         }
 
         EntityVehicleBase self = (EntityVehicleBase) (Object) this;
-        if (self == TrainStandingHandler.getClientStandingTrain()) {
-            // Keep the standing player and its train on the same client timeline.
+        EntityVehicleBase currentVehicle = net.suzumiya.crosstie.client.TrainCameraController.getMountedOrStandingVehicle(net.minecraft.client.Minecraft.getMinecraft().thePlayer);
+        if (self == currentVehicle || self == TrainStandingHandler.getClientStandingTrain()) {
+            // Keep the mounted/standing player and its train on the same client timeline.
             crosstie$snapshots.clear();
             crosstie$targetOffset = Double.NaN;
             crosstie$smoothedOffset = Double.NaN;

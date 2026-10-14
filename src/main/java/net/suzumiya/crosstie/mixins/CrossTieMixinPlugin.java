@@ -198,7 +198,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasAnyAngelica = hasAngelica || hasAngelicaGlsm;
 
             if (mixinClassName.endsWith(".WeatherColumnsRainOcclusionMixin")
-                    || mixinClassName.endsWith(".WeatherRendererRainOcclusionMixin")) {
+                    || mixinClassName.endsWith(".WeatherRendererRainOcclusionMixin")
+                    || mixinClassName.endsWith(".WeatherColumnsAccessor")) {
                 boolean hasRtm = isModPresent("RTM");
                 shouldApply = isClient && hasAnyAngelica && hasRtm;
                 debugReason = "isClient=" + isClient + ", Angelica=" + hasAnyAngelica + ", RTM=" + hasRtm;
@@ -443,6 +444,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("angelica.FpsReducerMixin");
 
                 if (isModPresent("RTM")) {
+                    mixins.add("angelica.WeatherColumnsAccessor");
                     mixins.add("angelica.WeatherColumnsRainOcclusionMixin");
                     mixins.add("angelica.WeatherRendererRainOcclusionMixin");
                 }
@@ -550,6 +552,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         // ※ ElectricalWiringDecorativeMixin / TileEntityEWConnectionMixin をここに集約。
         // 上部 RTM ブロック（L276）での誤二重登録は廃止済み。
         if (isModPresent("RTM")) {
+            mixins.add("minecraft.TrainEntityInteractionRangeMixin");
             mixins.add("rtm.TileEntityElectricalWiringInvalidateMixin");
             mixins.add("rtm.RailMapChunkLoadMixin");
             mixins.add("rtm.TileEntityUnreadSaveDiagnosticMixin"); // 診断専用(挙動不変)

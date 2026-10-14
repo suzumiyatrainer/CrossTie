@@ -8,25 +8,35 @@ import jp.ngt.rtm.entity.vehicle.EntityVehicleBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.suzumiya.crosstie.utils.TrainStandingHandler;
 
-@SideOnly(value=Side.CLIENT)
+@SideOnly(value = Side.CLIENT)
 public final class TrainCameraController {
     private TrainCameraController() {
     }
 
     public static EntityVehicleBase<?> getMountedOrStandingVehicle(EntityPlayer player) {
+        @SuppressWarnings("unused")
         EntityFloor floor;
         if (player == null) {
             return null;
         }
-        if (player.ridingEntity instanceof EntityFloor && (floor = (EntityFloor)player.ridingEntity).getVehicle() != null) {
-            return floor.getVehicle();
+        if (player.ridingEntity instanceof jp.ngt.rtm.entity.train.parts.EntityVehiclePart) {
+            jp.ngt.rtm.entity.train.parts.EntityVehiclePart part = (jp.ngt.rtm.entity.train.parts.EntityVehiclePart) player.ridingEntity;
+            if (part.getVehicle() != null) {
+                return part.getVehicle();
+            }
         }
         if (player.ridingEntity instanceof EntityVehicleBase) {
             return (EntityVehicleBase<?>) player.ridingEntity;
         }
-        EntityTrainBase standingTrain = TrainStandingHandler.getClientStandingTrain();
-        if (standingTrain != null && !standingTrain.isDead) {
-            return standingTrain;
+        if (player.ridingEntity == null) {
+            EntityTrainBase standingTrain = TrainStandingHandler.getClientStandingTrain();
+            if (standingTrain != null && !standingTrain.isDead) {
+                if (TrainStandingHandler.isPlayerActuallyStandingOn(standingTrain, player)) {
+                    return standingTrain;
+                } else {
+                    TrainStandingHandler.clearClientStandingTrain(standingTrain);
+                }
+            }
         }
         return null;
     }

@@ -10,7 +10,7 @@
         "angelica.AngelicaRebuildSyncRTMRailMixin",
         "customnpc.ScriptControllerInitMixin",
         "rtm.TrainStandingMixin",
-        "rtm.EntityFloorPitchFollowMixin",
+        "rtm.EntityTrainBaseRiderPitchCompensationMixin",
         "rtm.VehicleTrackerEntryMixin"
     ],
     "client": [

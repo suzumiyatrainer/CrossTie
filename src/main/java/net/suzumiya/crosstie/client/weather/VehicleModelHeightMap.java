@@ -25,25 +25,59 @@ import java.util.concurrent.ConcurrentHashMap;
 @SideOnly(Side.CLIENT)
 public class VehicleModelHeightMap {
 
-    public static final float CELL_SIZE = 0.25f; // 25cm 解像度
+    public static final float CELL_SIZE = 0.20f; // 20cm 解像度（細部追従と隙間防止）
     public static final float NO_HEIGHT = Float.NEGATIVE_INFINITY;
 
     private static final Map<String, VehicleModelHeightMap> CACHE = new ConcurrentHashMap<>();
 
     private final float minX;
+    private final float maxX;
     private final float minZ;
+    private final float maxZ;
+    private final float roofMinX;
+    private final float roofMaxX;
+    private final float roofMinZ;
+    private final float roofMaxZ;
+    private final float nominalRoofY;
     private final int cellsX;
     private final int cellsZ;
     private final float[] heightMap;
     private final boolean hasFaces;
 
-    public VehicleModelHeightMap(float minX, float minZ, int cellsX, int cellsZ, float[] heightMap, boolean hasFaces) {
+    public VehicleModelHeightMap(float minX, float maxX, float minZ, float maxZ,
+                                float roofMinX, float roofMaxX, float roofMinZ, float roofMaxZ,
+                                float nominalRoofY, int cellsX, int cellsZ, float[] heightMap, boolean hasFaces) {
         this.minX = minX;
+        this.maxX = maxX;
         this.minZ = minZ;
+        this.maxZ = maxZ;
+        this.roofMinX = roofMinX;
+        this.roofMaxX = roofMaxX;
+        this.roofMinZ = roofMinZ;
+        this.roofMaxZ = roofMaxZ;
+        this.nominalRoofY = nominalRoofY;
         this.cellsX = cellsX;
         this.cellsZ = cellsZ;
         this.heightMap = heightMap;
         this.hasFaces = hasFaces;
+    }
+
+    public float getMinX() { return minX; }
+    public float getMaxX() { return maxX; }
+    public float getMinZ() { return minZ; }
+    public float getMaxZ() { return maxZ; }
+    public float getRoofMinX() { return roofMinX; }
+    public float getRoofMaxX() { return roofMaxX; }
+    public float getRoofMinZ() { return roofMinZ; }
+    public float getRoofMaxZ() { return roofMaxZ; }
+    public float getNominalRoofY() { return nominalRoofY; }
+    public boolean hasFaces() { return hasFaces; }
+
+    /**
+     * 指定のローカル座標が車体の屋根カバー範囲の内側にあるかを判定する。
+     */
+    public boolean isInsideRoofBounds(float lx, float lz) {
+        return hasFaces && lx >= roofMinX && lx <= roofMaxX && lz >= roofMinZ && lz <= roofMaxZ;
     }
 
     /**
@@ -69,26 +103,68 @@ public class VehicleModelHeightMap {
             }
 
             IModelNGT model = modelSet.vehicleModel.model;
-            VehicleModelHeightMap generated = computeFromModel(model, modelSet.getConfig());
+            ensureModelLoaded(model);
+            VehicleModelHeightMap generated = computeFromModel(modelName, model, modelSet.getConfig());
+            compactModelIfPossible(model);
+
             if (generated != null) {
                 CACHE.put(modelName, generated);
             }
             return generated;
         } catch (Throwable t) {
+            net.suzumiya.crosstie.CrossTie.LOGGER.warn("[CrossTie] 車両モデルハイトマップ生成中にエラーが発生しました: " + modelName, t);
             return null;
+        }
+    }
+
+    /**
+     * KaizPatchX (fixRTM) の AsyncCachedModel 等でモデルがアンロードされている場合に同期ロードを保証する。
+     */
+    private static void ensureModelLoaded(IModelNGT model) {
+        if (model == null) return;
+        try {
+            Class<?> utilCls = Class.forName("jp.kaiz.kaizpatch.fixrtm.model.CachedModelUtil");
+            java.lang.reflect.Method m = utilCls.getMethod("prepareSharedUse", IModelNGT.class);
+            m.invoke(null, model);
+            return;
+        } catch (Throwable ignored) {
+        }
+
+        try {
+            java.lang.reflect.Method m = model.getClass().getMethod("ensureLoadedForSharedUse");
+            m.setAccessible(true);
+            m.invoke(model);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * ハイトマップ生成完了後、メモリ節約のためアンロード状態に戻す（KaizPatchXキャッシュ協調）。
+     */
+    private static void compactModelIfPossible(IModelNGT model) {
+        if (model == null) return;
+        try {
+            Class<?> utilCls = Class.forName("jp.kaiz.kaizpatch.fixrtm.model.CachedModelUtil");
+            java.lang.reflect.Method m = utilCls.getMethod("compact", IModelNGT.class);
+            m.invoke(null, model);
+        } catch (Throwable ignored) {
         }
     }
 
     /**
      * モデルからローカルハイトマップを動的生成する。
      */
-    private static VehicleModelHeightMap computeFromModel(IModelNGT model, jp.ngt.rtm.modelpack.cfg.VehicleBaseConfig cfg) {
+    private static VehicleModelHeightMap computeFromModel(String modelName, IModelNGT model, jp.ngt.rtm.modelpack.cfg.VehicleBaseConfig cfg) {
         if (!(model instanceof PolygonModel)) {
             return null;
         }
 
         PolygonModel polygonModel = (PolygonModel) model;
         if (polygonModel.getGroupObjects() == null || polygonModel.getGroupObjects().isEmpty()) {
+            ensureModelLoaded(model);
+        }
+        if (polygonModel.getGroupObjects() == null || polygonModel.getGroupObjects().isEmpty()) {
+            net.suzumiya.crosstie.CrossTie.LOGGER.warn("[CrossTie] モデルポリゴン面が空のためハイトマップを生成できませんでした: " + modelName);
             return null;
         }
 
@@ -214,7 +290,117 @@ public class VehicleModelHeightMap {
             }
         }
 
-        return new VehicleModelHeightMap(minX, minZ, cellsX, cellsZ, finalHeight, foundFace);
+        // 3. ホールフィリング（穴埋め処理）:
+        // 細いポリゴン境界やキールライン（中央線）の離散サンプリング抜けで生じた NO_HEIGHT セルを
+        // 左右および前後の有効な屋根面から線形補間して完全に塞ぐ
+        float roofMinX = Float.POSITIVE_INFINITY;
+        float roofMaxX = Float.NEGATIVE_INFINITY;
+        float roofMinZ = Float.POSITIVE_INFINITY;
+        float roofMaxZ = Float.NEGATIVE_INFINITY;
+
+        // まず屋根の実際の範囲を特定
+        for (int gz = 0; gz < cellsZ; gz++) {
+            float pz = minZ + gz * CELL_SIZE;
+            for (int gx = 0; gx < cellsX; gx++) {
+                int idx = gz * cellsX + gx;
+                if (finalHeight[idx] != NO_HEIGHT) {
+                    float px = minX + gx * CELL_SIZE;
+                    if (px < roofMinX) roofMinX = px;
+                    if (px > roofMaxX) roofMaxX = px;
+                    if (pz < roofMinZ) roofMinZ = pz;
+                    if (pz > roofMaxZ) roofMaxZ = pz;
+                }
+            }
+        }
+
+        // 左右（X方向）の隙間埋め
+        for (int gz = 0; gz < cellsZ; gz++) {
+            int firstValidGx = -1;
+            int lastValidGx = -1;
+            for (int gx = 0; gx < cellsX; gx++) {
+                if (finalHeight[gz * cellsX + gx] != NO_HEIGHT) {
+                    if (firstValidGx == -1) firstValidGx = gx;
+                    lastValidGx = gx;
+                }
+            }
+
+            if (firstValidGx != -1 && lastValidGx > firstValidGx) {
+                for (int gx = firstValidGx + 1; gx < lastValidGx; gx++) {
+                    int idx = gz * cellsX + gx;
+                    if (finalHeight[idx] == NO_HEIGHT) {
+                        int leftGx = gx - 1;
+                        while (leftGx >= firstValidGx && finalHeight[gz * cellsX + leftGx] == NO_HEIGHT) {
+                            leftGx--;
+                        }
+                        int rightGx = gx + 1;
+                        while (rightGx <= lastValidGx && finalHeight[gz * cellsX + rightGx] == NO_HEIGHT) {
+                            rightGx++;
+                        }
+
+                        if (leftGx >= firstValidGx && rightGx <= lastValidGx) {
+                            float leftH = finalHeight[gz * cellsX + leftGx];
+                            float rightH = finalHeight[gz * cellsX + rightGx];
+                            float t = (float) (gx - leftGx) / (float) (rightGx - leftGx);
+                            finalHeight[idx] = leftH + t * (rightH - leftH);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 前後（Z方向）の隙間埋め
+        for (int gx = 0; gx < cellsX; gx++) {
+            int firstValidGz = -1;
+            int lastValidGz = -1;
+            for (int gz = 0; gz < cellsZ; gz++) {
+                if (finalHeight[gz * cellsX + gx] != NO_HEIGHT) {
+                    if (firstValidGz == -1) firstValidGz = gz;
+                    lastValidGz = gz;
+                }
+            }
+
+            if (firstValidGz != -1 && lastValidGz > firstValidGz) {
+                for (int gz = firstValidGz + 1; gz < lastValidGz; gz++) {
+                    int idx = gz * cellsX + gx;
+                    if (finalHeight[idx] == NO_HEIGHT) {
+                        int prevGz = gz - 1;
+                        while (prevGz >= firstValidGz && finalHeight[prevGz * cellsX + gx] == NO_HEIGHT) {
+                            prevGz--;
+                        }
+                        int nextGz = gz + 1;
+                        while (nextGz <= lastValidGz && finalHeight[nextGz * cellsX + gx] == NO_HEIGHT) {
+                            nextGz++;
+                        }
+
+                        if (prevGz >= firstValidGz && nextGz <= lastValidGz) {
+                            float prevH = finalHeight[prevGz * cellsX + gx];
+                            float nextH = finalHeight[nextGz * cellsX + gx];
+                            float t = (float) (gz - prevGz) / (float) (nextGz - prevGz);
+                            finalHeight[idx] = prevH + t * (nextH - prevH);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. nominalRoofY（基準屋根高さ）の計算
+        float heightSum = 0;
+        int validCellCount = 0;
+        for (int i = 0; i < totalCells; i++) {
+            if (finalHeight[i] != NO_HEIGHT) {
+                heightSum += finalHeight[i];
+                validCellCount++;
+            }
+        }
+        float nominalRoofY = validCellCount > 0 ? (heightSum / validCellCount) : 3.3f;
+
+        float spanX = maxX - minX;
+        float spanZ = maxZ - minZ;
+        net.suzumiya.crosstie.CrossTie.LOGGER.info(String.format(java.util.Locale.ROOT,
+                "[CrossTie] 車両モデルハイトマップ生成完了: %s (幅: %.2fm, 長さ: %.2fm, 屋根基準高: %.2fm, グリッド: %dx%d=%dセル)",
+                modelName, spanX, spanZ, nominalRoofY, cellsX, cellsZ, totalCells));
+
+        return new VehicleModelHeightMap(minX, maxX, minZ, maxZ, roofMinX, roofMaxX, roofMinZ, roofMaxZ, nominalRoofY, cellsX, cellsZ, finalHeight, foundFace);
     }
 
     /**
@@ -265,8 +451,6 @@ public class VehicleModelHeightMap {
                     int idx = gz * cellsX + gx;
 
                     if (isKnownExcluded) {
-                        // 明示的除外パーツ（パンタグラフ等）の場合は topHeight には含めず、
-                        // もし屋根面より下なら subHeight にのみ考慮
                         continue;
                     }
 
@@ -302,7 +486,33 @@ public class VehicleModelHeightMap {
             return NO_HEIGHT;
         }
 
-        return heightMap[gz * cellsX + gx];
+        float h = heightMap[gz * cellsX + gx];
+        if (h != NO_HEIGHT) {
+            return h;
+        }
+
+        // 周囲3x3の最近傍探索フォールバック（微小なサンプリング欠けの補間）
+        float sum = 0;
+        int count = 0;
+        for (int dz = -1; dz <= 1; dz++) {
+            int nz = gz + dz;
+            if (nz < 0 || nz >= cellsZ) continue;
+            for (int dx = -1; dx <= 1; dx++) {
+                int nx = gx + dx;
+                if (nx < 0 || nx >= cellsX) continue;
+                float nh = heightMap[nz * cellsX + nx];
+                if (nh != NO_HEIGHT) {
+                    sum += nh;
+                    count++;
+                }
+            }
+        }
+
+        if (count > 0) {
+            return sum / count;
+        }
+
+        return NO_HEIGHT;
     }
 
     private static void collectConfigParts(java.util.Set<String> set, jp.ngt.rtm.modelpack.cfg.VehicleBaseConfig.VehicleParts[] partsArray) {

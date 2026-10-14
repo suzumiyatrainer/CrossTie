@@ -54,6 +54,28 @@ public class TrainStandingHandler {
         return clientStandingTrain;
     }
 
+    public static boolean isPlayerActuallyStandingOn(EntityTrainBase train, EntityPlayer player) {
+        if (train == null || train.isDead || player == null || player.worldObj != train.worldObj) {
+            return false;
+        }
+        if (player.ridingEntity != null) {
+            return false;
+        }
+        double halfLength = getHalfLength(train);
+        double halfWidth = 1.525;
+        double dx = train.posX - train.prevPosX;
+        double dy = train.posY - train.prevPosY;
+        double dz = train.posZ - train.prevPosZ;
+        double speed = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        return isStandingOnTrain(train, halfLength, halfWidth, player, true, speed);
+    }
+
+    public static void clearClientStandingTrain(EntityTrainBase train) {
+        if (clientStandingTrain == train) {
+            clientStandingTrain = null;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public static void updateStandingEntities(EntityTrainBase train) {
         double dx = train.posX - train.prevPosX;
@@ -119,6 +141,17 @@ public class TrainStandingHandler {
                     } else if (!isRemote) {
                         serverStandingStates.remove(uuid);
                     }
+                }
+            }
+        }
+
+        // クライアント側: ローカルプレイヤーがこの電車の範囲外に出た場合、確実にclientStandingTrainを解除
+        if (isRemote && clientStandingTrain == train) {
+            EntityPlayer localPlayer = Minecraft.getMinecraft().thePlayer;
+            if (localPlayer == null || !isPlayerActuallyStandingOn(train, localPlayer)) {
+                clientStandingTrain = null;
+                if (localPlayer != null) {
+                    ridingPlayers.remove(localPlayer.getUniqueID());
                 }
             }
         }
@@ -286,11 +319,11 @@ public class TrainStandingHandler {
     }
 
     /**
-     * 電車中心座標（train.posY ≒ 67.09560）から立ち乗り床面（Y 65.325）への高さオフセット。
+     * 電車中心座標（train.posY ≒ 67.09560）から立ち乗り床面（Y 65.35）への高さオフセット。
      * 実測値: 地面Y64、レール底面64.06250のとき、train.posY = 67.09560。
-     * 本来あるべき床面高さ Y65.325 に合わせるため、オフセットは 65.325 - 67.09560 = -1.7706D。
+     * 本来あるべき床面高さ Y65.35 に合わせるため、オフセットは 65.35 - 67.09560 = -1.7456D。
      */
-    public static final double FLOOR_HEIGHT_OFFSET = -1.7706D;
+    public static final double FLOOR_HEIGHT_OFFSET = -1.7456D;
 
     /**
      * 電車のローカル座標系 (前後L, 左右W, 床面からの相対高さlocalY) からワールド座標へ3次元変換（Yaw, Pitch, Roll を完全適用）

@@ -73,8 +73,9 @@ public abstract class EntityTrainClientSmoothingMixin {
         if (!self.worldObj.isRemote || !crosstie$hasTarget) {
             return;
         }
-        if (self == TrainStandingHandler.getClientStandingTrain()) {
-            // Do not make a standing player chase a separately smoothed train pose.
+        Entity currentVehicle = net.suzumiya.crosstie.client.TrainCameraController.getMountedOrStandingVehicle(net.minecraft.client.Minecraft.getMinecraft().thePlayer);
+        if (self == currentVehicle || self == TrainStandingHandler.getClientStandingTrain()) {
+            // Do not make a mounted or standing player chase a separately smoothed train pose.
             crosstie$hasTarget = false;
             return;
         }
