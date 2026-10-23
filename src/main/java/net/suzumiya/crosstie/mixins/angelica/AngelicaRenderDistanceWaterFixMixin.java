@@ -2,7 +2,7 @@ package net.suzumiya.crosstie.mixins.angelica;
 
 import com.gtnewhorizons.angelica.glsm.GLStateManager;
 import net.coderbot.iris.Iris;
-import net.minecraft.client.renderer.RenderGlobal;
+import net.minecraft.client.renderer.EntityRenderer;
 import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 // LWJGLから定数をインポート
 import static org.lwjgl.opengl.GL11.GL_CULL_FACE;
 
-@Mixin(value = RenderGlobal.class, priority = 500)
+@Mixin(value = EntityRenderer.class, priority = 500)
 public abstract class AngelicaRenderDistanceWaterFixMixin {
 
     @Inject(method = "renderWorld", at = @At("HEAD"))

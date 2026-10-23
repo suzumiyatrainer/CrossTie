@@ -6,15 +6,13 @@
   "refmap": "mixins.crosstie.refmap.json",
   "target": "@env(DEFAULT)",
   "compatibilityLevel": "JAVA_8",
-  "mixins": [],
-  "client": [
-    "mcte.late.RenderMiniatureAngelicaLightMixin",
-    "mcte.late.RenderItemMiniatureAngelicaLightMixin",
-    "mcte.late.McteWorldAngelicaLightMixin",
-    "mcte.late.NGTRendererMixin",
-    "mcte.late.DirectTessellatorNormalMixin",
-    "mcte.late.DirectTessellatorLightMixin",
-    "ctm.MixinTileOverride"
+  "mixins": [
+    "atsassist.IFTTTUtilMixin",
+    "webctc.RailCacheDataUpdateOptimizationMixin",
+    "webctc.SignalCacheDataUpdateOptimizationMixin",
+    "webctc.SignalRouterReflectionMixin",
+    "webctc.RailGroupUtilsSignalLevelMixin"
   ],
+  "client": [],
   "server": []
 }

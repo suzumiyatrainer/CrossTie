@@ -13,6 +13,9 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
+    /** Set true to register diagnostic-only mixins. */
+    private static final boolean ENABLE_DIAGNOSTIC_MIXINS = false;
+
     private boolean isClient;
     private ModDetector modDetector;
 
@@ -228,10 +231,22 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 shouldApply = hasNgtLib;
                 debugReason = "NGTLib=" + hasNgtLib;
             }
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.client.CameraTiltMixin")
+                || mixinClassName.endsWith(".EntityTrainBaseRiderPitchCompensationMixin")
+                || mixinClassName.endsWith(".TrainStandingMixin")
+                || mixinClassName.endsWith(".VehicleTrackerEntryMixin")
+                || mixinClassName.endsWith(".VehicleTrackerThrottleMixin")
+                || mixinClassName.endsWith(".EntityVehicleBasePacketSmoothingMixin")
+                || mixinClassName.endsWith(".EntityTrainClientSmoothingMixin")
+                || mixinClassName.endsWith(".EntityTrainBaseSpeedSyncMixin")
+                || mixinClassName.endsWith(".EntityVehicleBaseSeatSyncMixin")
+                || mixinClassName.endsWith(".EntityFloorSyncMixin")) {
+            // 視点追従・列車パケット・立ち乗り系コードの完全無効化
+            shouldApply = false;
+            debugReason = "disabled: camera/packet/standing features";
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.rtm.")) {
             boolean hasRtm = isModPresent("RTM");
             if (mixinClassName.endsWith(".EntityVehicleBaseModelSetGuardMixin")
-                    || mixinClassName.endsWith(".EntityVehicleBasePacketSmoothingMixin")
                     || mixinClassName.endsWith(".RenderVehicleBaseContextMixin")
                     || mixinClassName.endsWith(".PartsRendererCheckMouseActionGuardMixin")
                     || mixinClassName.endsWith(".PartsRendererPickPassGuardMixin")
@@ -289,9 +304,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             shouldApply = hasCustomNpc;
             debugReason = "CustomNpc=" + hasCustomNpc;
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.webctc.")) {
-            boolean hasWebCtc = isModPresent("WebCTC");
+            boolean hasWebCtc = isModPresent("WebCTC") && isModPresent("RTM");
             shouldApply = hasWebCtc;
-            debugReason = "WebCTC=" + hasWebCtc;
+            debugReason = "WebCTC=" + isModPresent("WebCTC") + ", RTM=" + isModPresent("RTM");
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.dimensionalanchors.")) {
             // "dimensionalanchors" is typical FML Mod ID, also check jar file name patterns
             boolean hasDA = isModPresent("DimensionalAnchors") || isModPresent("dimensionalanchors") || isModPresent("dimensional-anchor");
@@ -353,14 +368,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         if (isModPresent("RTM")) {
             mixins.add("rtm.DataEntryMixin");
             mixins.add("rtm.DataMapMixin");
-            mixins.add("rtm.VehicleTrackerThrottleMixin");
             mixins.add("rtm.CommonProxySoundRangeOptimizationMixin");
             mixins.add("rtm.TileEntityInsulatorOptimizationMixin");
             // ElectricalWiringDecorativeMixin / TileEntityEWConnectionMixin は
             // クライアント・サーバー共通であり、下部の「RTM サーバー側」ブロックで一元登録。
             // RenderElectricalWiringOptimizationMixin はクライアント描画専用のため
-            // isClient ブロック内（L343）でのみ登録する。ここには追加しない。
-            mixins.add("rtm.EntityTrainBaseSpeedSyncMixin");
+            // EntityTrainBaseSpeedSyncMixin: 列車パケット同期の無効化要請に伴い除外
             mixins.add("rtm.EntityTrainBaseDataWatcherCacheMixin");
             mixins.add("rtm.EntityTrainBaseOptimizationMixin");
             mixins.add("rtm.EntityTrainBasePhysicsMixin");
@@ -368,6 +381,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.EntityBogieChunkCacheMixin");
             mixins.add("rtm.FormationManagerConcurrentMapMixin");
             mixins.add("rtm.TileEntityPoleOptimizationMixin");
+            mixins.add("rtm.TileEntityMachineUpdateOptimizationMixin");
+            mixins.add("rtm.TileEntitySignalUpdateOptimizationMixin");
             mixins.add("rtm.TileEntityEWUpdateOptimizationMixin");
             mixins.add("rtm.WireManagerMixin");
             // F-01: 列車屋根上への立ち乗り追従（サーバー側のみ動作） - 削除済み
@@ -422,6 +437,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("lwjgl3ify.Lwjgl3ifyKeyboardIsKeyDownMixin");
                 mixins.add("lwjgl3ify.Lwjgl3ifyKeyboardRedirectMixin");
                 mixins.add("lwjgl3ify.Lwjgl3ifyMouseButtonMixin");
+                // IME汎用補正(自動TextInput有効化・二重入力除去・クリック位置記録)
+                mixins.add("lwjgl3ify.Lwjgl3ifyImeKeyboardMixin");
+                mixins.add("lwjgl3ify.Lwjgl3ifyImeMouseMixin");
                 // GuiSelectModel モデルプレビューを GLStateManager 経由に切り替え
                 // lwjgl3ify + Angelica 環境での投影行列 desync / ライティング破壊を修正
                 if (isModPresent("RTM") && isModPresent("AngelicaGlsm")) {
@@ -472,6 +490,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.RenderElectricalWiringOptimizationMixin");
                 mixins.add("rtm.BlockLinePoleConnectionCacheMixin");
                 mixins.add("rtm.RenderLargeRailOptimizationMixin");
+                // RenderMachine（照明/スピーカー/券売機のみ）の距離カリング
+                mixins.add("rtm.RenderMachineCullingMixin");
                 mixins.add("rtm.RailTessellateOptimizationMixin");
                 mixins.add("rtm.RailPartsRendererScriptGuardMixin");
                 mixins.add("rtm.RenderMarkerBlockBaseMixin");
@@ -485,10 +505,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.MixinSoundAPIEntityTrainBase");
                 mixins.add("rtm.PartsDoorGhostFixMixin");
                 mixins.add("rtm.NGTRenderHelperDoorFilterMixin");
-                // クライアント側の車両位置をLerp補間してマルチプレイのカクカクを緩和
-                // VehicleTrackerのデフォルト3tick更新に合わせて係数0.2〜0.25が望ましいが
-                // 現在0.35で設定中。オーバーシュートが気になる場合は値を下げること。
-                mixins.add("rtm.EntityTrainClientSmoothingMixin");
+                // EntityVehicleBasePacketSmoothingMixin handles train and vehicle snapshots
+                // on one timeline, including the vehicle currently carrying the player.
 
                 mixins.add("rtm.ModelPackManagerReloadMixin");
                 mixins.add("rtm.TextureManagerReloadMixin");
@@ -555,9 +573,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("minecraft.TrainEntityInteractionRangeMixin");
             mixins.add("rtm.TileEntityElectricalWiringInvalidateMixin");
             mixins.add("rtm.RailMapChunkLoadMixin");
-            mixins.add("rtm.TileEntityUnreadSaveDiagnosticMixin"); // 診断専用(挙動不変)
-            mixins.add("rtm.TileEntityModelNameMutationDiagnosticMixin"); // 診断専用(挙動不変)
-            mixins.add("rtm.TileEntityRailPropertyMutationDiagnosticMixin"); // 診断専用(挙動不変)
+            if (ENABLE_DIAGNOSTIC_MIXINS) {
+                mixins.add("rtm.TileEntityUnreadSaveDiagnosticMixin");
+                mixins.add("rtm.TileEntityModelNameMutationDiagnosticMixin");
+                mixins.add("rtm.TileEntityRailPropertyMutationDiagnosticMixin");
+            }
             mixins.add("rtm.TileEntityLargeRailCoreInvalidateMixin");
             mixins.add("rtm.ElectricalWiringDecorativeMixin");
             mixins.add("rtm.TileEntityEWConnectionMixin");
@@ -587,12 +607,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("ngtlib.PacketNBTPlayerItemGuardMixin");
         }
 
-        // WebCTC
-        // if (isModPresent("WebCTC")) {
-        // mixins.add("webctc.TileEntityLargeRailCoreOccupancyMixin");
-        // mixins.add("webctc.RailCacheDataUpdateOptimizationMixin");
-        // mixins.add("webctc.TeConRuntimeManagerScriptEngineMixin");
-        // }
+        // WebCTC (RTM-side hooks are registered here; WebCTC-target mixins are registered in CrossTieLateMixinLoader)
+        if (isModPresent("WebCTC") && isModPresent("RTM")) {
+            mixins.add("webctc.TileEntityLargeRailCoreWebCtcHookMixin");
+            mixins.add("webctc.TileEntitySignalWebCtcHookMixin");
+        }
 
         // Dimensional Anchors
         if (isModPresent("DimensionalAnchors") || isModPresent("dimensionalanchors") || isModPresent("dimensional-anchor")) {

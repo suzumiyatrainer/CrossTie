@@ -10,18 +10,29 @@ import java.util.UUID;
 import java.util.WeakHashMap;
 import jp.ngt.rtm.entity.train.EntityTrainBase;
 import jp.ngt.rtm.modelpack.cfg.TrainConfig;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
+import net.suzumiya.crosstie.client.TrainStandingClientHandler;
 
 public class TrainStandingHandler {
 
     private static final Set<UUID> ridingPlayers = Collections.newSetFromMap(new WeakHashMap<>());
-    private static EntityTrainBase clientStandingTrain = null;
+
+    public static boolean isPlayerRiding(UUID uuid) {
+        return ridingPlayers.contains(uuid);
+    }
+
+    public static void setPlayerRiding(UUID uuid, boolean riding) {
+        if (riding) {
+            ridingPlayers.add(uuid);
+        } else {
+            ridingPlayers.remove(uuid);
+        }
+    }
 
     /**
      * サーバー側で保持する立ち乗りプレイヤーの状態情報
@@ -51,7 +62,11 @@ public class TrainStandingHandler {
     private static final Map<UUID, StandingPlayerState> serverStandingStates = new HashMap<>();
 
     public static EntityTrainBase getClientStandingTrain() {
-        return clientStandingTrain;
+        return TrainStandingClientHandler.getClientStandingTrain();
+    }
+
+    public static void clearClientStandingTrain(EntityTrainBase train) {
+        TrainStandingClientHandler.clearClientStandingTrain(train);
     }
 
     public static boolean isPlayerActuallyStandingOn(EntityTrainBase train, EntityPlayer player) {
@@ -68,12 +83,6 @@ public class TrainStandingHandler {
         double dz = train.posZ - train.prevPosZ;
         double speed = Math.sqrt(dx * dx + dy * dy + dz * dz);
         return isStandingOnTrain(train, halfLength, halfWidth, player, true, speed);
-    }
-
-    public static void clearClientStandingTrain(EntityTrainBase train) {
-        if (clientStandingTrain == train) {
-            clientStandingTrain = null;
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -97,19 +106,18 @@ public class TrainStandingHandler {
         List<Entity> nearby = train.worldObj.getEntitiesWithinAABBExcludingEntity(train, searchBox);
         boolean isRemote = train.worldObj.isRemote;
 
+        if (isRemote) {
+            // クライアント側（ローカルプレイヤー）は隔離されたクライアント専用ハンドラーで実行
+            TrainStandingClientHandler.onTrainUpdateClient(train, nearby, dYaw, halfLength, halfWidth, speed);
+            return;
+        }
+
+        // サーバー側の処理
         for (Entity entity : nearby) {
-            if (!(entity instanceof EntityPlayer) || entity.ridingEntity != null) {
+            if (!(entity instanceof EntityPlayerMP) || entity.ridingEntity != null) {
                 continue;
             }
-            EntityPlayer player = (EntityPlayer) entity;
-            boolean isLocalPlayer = false;
-            if (isRemote) {
-                isLocalPlayer = (player == Minecraft.getMinecraft().thePlayer);
-                if (!isLocalPlayer) {
-                    continue;
-                }
-            }
-
+            EntityPlayerMP player = (EntityPlayerMP) entity;
             UUID uuid = player.getUniqueID();
             boolean alreadyRiding = ridingPlayers.contains(uuid);
             boolean standing = TrainStandingHandler.isStandingOnTrain(train, halfLength, halfWidth, player, alreadyRiding, speed);
@@ -118,46 +126,21 @@ public class TrainStandingHandler {
                 // 視線旋回 (Yaw) の追従
                 if (dYaw != 0.0f) {
                     player.rotationYaw -= dYaw;
-                    if (isRemote && isLocalPlayer) {
-                        player.prevRotationYaw -= dYaw;
-                    }
                 }
 
-                if (isRemote && isLocalPlayer) {
-                    // クライアント側（自分）: 3次元ローカル追従
-                    movePlayerWithTrainClient(player, train);
-                    clientStandingTrain = train;
-                } else if (!isRemote && player instanceof EntityPlayerMP) {
-                    // サーバー側: 状態管理・号車間移動・乖離判定・救済措置
-                    updateServerStandingState((EntityPlayerMP) player, train, halfLength, speed);
-                }
-
+                // サーバー側: 状態管理・号車間移動・乖離判定・救済措置
+                updateServerStandingState(player, train, halfLength, speed);
                 ridingPlayers.add(uuid);
             } else {
                 if (alreadyRiding) {
                     ridingPlayers.remove(uuid);
-                    if (isRemote && isLocalPlayer && clientStandingTrain == train) {
-                        clientStandingTrain = null;
-                    } else if (!isRemote) {
-                        serverStandingStates.remove(uuid);
-                    }
-                }
-            }
-        }
-
-        // クライアント側: ローカルプレイヤーがこの電車の範囲外に出た場合、確実にclientStandingTrainを解除
-        if (isRemote && clientStandingTrain == train) {
-            EntityPlayer localPlayer = Minecraft.getMinecraft().thePlayer;
-            if (localPlayer == null || !isPlayerActuallyStandingOn(train, localPlayer)) {
-                clientStandingTrain = null;
-                if (localPlayer != null) {
-                    ridingPlayers.remove(localPlayer.getUniqueID());
+                    serverStandingStates.remove(uuid);
                 }
             }
         }
 
         // サーバー側のクリーンアップ（死亡・切断・別ディメンション）
-        if (!isRemote && train.ticksExisted % 100 == 0) {
+        if (train.ticksExisted % 100 == 0) {
             cleanupServerStates(train);
         }
     }
@@ -206,7 +189,6 @@ public class TrainStandingHandler {
         double distSq = dx * dx + dy * dy + dz * dz;
 
         // 330km/h (4.58 blocks/tick) でも壊れない動的しきい値
-        // プレイヤーの最大歩行/ダッシュ速度 (約0.6 blocks/tick) + 電車の移動速度 * 遅延許容係数 + バッファ
         double threshold = Math.max(2.5, 0.6 + speed * 1.5 + 2.0);
         double thresholdSq = threshold * threshold;
 
@@ -236,44 +218,6 @@ public class TrainStandingHandler {
         state.lastUpdateTick = currentTick;
     }
 
-    /**
-     * クライアント側（ローカルプレイヤー）の3次元ローカル追従
-     * カント（Roll）や勾配（Pitch）による車体の立体的な傾き・変位に追従
-     */
-    private static void movePlayerWithTrainClient(EntityPlayer player, EntityTrainBase train) {
-        // 前tickの電車の姿勢から現在のプレイヤーのローカル相対座標を逆算
-        Vec3 localVec = computeLocalPosPrev(train, player.posX, player.posY, player.posZ);
-
-        // 新しい電車の姿勢・座標にローカル座標を投影して目標ワールド座標を算出
-        Vec3 targetWorld = computeTransformedWorldPos(train, localVec.zCoord, localVec.xCoord, 0.0);
-
-        // 水平方向および垂直方向の補正移動量
-        double targetX = targetWorld.xCoord;
-        double targetZ = targetWorld.zCoord;
-        double moveX = targetX - player.posX;
-        double moveZ = targetZ - player.posZ;
-
-        // 床面高さの計算
-        double targetFloorY = computeFloorY(train, localVec.zCoord, localVec.xCoord);
-        double yError = targetFloorY - player.boundingBox.minY;
-        double yCorrection = 0.0;
-        if (player.boundingBox.minY - targetFloorY < 0.6) {
-            yCorrection = MathHelper.clamp_double(yError * 0.4, -0.6, 0.6);
-            if (Math.abs(yError) > 0.6) {
-                yCorrection = yError;
-            }
-        }
-
-        boolean prevNoClip = player.noClip;
-        player.noClip = true;
-        player.moveEntity(moveX, yCorrection, moveZ);
-        player.noClip = prevNoClip;
-
-        player.motionY = 0.0;
-        player.fallDistance = 0.0f;
-        player.onGround = true;
-    }
-
     private static void cleanupServerStates(EntityTrainBase train) {
         long currentTick = train.worldObj.getTotalWorldTime();
         Iterator<Map.Entry<UUID, StandingPlayerState>> it = serverStandingStates.entrySet().iterator();
@@ -285,7 +229,7 @@ public class TrainStandingHandler {
         }
     }
 
-    private static double getHalfLength(EntityTrainBase train) {
+    public static double getHalfLength(EntityTrainBase train) {
         TrainConfig cfg = (TrainConfig) train.getModelSet().getConfig();
         if (cfg == null) {
             return 1.375;
@@ -293,7 +237,7 @@ public class TrainStandingHandler {
         return cfg.trainDistance;
     }
 
-    private static boolean isStandingOnTrain(EntityTrainBase train, double halfLength, double halfWidth, Entity entity,
+    public static boolean isStandingOnTrain(EntityTrainBase train, double halfLength, double halfWidth, Entity entity,
             boolean alreadyRiding, double speed) {
         Vec3 localVec = computeLocalPos(train, entity.posX, entity.posY, entity.posZ);
         double localLength = localVec.zCoord;
@@ -318,16 +262,8 @@ public class TrainStandingHandler {
         return vertDiff >= minVert && vertDiff <= maxVert;
     }
 
-    /**
-     * 電車中心座標（train.posY ≒ 67.09560）から立ち乗り床面（Y 65.35）への高さオフセット。
-     * 実測値: 地面Y64、レール底面64.06250のとき、train.posY = 67.09560。
-     * 本来あるべき床面高さ Y65.35 に合わせるため、オフセットは 65.35 - 67.09560 = -1.7456D。
-     */
     public static final double FLOOR_HEIGHT_OFFSET = -1.7456D;
 
-    /**
-     * 電車のローカル座標系 (前後L, 左右W, 床面からの相対高さlocalY) からワールド座標へ3次元変換（Yaw, Pitch, Roll を完全適用）
-     */
     public static Vec3 computeTransformedWorldPos(EntityTrainBase train, double localL, double localW, double localY) {
         Vec3 vec = Vec3.createVectorHelper(localW, localY + FLOOR_HEIGHT_OFFSET, localL);
         vec.rotateAroundZ((float) Math.toRadians(-train.rotationRoll));
@@ -337,9 +273,6 @@ public class TrainStandingHandler {
         return Vec3.createVectorHelper(train.posX + vec.xCoord, train.posY + vec.yCoord, train.posZ + vec.zCoord);
     }
 
-    /**
-     * ワールド座標から電車の現在のローカル座標系 (前後L, 左右W, 床面からの相対高さlocalY) への逆変換
-     */
     public static Vec3 computeLocalPos(EntityTrainBase train, double worldX, double worldY, double worldZ) {
         double relX = worldX - train.posX;
         double relY = worldY - train.posY;
@@ -353,10 +286,7 @@ public class TrainStandingHandler {
         return Vec3.createVectorHelper(vec.xCoord, vec.yCoord - FLOOR_HEIGHT_OFFSET, vec.zCoord);
     }
 
-    /**
-     * ワールド座標から電車の「前tickの姿勢」のローカル座標系への逆変換（クライアント追従用）
-     */
-    private static Vec3 computeLocalPosPrev(EntityTrainBase train, double worldX, double worldY, double worldZ) {
+    public static Vec3 computeLocalPosPrev(EntityTrainBase train, double worldX, double worldY, double worldZ) {
         double relX = worldX - train.prevPosX;
         double relY = worldY - train.prevPosY;
         double relZ = worldZ - train.prevPosZ;

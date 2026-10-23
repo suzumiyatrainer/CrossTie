@@ -23,6 +23,9 @@ public class CrossTieLateMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.atsassist.")) {
             return cpw.mods.fml.common.Loader.isModLoaded("ATSAssistMod");
         }
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.webctc.")) {
+            return cpw.mods.fml.common.Loader.isModLoaded("webctc") || cpw.mods.fml.common.Loader.isModLoaded("WebCTC");
+        }
         return true;
     }
 

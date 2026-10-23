@@ -48,15 +48,15 @@ public abstract class WeatherRendererRainOcclusionMixin {
             ),
             require = 0
     )
-    private static int crosstie$redirectHeightAtSlot(Object columns, int slot) {
+    private static int crosstie$redirectHeightAtSlot(com.gtnewhorizons.angelica.render.WeatherColumns columns, int slot) {
         int defaultHeight = 0;
         try {
-            defaultHeight = ((com.gtnewhorizons.angelica.render.WeatherColumns) columns).heightAtSlot(slot);
+            defaultHeight = columns.heightAtSlot(slot);
         } catch (Throwable ignored) {
         }
 
         try {
-            WeatherColumnsAccessor accessor = (WeatherColumnsAccessor) columns;
+            WeatherColumnsAccessor accessor = (WeatherColumnsAccessor) (Object) columns;
             int[] keyX = accessor.getKeyX();
             int[] keyZ = accessor.getKeyZ();
             if (keyX != null && keyZ != null && slot >= 0 && slot < keyX.length) {
@@ -84,8 +84,8 @@ public abstract class WeatherRendererRainOcclusionMixin {
             ),
             require = 0
     )
-    private static int crosstie$redirectHeightAtTessellator(Object columns, int x, int z) {
-        int defaultHeight = ((com.gtnewhorizons.angelica.render.WeatherColumns) columns).heightAt(x, z);
+    private static int crosstie$redirectHeightAtTessellator(com.gtnewhorizons.angelica.render.WeatherColumns columns, int x, int z) {
+        int defaultHeight = columns.heightAt(x, z);
         Minecraft mc = Minecraft.getMinecraft();
         if (mc != null && mc.theWorld != null) {
             return VehicleWeatherManager.getOccludedPrecipitationHeight(mc.theWorld, x, z, defaultHeight);
@@ -104,8 +104,8 @@ public abstract class WeatherRendererRainOcclusionMixin {
             ),
             require = 0
     )
-    private static int crosstie$redirectHeightAtParticles(Object columns, int x, int z) {
-        int defaultHeight = ((com.gtnewhorizons.angelica.render.WeatherColumns) columns).heightAt(x, z);
+    private static int crosstie$redirectHeightAtParticles(com.gtnewhorizons.angelica.render.WeatherColumns columns, int x, int z) {
+        int defaultHeight = columns.heightAt(x, z);
         Minecraft mc = Minecraft.getMinecraft();
         if (mc != null && mc.theWorld != null) {
             return VehicleWeatherManager.getOccludedPrecipitationHeight(mc.theWorld, x, z, defaultHeight);

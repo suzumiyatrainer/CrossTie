@@ -5,7 +5,6 @@ import cpw.mods.fml.relauncher.SideOnly;
 import jp.ngt.rtm.entity.train.EntityTrainBase;
 import jp.ngt.rtm.entity.vehicle.EntityVehicleBase;
 import jp.ngt.rtm.modelpack.cfg.TrainConfig;
-import jp.ngt.rtm.modelpack.cfg.VehicleBaseConfig;
 import jp.ngt.rtm.modelpack.modelset.ModelSetVehicleBaseClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.MathHelper;
@@ -16,13 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 降水（雨・雪・パーティクル・雨音）の車両モデル面による遮蔽を管理するマネージャー。
- * 高速走行時にも追従するよう、partialTicks によるフレーム補間座標をサポート。
+ * 降水（雨・雪・パーティクル・雨音）の車両モデル面による遮蔽を管理するマネージャー。 高速走行時にも追従するよう、partialTicks
+ * によるフレーム補間座標をサポート。
  */
 @SideOnly(Side.CLIENT)
 public final class VehicleWeatherManager {
 
     private static final List<CachedVehicleEntry> NEARBY_VEHICLES = new ArrayList<>();
+    @SuppressWarnings("unused")
     private static long lastCacheUpdateTick = -1;
     private static float currentPartialTicks = 0.0f;
     private static int lastFrameHash = 0;
@@ -40,7 +40,8 @@ public final class VehicleWeatherManager {
         public final double bboxMaxY;
         public final double nominalRoofY;
 
-        public CachedVehicleEntry(EntityVehicleBase<?> vehicle, VehicleModelHeightMap heightMap, float[] offset, float partialTicks) {
+        public CachedVehicleEntry(EntityVehicleBase<?> vehicle, VehicleModelHeightMap heightMap, float[] offset,
+                float partialTicks) {
             this.vehicle = vehicle;
             this.heightMap = heightMap;
             this.modelOffset = offset != null ? offset : new float[] { 0, 0, 0 };
@@ -49,7 +50,8 @@ public final class VehicleWeatherManager {
             this.posX = vehicle.prevPosX + (vehicle.posX - vehicle.prevPosX) * partialTicks;
             this.posY = vehicle.prevPosY + (vehicle.posY - vehicle.prevPosY) * partialTicks;
             this.posZ = vehicle.prevPosZ + (vehicle.posZ - vehicle.prevPosZ) * partialTicks;
-            this.yaw = vehicle.prevRotationYaw + MathHelper.wrapAngleTo180_float(vehicle.rotationYaw - vehicle.prevRotationYaw) * partialTicks;
+            this.yaw = vehicle.prevRotationYaw
+                    + MathHelper.wrapAngleTo180_float(vehicle.rotationYaw - vehicle.prevRotationYaw) * partialTicks;
             this.bboxMaxY = vehicle.boundingBox != null ? vehicle.boundingBox.maxY : (this.posY + 3.6);
 
             // 車両の寸法（半幅・半長）の決定
@@ -144,6 +146,7 @@ public final class VehicleWeatherManager {
         NEARBY_VEHICLES.clear();
 
         double camX = mc.renderViewEntity.posX;
+        @SuppressWarnings("unused")
         double camY = mc.renderViewEntity.posY;
         double camZ = mc.renderViewEntity.posZ;
         double range = 64.0; // 描画距離に合わせて十分な探索範囲

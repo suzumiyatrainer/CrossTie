@@ -18,14 +18,15 @@ import net.minecraft.launchwrapper.Launch;
  */
 public final class ScriptUtilFallback {
 
-    // Flip this switch to log the first script entry and lwjgl3ify detection result.
-    private static final boolean DEBUG_MODE = true;
+    // Flip this switch to log the first script entry and lwjgl3ify detection
+    // result.
+    private static final boolean DEBUG_MODE = false;
     private static volatile boolean lwjgl3ifyKeyboardCallRedirectLogged;
     private static volatile boolean scriptProbeLogged;
-    private static final Pattern LEGACY_KEYBOARD_IS_KEY_DOWN = Pattern.compile(
-            "\\bKeyboard\\s*\\.\\s*isKeyDown\\s*\\(");
-    private static final Pattern LEGACY_MOUSE_IS_BUTTON_DOWN = Pattern.compile(
-            "\\bMouse\\s*\\.\\s*isButtonDown\\s*\\(");
+    private static final Pattern LEGACY_KEYBOARD_IS_KEY_DOWN = Pattern
+            .compile("\\bKeyboard\\s*\\.\\s*isKeyDown\\s*\\(");
+    private static final Pattern LEGACY_MOUSE_IS_BUTTON_DOWN = Pattern
+            .compile("\\bMouse\\s*\\.\\s*isButtonDown\\s*\\(");
 
     private ScriptUtilFallback() {
     }
@@ -63,9 +64,10 @@ public final class ScriptUtilFallback {
 
     /**
      * Routes legacy LWJGL2 Keyboard package references through CrossTie when
-     * lwjgl3ify is installed. This works even when the LWJGL Keyboard facade
-     * was loaded before LaunchWrapper's transformers were registered.
+     * lwjgl3ify is installed. This works even when the LWJGL Keyboard facade was
+     * loaded before LaunchWrapper's transformers were registered.
      */
+    @SuppressWarnings("unused")
     private static String redirectLwjgl3ifyKeyboardCalls(String script) {
         if (script == null) {
             return script;
@@ -76,20 +78,21 @@ public final class ScriptUtilFallback {
         }
 
         if (LEGACY_MOUSE_IS_BUTTON_DOWN.matcher(script).find()) {
-            script = LEGACY_MOUSE_IS_BUTTON_DOWN.matcher(script).replaceAll(
-                    "Packages.net.suzumiya.crosstie.compat.lwjgl3ify.MouseAdapter.isButtonDown(");
+            script = LEGACY_MOUSE_IS_BUTTON_DOWN.matcher(script)
+                    .replaceAll("Packages.net.suzumiya.crosstie.compat.lwjgl3ify.MouseAdapter.isButtonDown(");
         }
 
         if (!LEGACY_KEYBOARD_IS_KEY_DOWN.matcher(script).find()) {
             return script;
         }
 
-        String redirected = LEGACY_KEYBOARD_IS_KEY_DOWN.matcher(script).replaceAll(
-                "Packages.net.suzumiya.crosstie.compat.lwjgl3ify.KeyboardAdapter.isKeyDown(");
-        if (!lwjgl3ifyKeyboardCallRedirectLogged) {
+        String redirected = LEGACY_KEYBOARD_IS_KEY_DOWN.matcher(script)
+                .replaceAll("Packages.net.suzumiya.crosstie.compat.lwjgl3ify.KeyboardAdapter.isKeyDown(");
+        if (DEBUG_MODE && !lwjgl3ifyKeyboardCallRedirectLogged) {
             synchronized (ScriptUtilFallback.class) {
-                if (!lwjgl3ifyKeyboardCallRedirectLogged) {
-                    System.out.println("[CrossTie KeyDebug] Redirected Keyboard.isKeyDown script calls to CrossTie adapter");
+                if (DEBUG_MODE && !lwjgl3ifyKeyboardCallRedirectLogged) {
+                    System.out.println(
+                            "[CrossTie KeyDebug] Redirected Keyboard.isKeyDown script calls to CrossTie adapter");
                     lwjgl3ifyKeyboardCallRedirectLogged = true;
                 }
             }
@@ -98,12 +101,8 @@ public final class ScriptUtilFallback {
     }
 
     private static boolean isLwjgl3ifyPresent() {
-        ClassLoader[] loaders = {
-                Launch.classLoader,
-                Thread.currentThread().getContextClassLoader(),
-                ScriptUtilFallback.class.getClassLoader(),
-                ClassLoader.getSystemClassLoader()
-        };
+        ClassLoader[] loaders = { Launch.classLoader, Thread.currentThread().getContextClassLoader(),
+                ScriptUtilFallback.class.getClassLoader(), ClassLoader.getSystemClassLoader() };
         for (ClassLoader loader : loaders) {
             if (loader == null) {
                 continue;
@@ -120,6 +119,7 @@ public final class ScriptUtilFallback {
         return false;
     }
 
+    @SuppressWarnings("unused")
     private static void debugFirstScript(String script) {
         if (!DEBUG_MODE || scriptProbeLogged) {
             return;
@@ -133,12 +133,8 @@ public final class ScriptUtilFallback {
 
         boolean hasLegacyCall = script != null && LEGACY_KEYBOARD_IS_KEY_DOWN.matcher(script).find();
         StringBuilder loaders = new StringBuilder();
-        ClassLoader[] candidates = {
-                Launch.classLoader,
-                Thread.currentThread().getContextClassLoader(),
-                ScriptUtilFallback.class.getClassLoader(),
-                ClassLoader.getSystemClassLoader()
-        };
+        ClassLoader[] candidates = { Launch.classLoader, Thread.currentThread().getContextClassLoader(),
+                ScriptUtilFallback.class.getClassLoader(), ClassLoader.getSystemClassLoader() };
         for (ClassLoader loader : candidates) {
             if (loaders.length() > 0) {
                 loaders.append(", ");
@@ -146,8 +142,8 @@ public final class ScriptUtilFallback {
             loaders.append(loader == null ? "null" : loader.getClass().getName());
         }
         System.out.println("[CrossTie KeyDebug] ScriptUtilFallback entered; scriptLength="
-                + (script == null ? -1 : script.length()) + " legacyKeyboardCall=" + hasLegacyCall
-                + " loaders=[" + loaders + "] lwjgl3ifyKeyboard=" + isLwjgl3ifyPresent());
+                + (script == null ? -1 : script.length()) + " legacyKeyboardCall=" + hasLegacyCall + " loaders=["
+                + loaders + "] lwjgl3ifyKeyboard=" + isLwjgl3ifyPresent());
     }
 
     /**
@@ -155,17 +151,12 @@ public final class ScriptUtilFallback {
      * factories. Tries Nashorn first, then falls back to any available engine.
      */
     private static ScriptEngine createScriptEngine() {
-        ClassLoader[] loaders = {
-                Thread.currentThread().getContextClassLoader(),
-                ScriptUtilFallback.class.getClassLoader(),
-                ClassLoader.getSystemClassLoader()
-        };
+        ClassLoader[] loaders = { Thread.currentThread().getContextClassLoader(),
+                ScriptUtilFallback.class.getClassLoader(), ClassLoader.getSystemClassLoader() };
 
         // 1. Try to find NashornScriptEngineFactory via class name
-        String[] candidates = {
-                "jdk.nashorn.api.scripting.NashornScriptEngineFactory",
-                "org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory"
-        };
+        String[] candidates = { "jdk.nashorn.api.scripting.NashornScriptEngineFactory",
+                "org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory" };
 
         for (ClassLoader loader : loaders) {
             if (loader == null) {
@@ -183,14 +174,12 @@ public final class ScriptUtilFallback {
                     for (String candidate : candidates) {
                         if (candidate.equals(factoryClassName)) {
                             try {
-                                Method getEngine = factory.getClass()
-                                        .getMethod("getScriptEngine", String[].class);
+                                Method getEngine = factory.getClass().getMethod("getScriptEngine", String[].class);
                                 return (ScriptEngine) getEngine.invoke(factory,
                                         (Object) new String[] { "-doe", "--language=es6" });
                             } catch (Throwable ignored) {
                                 try {
-                                    Method getEngine = factory.getClass()
-                                            .getMethod("getScriptEngine");
+                                    Method getEngine = factory.getClass().getMethod("getScriptEngine");
                                     return (ScriptEngine) getEngine.invoke(factory);
                                 } catch (Throwable ignored2) {
                                     // fall through
@@ -208,16 +197,14 @@ public final class ScriptUtilFallback {
                     Class<?> factoryClass = Class.forName(candidate, true, loader);
                     Object factory = factoryClass.getDeclaredConstructor().newInstance();
                     Method getEngine = factoryClass.getMethod("getScriptEngine", String[].class);
-                    return (ScriptEngine) getEngine.invoke(factory,
-                            (Object) new String[] { "-doe", "--language=es6" });
+                    return (ScriptEngine) getEngine.invoke(factory, (Object) new String[] { "-doe", "--language=es6" });
                 } catch (Throwable ignored) {
                 }
             }
         }
 
         // 2. Fallback: ScriptEngineManager
-        String[] names = { "nashorn", "JavaScript", "javascript", "js", "ECMAScript",
-                "ecmascript", "rhino" };
+        String[] names = { "nashorn", "JavaScript", "javascript", "js", "ECMAScript", "ecmascript", "rhino" };
         for (ClassLoader classLoader : loaders) {
             if (classLoader == null) {
                 continue;

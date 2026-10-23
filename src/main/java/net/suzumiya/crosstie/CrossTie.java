@@ -48,6 +48,14 @@ public class CrossTie {
                     .register(new net.suzumiya.crosstie.client.WireFastRemoveTracker());
             cpw.mods.fml.common.FMLCommonHandler.instance().bus()
                     .register(new net.suzumiya.crosstie.client.CrossTieDiagnosticsTicker());
+            // lwjgl3ify(SDL3)環境のIME汎用補正
+            try {
+                Class.forName("org.lwjglx.opengl.Display");
+                cpw.mods.fml.common.FMLCommonHandler.instance().bus()
+                        .register(new net.suzumiya.crosstie.client.ImeTicker());
+                LOGGER.info("lwjgl3ify detected: IME compat enabled");
+            } catch (Throwable ignored) {
+            }
         }
     }
 
@@ -63,6 +71,14 @@ public class CrossTie {
     public void serverStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new net.suzumiya.crosstie.command.CommandCrossTie());
         LOGGER.info("Registered /crosstie command");
+
+        // Discord 連携初期化 (Dedicated Server かつ enabled=true 時のみ動作)
+        net.suzumiya.crosstie.discord.DiscordManager.onServerStarting(event);
+    }
+
+    @Mod.EventHandler
+    public void serverStopping(cpw.mods.fml.common.event.FMLServerStoppingEvent event) {
+        net.suzumiya.crosstie.discord.DiscordManager.onServerStopping(event);
     }
 
     @cpw.mods.fml.common.network.NetworkCheckHandler

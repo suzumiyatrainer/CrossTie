@@ -36,6 +36,15 @@ public abstract class BlockLargeRailBaseBreakBlockMixin extends BlockContainer {
             TileEntityLargeRailCore core = tile0.getRailCore();
             if (!world.isRemote && core != null && !core.breaking) {
                 core.breaking = true;
+                net.suzumiya.crosstie.utils.WebCtcDirtyTracker.markRailRemoved(core.xCoord, core.yCoord, core.zCoord);
+                if (core instanceof jp.kaiz.kaizpatch.rtm.rail.TileEntityLargeRailSectionCore) {
+                    java.util.List<int[]> groupPositions = ((jp.kaiz.kaizpatch.rtm.rail.TileEntityLargeRailSectionCore) core).getRailGroupCorePositions();
+                    if (groupPositions != null) {
+                        for (int[] p : groupPositions) {
+                            net.suzumiya.crosstie.utils.WebCtcDirtyTracker.markRailRemoved(p[0], p[1], p[2]);
+                        }
+                    }
+                }
                 // KaizPatchX 1.10.3: TileEntityLargeRailSectionCore の breakLogicalRail() が
                 // グループ全体のチャンク分割レールをまとめて破壊する。
                 // 通常の TileEntityLargeRailCore では元の RailMap ループと同等の動作をする。

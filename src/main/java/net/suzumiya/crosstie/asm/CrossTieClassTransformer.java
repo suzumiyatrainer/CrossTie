@@ -14,6 +14,9 @@ import org.objectweb.asm.tree.VarInsnNode;
 
 public class CrossTieClassTransformer implements IClassTransformer {
 
+    /** Set true to print keyboard transformer diagnostic messages. */
+    private static final boolean KEYBOARD_DIAGNOSTICS_ENABLED = false;
+
     /**
      * GTNHLib 0.9.x で使用されていた {@code MixinBlock_IconWrapper} のクラス名。
      *
@@ -55,13 +58,14 @@ public class CrossTieClassTransformer implements IClassTransformer {
     // クラスロード時のフィールド書き換えは効果がありません。
     // 代わりに CrossTieCorePlugin で設定ファイルを直接書き換えて対応します。
 
+    @SuppressWarnings("unused")
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass) {
         boolean isKeyboardFacade = isClass(transformedName, name, "org.lwjgl.input.Keyboard", null);
         boolean isLwjgl3ifyKeyboard = isClass(transformedName, name, "org.lwjglx.input.Keyboard", null);
-        if (isKeyboardFacade || isLwjgl3ifyKeyboard) {
-            System.out.println("[CrossTie KeyDebug] Transformer observed target: name=" + name
-                    + " transformedName=" + transformedName + " bytes=" + (basicClass != null));
+        if (KEYBOARD_DIAGNOSTICS_ENABLED && (isKeyboardFacade || isLwjgl3ifyKeyboard)) {
+            System.out.println("[CrossTie KeyDebug] Transformer observed target: name=" + name + " transformedName="
+                    + transformedName + " bytes=" + (basicClass != null));
         }
         if (transformedName != null
                 && "org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory".equals(transformedName)) {
@@ -159,20 +163,17 @@ public class CrossTieClassTransformer implements IClassTransformer {
             }
             methodFound = true;
 
-            for (org.objectweb.asm.tree.AbstractInsnNode instruction = method.instructions.getFirst();
-                    instruction != null; ) {
+            for (org.objectweb.asm.tree.AbstractInsnNode instruction = method.instructions
+                    .getFirst(); instruction != null;) {
                 org.objectweb.asm.tree.AbstractInsnNode next = instruction.getNext();
                 if (instruction.getOpcode() == Opcodes.IRETURN) {
                     InsnList hook = new InsnList();
                     hook.add(new VarInsnNode(Opcodes.ISTORE, 1));
                     hook.add(new VarInsnNode(Opcodes.ILOAD, 0));
                     hook.add(new VarInsnNode(Opcodes.ILOAD, 1));
-                    hook.add(new MethodInsnNode(
-                            Opcodes.INVOKESTATIC,
-                            "net/suzumiya/crosstie/compat/lwjgl3ify/Lwjgl3ifyKeyboardCompat",
-                            "mergeIsKeyDownResult",
-                            "(IZ)Z",
-                            false));
+                    hook.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
+                            "net/suzumiya/crosstie/compat/lwjgl3ify/Lwjgl3ifyKeyboardCompat", "mergeIsKeyDownResult",
+                            "(IZ)Z", false));
                     hook.add(new InsnNode(Opcodes.IRETURN));
                     method.instructions.insertBefore(instruction, hook);
                     method.instructions.remove(instruction);
@@ -187,8 +188,10 @@ public class CrossTieClassTransformer implements IClassTransformer {
                     + ".isKeyDown(int) with LWJGL3 keymap fallback");
             return writeClass(classNode);
         }
-        System.out.println("[CrossTie KeyDebug] Keyboard target matched but isKeyDown(I)Z was "
-                + (methodFound ? "not patchable (no IRETURN found)" : "not found"));
+        if (KEYBOARD_DIAGNOSTICS_ENABLED) {
+            System.out.println("[CrossTie KeyDebug] Keyboard target matched but isKeyDown(I)Z was "
+                    + (methodFound ? "not patchable (no IRETURN found)" : "not found"));
+        }
         return basicClass;
     }
 
@@ -356,10 +359,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
             if ("sortModList".equals(method.name) && "()V".equals(method.desc)) {
                 InsnList inject = new InsnList();
                 inject.add(new VarInsnNode(Opcodes.ALOAD, 0));
-                inject.add(new MethodInsnNode(Opcodes.INVOKESTATIC,
-                        "net/suzumiya/crosstie/compat/FmlDependencyCompat",
-                        "normalizeModRequirements",
-                        "(Lcpw/mods/fml/common/Loader;)V", false));
+                inject.add(new MethodInsnNode(Opcodes.INVOKESTATIC, "net/suzumiya/crosstie/compat/FmlDependencyCompat",
+                        "normalizeModRequirements", "(Lcpw/mods/fml/common/Loader;)V", false));
                 method.instructions.insert(inject);
                 changed = true;
             }
@@ -463,6 +464,7 @@ public class CrossTieClassTransformer implements IClassTransformer {
         instructions.add(new InsnNode(Opcodes.IRETURN));
         return instructions;
     }
+
     /**
      * {@code String.intern()} を呼ぶだけのメソッド本体を生成します。
      *

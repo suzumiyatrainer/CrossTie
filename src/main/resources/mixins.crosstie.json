@@ -8,13 +8,9 @@
     "compatibilityLevel": "JAVA_8",
     "mixins": [
         "angelica.AngelicaRebuildSyncRTMRailMixin",
-        "customnpc.ScriptControllerInitMixin",
-        "rtm.TrainStandingMixin",
-        "rtm.EntityTrainBaseRiderPitchCompensationMixin",
-        "rtm.VehicleTrackerEntryMixin"
+        "customnpc.ScriptControllerInitMixin"
     ],
     "client": [
-        "client.CameraTiltMixin",
         "angelica.AngelicaCloudRenderingFixMixin",
         "angelica.AngelicaRenderDistanceWaterFixMixin",
         "angelica.IdMapOrderFixMixin",
@@ -22,7 +18,6 @@
         "angelica.AngelicaItemMaterialHelperCaseFixMixin",
         "optifine.WireColorShaderFixMixin",
         "rtm.EntityVehicleBaseModelSetGuardMixin",
-        "rtm.EntityVehicleBasePacketSmoothingMixin",
         "rtm.RenderVehicleBaseContextMixin",
         "rtm.PartsRendererCheckMouseActionGuardMixin",
         "rtm.PartsRendererPickPassGuardMixin",

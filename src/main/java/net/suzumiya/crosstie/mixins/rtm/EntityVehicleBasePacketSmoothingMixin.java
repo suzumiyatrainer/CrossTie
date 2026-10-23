@@ -1,7 +1,6 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
 import jp.ngt.rtm.entity.vehicle.EntityVehicleBase;
-import net.suzumiya.crosstie.utils.TrainStandingHandler;
 import net.minecraft.util.MathHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -77,8 +76,8 @@ public abstract class EntityVehicleBasePacketSmoothingMixin {
 
         EntityVehicleBase self = (EntityVehicleBase) (Object) this;
         EntityVehicleBase currentVehicle = net.suzumiya.crosstie.client.TrainCameraController.getMountedOrStandingVehicle(net.minecraft.client.Minecraft.getMinecraft().thePlayer);
-        if (self == currentVehicle || self == TrainStandingHandler.getClientStandingTrain()) {
-            // Keep the mounted/standing player and its train on the same client timeline.
+        if (self == currentVehicle || self == net.suzumiya.crosstie.utils.TrainStandingHandler.getClientStandingTrain()) {
+            // 乗車中・立ち乗り中の自車両は遅延平滑化（6tick遅延）から除外し、RTM本体の即時Lerpで直近パケットに追従させる
             crosstie$snapshots.clear();
             crosstie$targetOffset = Double.NaN;
             crosstie$smoothedOffset = Double.NaN;

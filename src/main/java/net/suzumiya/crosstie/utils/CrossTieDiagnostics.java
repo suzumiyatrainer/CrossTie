@@ -18,6 +18,9 @@ import net.suzumiya.crosstie.CrossTieConfig;
  */
 public final class CrossTieDiagnostics {
 
+    /** Set true to re-enable CrossTie diagnostic counters and periodic logs. */
+    public static final boolean DIAGNOSTICS_ENABLED = false;
+
     /** 診断を有効化するシステムプロパティキー。 */
     public static final String PROP_ENABLED = "crosstie.diagnostics";
 
@@ -74,8 +77,9 @@ public final class CrossTieDiagnostics {
      *
      * @return 診断が有効なら true
      */
+    @SuppressWarnings("unused")
     public static boolean isEnabled() {
-        return ENABLED_BY_PROPERTY || CrossTieConfig.enableDiagnostics;
+        return DIAGNOSTICS_ENABLED && (ENABLED_BY_PROPERTY || CrossTieConfig.enableDiagnostics);
     }
 
     /**
@@ -95,9 +99,9 @@ public final class CrossTieDiagnostics {
         long usedMemory = runtime.totalMemory() - runtime.freeMemory();
         long maxMemory = runtime.maxMemory();
 
-        CrossTie.LOGGER.debug("[CrossTie] (診断ログ) interval=60s largeRail_render={} wiring_render={}"
-                + " vehicle_render={} skipped_setBlock={} heap_used_mb={} heap_max_mb={}",
-                largeRail, wiring, vehicle, skipped, usedMemory / (1024L * 1024L),
-                maxMemory / (1024L * 1024L));
+        CrossTie.LOGGER.debug(
+                "[CrossTie] (診断ログ) interval=60s largeRail_render={} wiring_render={}"
+                        + " vehicle_render={} skipped_setBlock={} heap_used_mb={} heap_max_mb={}",
+                largeRail, wiring, vehicle, skipped, usedMemory / (1024L * 1024L), maxMemory / (1024L * 1024L));
     }
 }
