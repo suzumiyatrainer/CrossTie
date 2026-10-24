@@ -42,6 +42,8 @@ public class CrossTie {
     public void init(cpw.mods.fml.common.event.FMLInitializationEvent event) {
         if (event.getSide() == cpw.mods.fml.relauncher.Side.CLIENT) {
             net.suzumiya.crosstie.client.CrossTieKeyBindings.init();
+            net.minecraftforge.client.ClientCommandHandler.instance
+                    .registerCommand(new net.suzumiya.crosstie.client.gui.CommandViewImage());
             net.minecraftforge.common.MinecraftForge.EVENT_BUS
                     .register(new net.suzumiya.crosstie.gui.CrossTieGuiEventHandler());
             net.minecraftforge.common.MinecraftForge.EVENT_BUS
@@ -70,7 +72,8 @@ public class CrossTie {
     @Mod.EventHandler
     public void serverStarting(FMLServerStartingEvent event) {
         event.registerServerCommand(new net.suzumiya.crosstie.command.CommandCrossTie());
-        LOGGER.info("Registered /crosstie command");
+        event.registerServerCommand(new net.suzumiya.crosstie.command.CommandViewImageFallback());
+        LOGGER.info("Registered /crosstie and /crosstieview commands");
 
         // Discord 連携初期化 (Dedicated Server かつ enabled=true 時のみ動作)
         net.suzumiya.crosstie.discord.DiscordManager.onServerStarting(event);

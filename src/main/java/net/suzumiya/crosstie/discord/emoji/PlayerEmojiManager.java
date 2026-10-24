@@ -2,6 +2,10 @@ package net.suzumiya.crosstie.discord.emoji;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.discord.DiscordConfig;
@@ -29,6 +33,7 @@ public final class PlayerEmojiManager {
 
     private static final String CACHE_FILE_PATH = "config/CrossTie/skin_cache.json";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final JsonParser PARSER = new JsonParser();
 
     private static final Map<UUID, EmojiData> CACHE = new ConcurrentHashMap<>();
     private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(r -> {
@@ -37,6 +42,10 @@ public final class PlayerEmojiManager {
         return t;
     });
 
+    private static final Map<UUID, Long> LAST_CHECK_TIMES = new ConcurrentHashMap<>();
+    private static final Map<UUID, java.util.concurrent.Future<?>> PENDING_FUTURES = new ConcurrentHashMap<>();
+    private static final long CHECK_COOLDOWN_MS = 60_000L;
+
     private static String applicationId = "";
 
     private PlayerEmojiManager() {
@@ -44,9 +53,29 @@ public final class PlayerEmojiManager {
 
     public static void init(String botToken) {
         loadCache();
-        // Bot アカウント情報から Application ID を取得 (非同期で初期化)
+        // Bot アカウント情報から Application ID を取得し、起動時に全キャッシュプレイヤーのスキン変更をチェック
         if (botToken != null && !botToken.isEmpty()) {
-            WORKER.submit(() -> fetchApplicationId(botToken));
+            WORKER.submit(() -> {
+                fetchApplicationId(botToken);
+                checkAllCachedSkinsOnStartup();
+            });
+        }
+    }
+
+    /**
+     * サーバー起動時にキャッシュされている全プレイヤーのスキン変更・絵文字同期を非同期で実行する。
+     */
+    private static void checkAllCachedSkinsOnStartup() {
+        if (!DiscordConfig.enablePlayerFaceEmojis || CACHE.isEmpty()) {
+            return;
+        }
+        CrossTie.LOGGER.info("[Discord] Checking skin updates for {} cached player(s) on startup...", CACHE.size());
+        for (Map.Entry<UUID, EmojiData> entry : CACHE.entrySet()) {
+            UUID uuid = entry.getKey();
+            EmojiData data = entry.getValue();
+            if (uuid != null && data != null && data.name != null) {
+                checkAndUpdateSkin(uuid, data.name, true);
+            }
         }
     }
 
@@ -72,20 +101,74 @@ public final class PlayerEmojiManager {
     }
 
     /**
-     * プレイヤー参加時に非同期でスキンの取得・SHA-256判定・絵文字同期を実行する。
+     * プレイヤーの顔絵文字タグを取得する。
+     * キャッシュに存在する場合は即座に返し (0ms)、キャッシュに存在せず更新タスクが進行中の場合は
+     * 指定ミリ秒まで完了を待機して最新タグを返す。タイムアウト時は空文字を返す。
      */
-    public static void onPlayerJoin(UUID uuid, String playerName) {
+    public static String getOrAwaitEmojiTag(UUID uuid, String playerName, long timeoutMs) {
+        if (!DiscordConfig.enablePlayerFaceEmojis || uuid == null) {
+            return "";
+        }
+        String tag = getEmojiTag(uuid, playerName);
+        if (!tag.isEmpty()) {
+            return tag;
+        }
+
+        java.util.concurrent.Future<?> future = PENDING_FUTURES.get(uuid);
+        if (future != null) {
+            try {
+                future.get(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS);
+            } catch (Throwable ignored) {
+            }
+        }
+        return getEmojiTag(uuid, playerName);
+    }
+
+    /**
+     * 非同期ワーカースレッド上で処理を実行する。
+     */
+    public static void runAsync(Runnable runnable) {
+        if (runnable != null) {
+            WORKER.submit(runnable);
+        }
+    }
+
+    /**
+     * プレイヤー参加試行時 (allowUserToConnect) に非同期でスキンの取得・SHA-256判定・絵文字同期を先行実行する。
+     */
+    public static void onPlayerJoinAttempt(UUID uuid, String playerName) {
         if (!DiscordConfig.enablePlayerFaceEmojis) {
             return;
         }
-        WORKER.submit(() -> checkAndUpdateSkin(uuid, playerName));
+        if (uuid == null) {
+            return;
+        }
+        java.util.concurrent.Future<?> future = WORKER.submit(() -> checkAndUpdateSkin(uuid, playerName, false));
+        PENDING_FUTURES.put(uuid, future);
     }
 
-    private static void checkAndUpdateSkin(UUID uuid, String playerName) {
+    /**
+     * プレイヤー参加時に非同期でスキンの取得・SHA-256判定・絵文字同期を実行する。
+     */
+    public static void onPlayerJoin(UUID uuid, String playerName) {
+        onPlayerJoinAttempt(uuid, playerName);
+    }
+
+    private static void checkAndUpdateSkin(UUID uuid, String playerName, boolean force) {
         String token = DiscordConfig.resolvedBotToken;
         if (token == null || token.isEmpty()) {
             return;
         }
+
+        if (!force) {
+            Long lastCheck = LAST_CHECK_TIMES.get(uuid);
+            long now = System.currentTimeMillis();
+            if (lastCheck != null && (now - lastCheck) < CHECK_COOLDOWN_MS) {
+                return;
+            }
+        }
+        LAST_CHECK_TIMES.put(uuid, System.currentTimeMillis());
+
         if (applicationId.isEmpty()) {
             fetchApplicationId(token);
         }
@@ -95,28 +178,65 @@ public final class PlayerEmojiManager {
             String urlStr = DiscordConfig.getAvatarUrl(uuid, playerName, 128);
             byte[] pngBytes = fetchBytes(urlStr);
             if (pngBytes == null || pngBytes.length == 0) {
-                // フォールバック: mc-heads
+                // フォールバック 1: mc-heads (UUID)
                 String fallbackUrl = "https://mc-heads.net/avatar/" + uuid.toString().replace("-", "") + "/128.png";
                 pngBytes = fetchBytes(fallbackUrl);
+                // フォールバック 2: mc-heads (プレイヤー名指定、オフラインモードや認証不調時対策)
+                if ((pngBytes == null || pngBytes.length == 0) && playerName != null && !playerName.isEmpty()) {
+                    pngBytes = fetchBytes("https://mc-heads.net/avatar/" + playerName + "/128.png");
+                }
                 if (pngBytes == null || pngBytes.length == 0) {
-                    CrossTie.LOGGER.warn("[Discord] Failed to download skin head image for {} from: {}", playerName, urlStr);
+                    CrossTie.LOGGER.warn("[Discord] Failed to download skin head image for {} from: {}", playerName,
+                            urlStr);
                     return;
                 }
             }
 
             // 2. SHA-256 を計算
             String sha256 = calculateSha256(pngBytes);
+            // 名前は MCID と完全一致、プレフィックスなし
+            String sanitizedName = sanitizeEmojiName(playerName);
 
             // 3. 既存キャッシュと比較
             EmojiData existing = CACHE.get(uuid);
-            if (existing != null && sha256.equals(existing.sha256) && existing.emojiId != null
-                    && !existing.emojiId.isEmpty()) {
-                // 1ピクセルも変化なし (通信スキップ)
+            boolean sameSkin = existing != null && sha256.equals(existing.sha256) && existing.emojiId != null
+                    && !existing.emojiId.isEmpty();
+
+            // 4. Discord 上の既存絵文字を調査 (アプリ絵文字優先)
+            // キャッシュ消去や手動作成等で NAME_ALREADY_TAKEN になるのを防ぐため、同名および旧 mc_ プレフィックス絵文字を検索
+            Map<String, String> appEmojis = !applicationId.isEmpty() ? fetchApplicationEmojis(applicationId, token)
+                    : Collections.emptyMap();
+            String existingAppEmojiId = appEmojis.get(sanitizedName);
+            String legacyAppEmojiId = appEmojis.get("mc_" + sanitizedName);
+
+            Map<String, String> guildEmojis = (DiscordConfig.guildId != null && !DiscordConfig.guildId.isEmpty())
+                    ? fetchGuildEmojis(DiscordConfig.guildId, token) : Collections.emptyMap();
+            String existingGuildEmojiId = guildEmojis.get(sanitizedName);
+            String legacyGuildEmojiId = guildEmojis.get("mc_" + sanitizedName);
+
+            // スキンに変更がなく、かつ既にアプリ絵文字として同名絵文字が存在している場合
+            if (sameSkin && existingAppEmojiId != null && existingAppEmojiId.equals(existing.emojiId)) {
+                // 余分な旧プレフィックス絵文字やギルド絵文字があれば掃除して完了
+                if (legacyAppEmojiId != null) {
+                    deleteApplicationEmoji(applicationId, legacyAppEmojiId, token);
+                }
+                if (existingGuildEmojiId != null) {
+                    deleteGuildEmoji(DiscordConfig.guildId, existingGuildEmojiId, token);
+                }
+                if (legacyGuildEmojiId != null) {
+                    deleteGuildEmoji(DiscordConfig.guildId, legacyGuildEmojiId, token);
+                }
                 return;
             }
 
-            // 4. スキン変更または新規参加: 古い絵文字を削除
-            String sanitizedName = sanitizeEmojiName(playerName);
+            // スキン更新または新規作成、あるいはアプリ絵文字への再昇格が必要な場合:
+            // Discord 上の旧絵文字を確実に削除 (400 APPLICATION_EMOJI_NAME_ALREADY_TAKEN 回避)
+            if (existingAppEmojiId != null) {
+                deleteApplicationEmoji(applicationId, existingAppEmojiId, token);
+            }
+            if (legacyAppEmojiId != null) {
+                deleteApplicationEmoji(applicationId, legacyAppEmojiId, token);
+            }
             if (existing != null && existing.emojiId != null && !existing.emojiId.isEmpty()) {
                 if (existing.targetGuildId != null && !existing.targetGuildId.isEmpty()) {
                     deleteGuildEmoji(existing.targetGuildId, existing.emojiId, token);
@@ -124,8 +244,14 @@ public final class PlayerEmojiManager {
                     deleteApplicationEmoji(applicationId, existing.emojiId, token);
                 }
             }
+            if (existingGuildEmojiId != null) {
+                deleteGuildEmoji(DiscordConfig.guildId, existingGuildEmojiId, token);
+            }
+            if (legacyGuildEmojiId != null) {
+                deleteGuildEmoji(DiscordConfig.guildId, legacyGuildEmojiId, token);
+            }
 
-            // 5. 新規絵文字を作成 (preferApplicationEmojis が有効な場合は Application Emoji を最優先)
+            // 5. 新規絵文字を作成 (アプリ絵文字優先)
             String base64Image = "data:image/png;base64," + Base64.getEncoder().encodeToString(pngBytes);
             String newEmojiId = null;
             String usedGuildId = null;
@@ -134,28 +260,27 @@ public final class PlayerEmojiManager {
                 newEmojiId = createApplicationEmoji(applicationId, sanitizedName, base64Image, token);
             }
 
-            // アプリ絵文字が未作成、またはギルド優先設定の場合は Guild Emoji を試行
-            if ((newEmojiId == null || newEmojiId.isEmpty()) && DiscordConfig.guildId != null && !DiscordConfig.guildId.isEmpty()) {
+            // アプリ絵文字作成が失敗した場合のみ、ギルド絵文字をフォールバック試行
+            if ((newEmojiId == null || newEmojiId.isEmpty()) && DiscordConfig.guildId != null
+                    && !DiscordConfig.guildId.isEmpty()) {
                 newEmojiId = createGuildEmoji(DiscordConfig.guildId, sanitizedName, base64Image, token);
                 if (newEmojiId != null && !newEmojiId.isEmpty()) {
                     usedGuildId = DiscordConfig.guildId;
                 }
             }
 
-            // ギルド優先時にギルド側が失敗した場合のフォールバックでアプリ絵文字を試行
-            if ((newEmojiId == null || newEmojiId.isEmpty()) && !applicationId.isEmpty()) {
-                newEmojiId = createApplicationEmoji(applicationId, sanitizedName, base64Image, token);
-            }
-
             if (newEmojiId != null && !newEmojiId.isEmpty()) {
-                EmojiData newData = new EmojiData(playerName, newEmojiId, sha256, System.currentTimeMillis(), usedGuildId);
+                EmojiData newData = new EmojiData(playerName, newEmojiId, sha256, System.currentTimeMillis(),
+                        usedGuildId);
                 CACHE.put(uuid, newData);
                 saveCache();
-                CrossTie.LOGGER.info("[Discord] Synchronized face emoji for {}: <:{}::{}> (Type: {})", playerName, sanitizedName,
-                        newEmojiId, (usedGuildId != null ? "Guild" : "Application"));
+                CrossTie.LOGGER.info("[Discord] Synchronized face emoji for {}: <:{}::{}> (Type: {})", playerName,
+                        sanitizedName, newEmojiId, (usedGuildId != null ? "Guild" : "Application"));
             }
         } catch (Throwable t) {
             CrossTie.LOGGER.warn("[Discord] Failed to synchronize emoji for {}: {}", playerName, t.getMessage());
+        } finally {
+            PENDING_FUTURES.remove(uuid);
         }
     }
 
@@ -172,16 +297,91 @@ public final class PlayerEmojiManager {
         return hexString.toString();
     }
 
+    /**
+     * 絵文字名を MCID と完全一致 (プレフィックスなし) で生成する。
+     * Discord の命名規則 (英数字とアンダースコアのみ、2〜32文字) に適合させる。
+     */
     private static String sanitizeEmojiName(String name) {
         if (name == null || name.isEmpty()) {
-            return "mc_player";
+            return "player";
         }
-        // Discord 絵文字名は英数字とアンダースコアのみ、2〜32文字
-        String sanitized = "mc_" + name.replaceAll("[^a-zA-Z0-9_]", "_");
+        String sanitized = name.replaceAll("[^a-zA-Z0-9_]", "_");
+        if (sanitized.length() < 2) {
+            sanitized = sanitized + "_";
+        }
         if (sanitized.length() > 32) {
             sanitized = sanitized.substring(0, 32);
         }
         return sanitized;
+    }
+
+    /**
+     * Discord アプリケーション絵文字一覧を取得し、名前 -> ID のマップを返す。
+     */
+    private static Map<String, String> fetchApplicationEmojis(String appId, String botToken) {
+        Map<String, String> map = new HashMap<>();
+        try {
+            URL url = new URL("https://discord.com/api/v10/applications/" + appId + "/emojis");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Authorization", "Bot " + botToken);
+            conn.setRequestProperty("User-Agent", "CrossTie-Discord/1.0");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+
+            if (conn.getResponseCode() == 200) {
+                try (InputStreamReader reader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8)) {
+                    JsonObject json = PARSER.parse(reader).getAsJsonObject();
+                    if (json.has("items") && json.get("items").isJsonArray()) {
+                        JsonArray items = json.getAsJsonArray("items");
+                        for (JsonElement elem : items) {
+                            if (elem.isJsonObject()) {
+                                JsonObject obj = elem.getAsJsonObject();
+                                if (obj.has("id") && obj.has("name")) {
+                                    map.put(obj.get("name").getAsString(), obj.get("id").getAsString());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            CrossTie.LOGGER.warn("[Discord] Failed to fetch application emojis: {}", t.getMessage());
+        }
+        return map;
+    }
+
+    /**
+     * Discord ギルド絵文字一覧を取得し、名前 -> ID のマップを返す。
+     */
+    private static Map<String, String> fetchGuildEmojis(String guildId, String botToken) {
+        Map<String, String> map = new HashMap<>();
+        try {
+            URL url = new URL("https://discord.com/api/v10/guilds/" + guildId + "/emojis");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Authorization", "Bot " + botToken);
+            conn.setRequestProperty("User-Agent", "CrossTie-Discord/1.0");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+
+            if (conn.getResponseCode() == 200) {
+                try (InputStreamReader reader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8)) {
+                    JsonArray arr = PARSER.parse(reader).getAsJsonArray();
+                    for (JsonElement elem : arr) {
+                        if (elem.isJsonObject()) {
+                            JsonObject obj = elem.getAsJsonObject();
+                            if (obj.has("id") && obj.has("name")) {
+                                map.put(obj.get("name").getAsString(), obj.get("id").getAsString());
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            CrossTie.LOGGER.warn("[Discord] Failed to fetch guild emojis: {}", t.getMessage());
+        }
+        return map;
     }
 
     private static void fetchApplicationId(String botToken) {
@@ -206,7 +406,8 @@ public final class PlayerEmojiManager {
                 }
             } else {
                 String err = readErrorStream(conn);
-                CrossTie.LOGGER.warn("[Discord] oauth2/applications/@me returned HTTP {}: {}. Trying users/@me...", conn.getResponseCode(), err);
+                CrossTie.LOGGER.warn("[Discord] oauth2/applications/@me returned HTTP {}: {}. Trying users/@me...",
+                        conn.getResponseCode(), err);
             }
         } catch (Throwable t) {
             CrossTie.LOGGER.warn("[Discord] Failed to fetch application ID via oauth2: {}", t.getMessage());
@@ -433,10 +634,9 @@ public final class PlayerEmojiManager {
         }
     }
 
+    @SuppressWarnings("unused")
     private static final class EmojiCreateRequest {
-        @SuppressWarnings("unused")
         public final String name;
-        @SuppressWarnings("unused")
         public final String image;
 
         public EmojiCreateRequest(String name, String image) {

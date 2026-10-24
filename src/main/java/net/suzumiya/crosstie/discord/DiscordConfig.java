@@ -41,13 +41,13 @@ public final class DiscordConfig {
     public static boolean sendServerLifecycle = true;
 
     // ---- Formatting 設定 ---- //
-    public static String formatDiscordToMc = "§9[Discord] §r<%name%> %message%";
-    public static String formatMcToDiscord = "%emoji% %name%: %message%";
-    public static String formatPlayerJoin = "%emoji% %name%: がサーバーに参加しました";
-    public static String formatPlayerLeave = "%emoji% %name%: がサーバーから退出しました";
+    public static String formatDiscordToMc = "§dDiscord§7｜%rolecolor%[%role%]§r %displayname%：%message%";
+    public static String formatMcToDiscord = "%emoji% **%mcid%**: %message%";
+    public static String formatPlayerJoin = "%emoji% **%mcid%** がサーバーに参加しました";
+    public static String formatPlayerLeave = "%emoji% **%mcid%** がサーバーから退出しました";
     public static String formatPlayerDeath = "%emoji% %deathmessage%";
-    public static String formatServerStart = "サーバーが起動しました";
-    public static String formatServerStop = "サーバーが停止しました";
+    public static String formatServerStart = "# :white_check_mark: **サーバーが起動しました**";
+    public static String formatServerStop = "# :octagonal_sign: **サーバーが停止しました**";
 
     // 解決済みの実行時トークン / URL
     public static String resolvedBotToken = "";
@@ -59,8 +59,8 @@ public final class DiscordConfig {
     /**
      * Discord 設定ファイルを初期化・ロードする。
      *
-     * @param configDir     設定ディレクトリ (config/CrossTie/)
-     * @param legacyConfig  CrossTie.cfg (旧設定のマイグレーション用、null可)
+     * @param configDir    設定ディレクトリ (config/CrossTie/)
+     * @param legacyConfig CrossTie.cfg (旧設定のマイグレーション用、null可)
      */
     public static void init(File configDir, Configuration legacyConfig) {
         if (!configDir.exists()) {
@@ -79,7 +79,8 @@ public final class DiscordConfig {
             loadValues(migrationSource);
 
         } catch (Exception e) {
-            CrossTie.LOGGER.error("[Discord] Failed to load Discord configuration from: {}", configFile.getAbsolutePath(), e);
+            CrossTie.LOGGER.error("[Discord] Failed to load Discord configuration from: {}",
+                    configFile.getAbsolutePath(), e);
         } finally {
             if (config.hasChanged()) {
                 config.save();
@@ -102,7 +103,8 @@ public final class DiscordConfig {
             loadValues(null);
             CrossTie.LOGGER.info("[Discord] Configuration reloaded from: {}", configFile.getAbsolutePath());
         } catch (Exception e) {
-            CrossTie.LOGGER.error("[Discord] Failed to reload Discord configuration from: {}", configFile.getAbsolutePath(), e);
+            CrossTie.LOGGER.error("[Discord] Failed to reload Discord configuration from: {}",
+                    configFile.getAbsolutePath(), e);
         }
     }
 
@@ -150,7 +152,8 @@ public final class DiscordConfig {
         propPreferApp.comment = "Prefer Discord Application Emojis (Bot-owned, 2000 slots) over Guild Emojis. Default: true";
         preferApplicationEmojis = propPreferApp.getBoolean();
 
-        String defAvatarUrl = getLegacyString(migrationSource, "avatarUrlTemplate", "https://crafatar.com/avatars/{uuid-nodashes}?size=256&overlay");
+        String defAvatarUrl = getLegacyString(migrationSource, "avatarUrlTemplate",
+                "https://crafatar.com/avatars/{uuid-nodashes}?size=256&overlay");
         Property propAvatar = config.get(CATEGORY_GENERAL, "avatarUrlTemplate", defAvatarUrl);
         propAvatar.comment = "URL template to fetch player avatar/skin image for webhooks and face emojis. Placeholders: {uuid}, {uuid-nodashes}, {name}, {size}.";
         avatarUrlTemplate = propAvatar.getString();
@@ -177,44 +180,62 @@ public final class DiscordConfig {
         sendServerLifecycle = propSendLifecycle.getBoolean();
 
         // ---- Formatting ---- //
-        String defFmtD2M = getLegacyString(migrationSource, "formatDiscordToMc", "§9[Discord] §r<%name%> %message%");
+        String defFmtD2M = getLegacyString(migrationSource, "formatDiscordToMc",
+                "§dDiscord§7｜%rolecolor%[%role%]§r %displayname%：%message%");
         Property propFmtD2M = config.get(CATEGORY_FORMATTING, "formatDiscordToMc", defFmtD2M);
-        propFmtD2M.comment = "Message format when receiving from Discord to Minecraft.";
-        formatDiscordToMc = propFmtD2M.getString();
+        propFmtD2M.comment = "Message format when receiving from Discord to Minecraft. Placeholders: %displayname%, %role%, %rolecolor%, %message%.";
+        formatDiscordToMc = unquote(propFmtD2M.getString());
 
-        String defFmtM2D = getLegacyString(migrationSource, "formatMcToDiscord", "%emoji% %name%: %message%");
+        String defFmtM2D = getLegacyString(migrationSource, "formatMcToDiscord", "%emoji% **%mcid%**: %message%");
         Property propFmtM2D = config.get(CATEGORY_FORMATTING, "formatMcToDiscord", defFmtM2D);
         propFmtM2D.comment = "Message format when sending player chat to Discord.";
-        formatMcToDiscord = propFmtM2D.getString();
-
-        String defFmtJoin = getLegacyString(migrationSource, "formatPlayerJoin", "%emoji% %name%: がサーバーに参加しました");
-        Property propFmtJoin = config.get(CATEGORY_FORMATTING, "formatPlayerJoin", defFmtJoin);
-        propFmtJoin.comment = "Message format when player joins the server.";
-        formatPlayerJoin = propFmtJoin.getString();
-
-        String defFmtLeave = getLegacyString(migrationSource, "formatPlayerLeave", "%emoji% %name%: がサーバーから退出しました");
-        Property propFmtLeave = config.get(CATEGORY_FORMATTING, "formatPlayerLeave", defFmtLeave);
-        propFmtLeave.comment = "Message format when player leaves the server.";
-        formatPlayerLeave = propFmtLeave.getString();
+        formatMcToDiscord = unquote(propFmtM2D.getString());
 
         String defFmtDeath = getLegacyString(migrationSource, "formatPlayerDeath", "%emoji% %deathmessage%");
         Property propFmtDeath = config.get(CATEGORY_FORMATTING, "formatPlayerDeath", defFmtDeath);
         propFmtDeath.comment = "Message format when player dies. Use %emoji%, %name%, %deathmessage%.";
-        formatPlayerDeath = propFmtDeath.getString();
+        formatPlayerDeath = unquote(propFmtDeath.getString());
 
-        String defFmtStart = getLegacyString(migrationSource, "formatServerStart", "サーバーが起動しました");
+        String defFmtJoin = getLegacyString(migrationSource, "formatPlayerJoin", "## %emoji% **%mcid%** がサーバーに参加しました");
+        Property propFmtJoin = config.get(CATEGORY_FORMATTING, "formatPlayerJoin", defFmtJoin);
+        propFmtJoin.comment = "Message format when player joins the server.";
+        formatPlayerJoin = unquote(propFmtJoin.getString());
+
+        String defFmtLeave = getLegacyString(migrationSource, "formatPlayerLeave",
+                "## %emoji% **%mcid%** がサーバーから退出しました");
+        Property propFmtLeave = config.get(CATEGORY_FORMATTING, "formatPlayerLeave", defFmtLeave);
+        propFmtLeave.comment = "Message format when player leaves the server.";
+        formatPlayerLeave = unquote(propFmtLeave.getString());
+
+        String defFmtStart = getLegacyString(migrationSource, "formatServerStart",
+                "# :white_check_mark: **サーバーが起動しました**");
         Property propFmtStart = config.get(CATEGORY_FORMATTING, "formatServerStart", defFmtStart);
         propFmtStart.comment = "Message format when server starts.";
-        formatServerStart = propFmtStart.getString();
+        formatServerStart = unquote(propFmtStart.getString());
 
-        String defFmtStop = getLegacyString(migrationSource, "formatServerStop", "サーバーが停止しました");
+        String defFmtStop = getLegacyString(migrationSource, "formatServerStop", "# :octagonal_sign: **サーバーが停止しました**");
         Property propFmtStop = config.get(CATEGORY_FORMATTING, "formatServerStop", defFmtStop);
         propFmtStop.comment = "Message format when server stops.";
-        formatServerStop = propFmtStop.getString();
+        formatServerStop = unquote(propFmtStop.getString());
 
         // 秘密情報・トークンを解決
         resolvedBotToken = DiscordSecretManager.resolveToken(rawBotToken);
         resolvedWebhookUrl = DiscordSecretManager.resolveString(rawWebhookUrl);
+    }
+
+    /**
+     * Forge Config 等で文字列がダブルクォーテーションで囲まれている場合、前後のダブルクォーテーションを除去する。 Markdown の見出し
+     * (#) 等がクォートによって無効化されるのを防ぐ。
+     */
+    public static String unquote(String s) {
+        if (s == null) {
+            return "";
+        }
+        String str = s.trim();
+        if (str.length() >= 2 && str.startsWith("\"") && str.endsWith("\"")) {
+            str = str.substring(1, str.length() - 1).trim();
+        }
+        return str;
     }
 
     public static String getAvatarUrl(java.util.UUID uuid, String name) {
@@ -229,10 +250,7 @@ public final class DiscordConfig {
         String uuidStr = uuid != null ? uuid.toString() : "";
         String uuidNoDashes = uuidStr.replace("-", "");
         String safeName = name != null ? name : "";
-        String url = tpl
-                .replace("{uuid}", uuidStr)
-                .replace("{uuid-nodashes}", uuidNoDashes)
-                .replace("{name}", safeName)
+        String url = tpl.replace("{uuid}", uuidStr).replace("{uuid-nodashes}", uuidNoDashes).replace("{name}", safeName)
                 .replace("{size}", String.valueOf(size));
         if (size != 256 && url.contains("size=")) {
             url = url.replaceAll("size=\\d+", "size=" + size);
@@ -241,14 +259,16 @@ public final class DiscordConfig {
     }
 
     private static boolean getLegacyBoolean(Configuration legacy, String key, boolean defaultValue) {
-        if (legacy != null && legacy.hasCategory(LEGACY_CATEGORY) && legacy.getCategory(LEGACY_CATEGORY).containsKey(key)) {
+        if (legacy != null && legacy.hasCategory(LEGACY_CATEGORY)
+                && legacy.getCategory(LEGACY_CATEGORY).containsKey(key)) {
             return legacy.get(LEGACY_CATEGORY, key, defaultValue).getBoolean();
         }
         return defaultValue;
     }
 
     private static String getLegacyString(Configuration legacy, String key, String defaultValue) {
-        if (legacy != null && legacy.hasCategory(LEGACY_CATEGORY) && legacy.getCategory(LEGACY_CATEGORY).containsKey(key)) {
+        if (legacy != null && legacy.hasCategory(LEGACY_CATEGORY)
+                && legacy.getCategory(LEGACY_CATEGORY).containsKey(key)) {
             return legacy.get(LEGACY_CATEGORY, key, defaultValue).getString();
         }
         return defaultValue;

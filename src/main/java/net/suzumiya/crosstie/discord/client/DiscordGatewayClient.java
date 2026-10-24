@@ -14,11 +14,22 @@ import io.netty.handler.ssl.SslHandler;
 import net.suzumiya.crosstie.CrossTie;
 import net.suzumiya.crosstie.discord.DiscordConfig;
 import net.suzumiya.crosstie.discord.DiscordMessageQueue;
+import net.suzumiya.crosstie.discord.DiscordRoleManager;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.HoverEvent;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatStyle;
+import net.minecraft.util.EnumChatFormatting;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -294,7 +305,7 @@ public final class DiscordGatewayClient {
 
         JsonObject d = new JsonObject();
         d.addProperty("token", DiscordConfig.resolvedBotToken);
-        d.addProperty("intents", 33280); // GUILD_MESSAGES (512) | MESSAGE_CONTENT (32768)
+        d.addProperty("intents", 33281); // GUILDS (1) | GUILD_MESSAGES (512) | MESSAGE_CONTENT (32768)
 
         JsonObject props = new JsonObject();
         props.addProperty("os", "minecraft");
@@ -333,6 +344,18 @@ public final class DiscordGatewayClient {
             CrossTie.LOGGER.info("[Discord] Gateway READY. Session ID: {}", sessionId);
         } else if ("RESUMED".equals(eventType)) {
             CrossTie.LOGGER.info("[Discord] Gateway session successfully RESUMED.");
+        } else if ("GUILD_CREATE".equals(eventType)) {
+            if (d.has("id") && d.has("roles") && d.get("roles").isJsonArray()) {
+                DiscordRoleManager.updateGuildRoles(d.get("id").getAsString(), d.getAsJsonArray("roles"));
+            }
+        } else if ("GUILD_ROLE_CREATE".equals(eventType) || "GUILD_ROLE_UPDATE".equals(eventType)) {
+            if (d.has("guild_id") && d.has("role") && d.get("role").isJsonObject()) {
+                DiscordRoleManager.updateRole(d.get("guild_id").getAsString(), d.getAsJsonObject("role"));
+            }
+        } else if ("GUILD_ROLE_DELETE".equals(eventType)) {
+            if (d.has("guild_id") && d.has("role_id")) {
+                DiscordRoleManager.removeRole(d.get("guild_id").getAsString(), d.get("role_id").getAsString());
+            }
         } else if ("MESSAGE_CREATE".equals(eventType)) {
             handleMessageCreate(d);
         }
@@ -361,25 +384,163 @@ public final class DiscordGatewayClient {
                 return;
             }
 
-            String authorName = author.get("username").getAsString();
-            // サーバーニックネームがある場合は優先
+            // 表示名の決定:
+            // 1. サーバーニックネーム (member.nick)
+            // 2. アカウントのグローバル表示名 (author.global_name)
+            // 3. アカウントのユーザー名 (author.username)
+            String authorName = "";
             if (d.has("member") && !d.get("member").isJsonNull()) {
                 JsonObject member = d.getAsJsonObject("member");
                 if (member.has("nick") && !member.get("nick").isJsonNull()) {
-                    authorName = member.get("nick").getAsString();
+                    String nick = member.get("nick").getAsString().trim();
+                    if (!nick.isEmpty()) {
+                        authorName = nick;
+                    }
+                }
+            }
+            if (authorName.isEmpty() && author.has("global_name") && !author.get("global_name").isJsonNull()) {
+                String globalName = author.get("global_name").getAsString().trim();
+                if (!globalName.isEmpty()) {
+                    authorName = globalName;
+                }
+            }
+            if (authorName.isEmpty() && author.has("username") && !author.get("username").isJsonNull()) {
+                authorName = author.get("username").getAsString().trim();
+            }
+            if (authorName.isEmpty()) {
+                authorName = "Discord User";
+            }
+
+            // メンバーの最上位ロールおよび色の解決
+            String guildId = d.has("guild_id") ? d.get("guild_id").getAsString() : DiscordConfig.guildId;
+            String roleName = "";
+            String roleColorCode = "§7";
+            if (d.has("member") && !d.get("member").isJsonNull()) {
+                JsonObject member = d.getAsJsonObject("member");
+                if (member.has("roles") && !member.get("roles").isJsonNull()) {
+                    JsonArray memberRoles = member.getAsJsonArray("roles");
+                    DiscordRoleManager.RoleInfo highestRole = DiscordRoleManager.getHighestRole(guildId, memberRoles);
+                    if (highestRole != null) {
+                        roleName = highestRole.name;
+                    }
+                    roleColorCode = DiscordRoleManager.getMemberColorCode(guildId, memberRoles);
                 }
             }
 
-            String content = d.has("content") ? d.get("content").getAsString() : "";
-            if (content.isEmpty() && d.has("attachments") && d.getAsJsonArray("attachments").size() > 0) {
-                content = "[添付ファイル]";
+            // 画像添付ファイル (png/jpg/jpeg/gif/webp/bmp) の解析
+            List<ImageAttachment> images = new ArrayList<>();
+            int totalAttachments = 0;
+            if (d.has("attachments") && !d.get("attachments").isJsonNull()) {
+                JsonArray attachments = d.getAsJsonArray("attachments");
+                totalAttachments = attachments.size();
+                for (JsonElement elem : attachments) {
+                    if (elem.isJsonObject()) {
+                        JsonObject att = elem.getAsJsonObject();
+                        String url = att.has("url") ? att.get("url").getAsString() : "";
+                        String filename = att.has("filename") ? att.get("filename").getAsString() : "image.png";
+                        String contentType = att.has("content_type") && !att.get("content_type").isJsonNull()
+                                ? att.get("content_type").getAsString() : "";
+                        if (isImage(filename, contentType)) {
+                            images.add(new ImageAttachment(filename, url));
+                        }
+                    }
+                }
             }
 
-            if (!content.isEmpty()) {
-                String formatted = DiscordConfig.formatDiscordToMc.replace("%name%", authorName).replace("%message%",
-                        content);
-                DiscordMessageQueue.enqueueInbound(formatted);
+            String rawContent = d.has("content") ? d.get("content").getAsString() : "";
+            String messageText = rawContent;
+
+            // 添付ファイルのみの場合の処理:
+            // 画像のみの場合は空白 (「添付ファイル」すら送らずプレビューのみ)、非画像添付が含まれる場合は「添付ファイル」
+            if (messageText.isEmpty() && totalAttachments > 0) {
+                if (images.size() == totalAttachments) {
+                    messageText = "";
+                } else {
+                    messageText = "添付ファイル";
+                }
             }
+
+            if (!messageText.isEmpty() || !images.isEmpty()) {
+                String baseFormatted = DiscordConfig.formatDiscordToMc
+                        .replace("%displayname%", authorName)
+                        .replace("%name%", authorName)
+                        .replace("%message%", messageText);
+
+                // ロールがない場合はブラケットや区切り線のゴミを残さない
+                if (roleName.isEmpty()) {
+                    baseFormatted = baseFormatted
+                            .replace("§7｜%rolecolor%[%role%]", "")
+                            .replace("§8｜%rolecolor%[%role%]", "")
+                            .replace("§7|%rolecolor%[%role%]", "")
+                            .replace("§8|%rolecolor%[%role%]", "")
+                            .replace("｜%rolecolor%[%role%]", "")
+                            .replace("|%rolecolor%[%role%]", "")
+                            .replace("｜[%role%]", "")
+                            .replace("|[%role%]", "")
+                            .replace("%rolecolor%[%role%]", "")
+                            .replace("[%role%]", "")
+                            .replace("%role%", "")
+                            .replace("%rolecolor%", "");
+                } else {
+                    baseFormatted = baseFormatted
+                            .replace("%role%", roleName)
+                            .replace("%rolecolor%", roleColorCode);
+                }
+
+                baseFormatted = baseFormatted.trim();
+                // 本文が空で末尾にコロン (半角または全角) が残った場合は取り除いてスッキリさせる
+                if (messageText.isEmpty()) {
+                    while (baseFormatted.endsWith(":") || baseFormatted.endsWith("：")) {
+                        baseFormatted = baseFormatted.substring(0, baseFormatted.length() - 1).trim();
+                    }
+                }
+
+                ChatComponentText rootComp = new ChatComponentText(baseFormatted);
+
+                // 画像プレビューリンクコンポーネントを追加
+                for (ImageAttachment img : images) {
+                    ChatComponentText previewBtn = new ChatComponentText("\n §b[🖼 " + img.filename + " (クリックでプレビュー)]");
+                    ChatStyle pStyle = new ChatStyle();
+                    pStyle.setColor(EnumChatFormatting.AQUA);
+                    pStyle.setUnderlined(true);
+                    pStyle.setChatClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/crosstieview " + img.url + " " + img.filename));
+                    pStyle.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                            new ChatComponentText("§eクリックしてゲーム画面中央に拡大プレビュー表示します\n§7URL: " + img.url)));
+                    previewBtn.setChatStyle(pStyle);
+                    rootComp.appendSibling(previewBtn);
+
+                    ChatComponentText browserBtn = new ChatComponentText(" §7[ブラウザで開く]");
+                    ChatStyle bStyle = new ChatStyle();
+                    bStyle.setColor(EnumChatFormatting.GRAY);
+                    bStyle.setUnderlined(true);
+                    bStyle.setChatClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, img.url));
+                    bStyle.setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                            new ChatComponentText("§7ブラウザで画像を開きます")));
+                    browserBtn.setChatStyle(bStyle);
+                    rootComp.appendSibling(browserBtn);
+                }
+
+                DiscordMessageQueue.enqueueInbound(rootComp);
+            }
+        }
+    }
+
+    private static boolean isImage(String filename, String contentType) {
+        if (contentType != null && contentType.toLowerCase().startsWith("image/")) {
+            return true;
+        }
+        String lower = filename.toLowerCase();
+        return lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg")
+                || lower.endsWith(".gif") || lower.endsWith(".webp") || lower.endsWith(".bmp");
+    }
+
+    private static final class ImageAttachment {
+        public final String filename;
+        public final String url;
+
+        public ImageAttachment(String filename, String url) {
+            this.filename = filename;
+            this.url = url;
         }
     }
 }

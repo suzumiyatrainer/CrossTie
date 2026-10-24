@@ -12,8 +12,8 @@ public final class DiscordMessageQueue {
     /** Minecraft → Discord への送信待ちキュー (容量制限付きでメモリ保護) */
     private static final BlockingQueue<OutboundMessage> OUTBOUND_QUEUE = new LinkedBlockingQueue<>(1000);
 
-    /** Discord → Minecraft への受信済みメッセージキュー (メインスレッドの tick で安全にポーリング配信) */
-    private static final ConcurrentLinkedQueue<String> INBOUND_QUEUE = new ConcurrentLinkedQueue<>();
+    /** Discord → Minecraft への受信済みチャットコンポーネントキュー (メインスレッドの tick で安全にポーリング配信) */
+    private static final ConcurrentLinkedQueue<net.minecraft.util.IChatComponent> INBOUND_QUEUE = new ConcurrentLinkedQueue<>();
 
     private DiscordMessageQueue() {}
 
@@ -26,10 +26,18 @@ public final class DiscordMessageQueue {
     }
 
     public static void enqueueInbound(String chatMessage) {
-        INBOUND_QUEUE.offer(chatMessage);
+        if (chatMessage != null && !chatMessage.isEmpty()) {
+            INBOUND_QUEUE.offer(new net.minecraft.util.ChatComponentText(chatMessage));
+        }
     }
 
-    public static String pollInbound() {
+    public static void enqueueInbound(net.minecraft.util.IChatComponent chatComponent) {
+        if (chatComponent != null) {
+            INBOUND_QUEUE.offer(chatComponent);
+        }
+    }
+
+    public static net.minecraft.util.IChatComponent pollInbound() {
         return INBOUND_QUEUE.poll();
     }
 

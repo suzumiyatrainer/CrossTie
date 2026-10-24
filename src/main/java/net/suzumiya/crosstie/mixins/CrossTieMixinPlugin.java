@@ -278,7 +278,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.minecraft.")) {
             if (mixinClassName.endsWith(".ChatComponentTextNullGuardMixin")
-                    || mixinClassName.endsWith(".ChatComponentStyleNullGuardMixin")) {
+                    || mixinClassName.endsWith(".ChatComponentStyleNullGuardMixin")
+                    || mixinClassName.endsWith(".ServerConfigurationManagerLoginMixin")) {
                 shouldApply = true;
                 debugReason = "always=true";
             } else if (mixinClassName.endsWith(".EntityRendererRainOcclusionMixin")
@@ -348,9 +349,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     public List<String> getMixins() {
         List<String> mixins = new ArrayList<>();
 
-        // Minecraft ChatComponent null guards
+        // Minecraft ChatComponent null guards & login hooks
         mixins.add("minecraft.ChatComponentTextNullGuardMixin");
         mixins.add("minecraft.ChatComponentStyleNullGuardMixin");
+        mixins.add("minecraft.ServerConfigurationManagerLoginMixin");
 
         // Hodgepodge
         if (isClient && isModPresent("Hodgepodge")) {

@@ -1,4 +1,4 @@
-package net.suzumiya.crosstie.mixins;
+package net.suzumiya.crosstie.late;
 
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
