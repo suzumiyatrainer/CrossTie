@@ -20,26 +20,54 @@ public abstract class TileEntityLargeRailCoreWebCtcHookMixin extends TileEntityL
     @Shadow
     protected boolean isCollidedTrain;
 
+    @Shadow
+    public abstract boolean isLogicalRailOccupied();
+
     @Unique
     private boolean crosstie$initialTickDone = false;
 
     @Unique
-    private boolean crosstie$lastColliding = false;
+    private boolean crosstie$lastOccupied = false;
 
-    @Inject(method = "updateEntity", at = @At("HEAD"))
-    private void crosstie$onUpdateEntityHead(CallbackInfo ci) {
+    @Unique
+    private boolean crosstie$lastTurning = false;
+
+    @Inject(method = "updateEntity", at = @At("RETURN"))
+    private void crosstie$onUpdateEntityReturn(CallbackInfo ci) {
         if (this.worldObj != null && !this.worldObj.isRemote) {
+            boolean occupied = this.isLogicalRailOccupied();
+            boolean turning = false;
+
+            if ((Object) this instanceof jp.ngt.rtm.rail.TileEntityLargeRailSwitchCore) {
+                jp.ngt.rtm.rail.TileEntityLargeRailSwitchCore sc = (jp.ngt.rtm.rail.TileEntityLargeRailSwitchCore) (Object) this;
+                jp.ngt.rtm.rail.util.SwitchType st = sc.getSwitch();
+                if (st != null && st.getPoints() != null) {
+                    for (jp.ngt.rtm.rail.util.Point p : st.getPoints()) {
+                        if (p != null) {
+                            boolean rs = p.rpRoot != null && p.rpRoot.checkRSInput(this.worldObj);
+                            boolean settled = (p.getMovement() == 0.0F && !rs) || (p.getMovement() == 1.0F && rs);
+                            if (!settled) {
+                                turning = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
             // 初回 tick 時に Dirty 登録（サーバー起動時・チャンクロード時の初期状態取得）
             if (!this.crosstie$initialTickDone) {
                 this.crosstie$initialTickDone = true;
-                this.crosstie$lastColliding = this.colliding;
+                this.crosstie$lastOccupied = occupied;
+                this.crosstie$lastTurning = turning;
                 WebCtcDirtyTracker.markRailDirty((TileEntityLargeRailCore) (Object) this);
                 return;
             }
 
-            // 占有状態が変化した時のみ Dirty 登録
-            if (this.colliding != this.crosstie$lastColliding) {
-                this.crosstie$lastColliding = this.colliding;
+            // 占有状態または転轍状態が変化した時のみ Dirty 登録
+            if (occupied != this.crosstie$lastOccupied || turning != this.crosstie$lastTurning) {
+                this.crosstie$lastOccupied = occupied;
+                this.crosstie$lastTurning = turning;
                 WebCtcDirtyTracker.markRailDirty((TileEntityLargeRailCore) (Object) this);
             }
         }

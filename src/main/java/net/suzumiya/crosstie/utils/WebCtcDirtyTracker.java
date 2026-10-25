@@ -32,6 +32,7 @@ public class WebCtcDirtyTracker {
     /** サーバー起動後の初回スキャンが完了したか */
     private static volatile boolean initialRailScanDone = false;
     private static volatile boolean initialSignalScanDone = false;
+    private static int railScanCycle = 0;
 
     /**
      * 座標 (x, y, z) を 64-bit long にパックする。
@@ -89,8 +90,10 @@ public class WebCtcDirtyTracker {
      * 初回は全ロード済みリストを返し、2回目以降は Dirty なレールのみのリストを返す。
      */
     public static List<?> pollDirtyRailsOrAll(List<?> allLoaded) {
-        if (!initialRailScanDone) {
+        if (!initialRailScanDone || ++railScanCycle >= 5) {
             initialRailScanDone = true;
+            railScanCycle = 0;
+            dirtyRails.clear();
             return allLoaded;
         }
 
@@ -174,5 +177,6 @@ public class WebCtcDirtyTracker {
         removedSignals.clear();
         initialRailScanDone = false;
         initialSignalScanDone = false;
+        railScanCycle = 0;
     }
 }

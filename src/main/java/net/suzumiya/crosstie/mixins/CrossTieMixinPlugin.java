@@ -360,10 +360,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("hodgepodge.MinecraftPreloadMixin");
         }
 
-        // GTNHLib - always present
-        mixins.add("gtnhlib.ObjectPoolerThreadSafeMixin");
-        if (isClient) {
-            mixins.add("gtnhlib.MixinBlockPaneFix");
+        // GTNHLib - optional; skip entirely when the library is absent
+        if (isModPresent("GTNHLib")) {
+            mixins.add("gtnhlib.ObjectPoolerThreadSafeMixin");
+            if (isClient) {
+                mixins.add("gtnhlib.MixinBlockPaneFix");
+            }
         }
 
         // RTM
@@ -382,6 +384,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.EntityBogiePhysicsMixin");
             mixins.add("rtm.EntityBogieChunkCacheMixin");
             mixins.add("rtm.FormationManagerConcurrentMapMixin");
+            mixins.add("rtm.FormationBoundaryMixin");
+            mixins.add("rtm.EntityTrainBaseFormationSafeMixin");
+            mixins.add("rtm.RTMEventHandlerMixin");
             mixins.add("rtm.TileEntityPoleOptimizationMixin");
             mixins.add("rtm.TileEntityMachineUpdateOptimizationMixin");
             mixins.add("rtm.TileEntitySignalUpdateOptimizationMixin");
@@ -614,6 +619,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("webctc.TileEntityLargeRailCoreWebCtcHookMixin");
             mixins.add("webctc.TileEntitySignalWebCtcHookMixin");
         }
+
+        // ATSAssistMod (Target-side mixins like IFTTTUtilMixin and GUIIFTTTMaterialPlaySoundFixMixin are registered in CrossTieLateMixinLoader)
 
         // Dimensional Anchors
         if (isModPresent("DimensionalAnchors") || isModPresent("dimensionalanchors") || isModPresent("dimensional-anchor")) {

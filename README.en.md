@@ -31,10 +31,10 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
-| **Gradle** | `9.8.1` |
+| **Gradle** | `9.8.2` |
 | **Required Mod** | `UniMixins 0.3.1+` |
 | **Build System** | RetroFuturaGradle 2.0.3 |
-| **Last Checked** | `2026-10-13` |
+| **Last Checked** | `2026-10-25` |
 
 ### 🔍 Internal Structure Index
 * **Mixin Control**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -51,7 +51,7 @@ Recommended mod versions for a smooth experience.
 
 | Mod Name | Recommended Version | Category |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha14` | **Core** |
+| **CrossTie** | `1.0.0-Alpha16` | **Core** |
 | **UniMixins** | `0.3.1+` | **Required** |
 | **KaizPatchX** | `1.10.4` | Recommended |
 | **Angelica** | `2.2.30+` | Recommended |

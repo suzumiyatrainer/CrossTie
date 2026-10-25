@@ -25,6 +25,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.annotation.Nonnull;
+
 /**
  * Discord Bot アプリケーション絵文字 (Application Emojis) を使用した
  * プレイヤー顔絵文字の自動同期・SHA-256完全一致比較マネージャー。
@@ -33,6 +35,7 @@ public final class PlayerEmojiManager {
 
     private static final String CACHE_FILE_PATH = "config/CrossTie/skin_cache.json";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    @SuppressWarnings("deprecation")
     private static final JsonParser PARSER = new JsonParser();
 
     private static final Map<UUID, EmojiData> CACHE = new ConcurrentHashMap<>();
@@ -101,8 +104,7 @@ public final class PlayerEmojiManager {
     }
 
     /**
-     * プレイヤーの顔絵文字タグを取得する。
-     * キャッシュに存在する場合は即座に返し (0ms)、キャッシュに存在せず更新タスクが進行中の場合は
+     * プレイヤーの顔絵文字タグを取得する。 キャッシュに存在する場合は即座に返し (0ms)、キャッシュに存在せず更新タスクが進行中の場合は
      * 指定ミリ秒まで完了を待機して最新タグを返す。タイムアウト時は空文字を返す。
      */
     public static String getOrAwaitEmojiTag(UUID uuid, String playerName, long timeoutMs) {
@@ -154,6 +156,7 @@ public final class PlayerEmojiManager {
         onPlayerJoinAttempt(uuid, playerName);
     }
 
+    @SuppressWarnings("null")
     private static void checkAndUpdateSkin(UUID uuid, String playerName, boolean force) {
         String token = DiscordConfig.resolvedBotToken;
         if (token == null || token.isEmpty()) {
@@ -198,6 +201,7 @@ public final class PlayerEmojiManager {
             String sanitizedName = sanitizeEmojiName(playerName);
 
             // 3. 既存キャッシュと比較
+            @Nonnull
             EmojiData existing = CACHE.get(uuid);
             boolean sameSkin = existing != null && sha256.equals(existing.sha256) && existing.emojiId != null
                     && !existing.emojiId.isEmpty();
@@ -210,7 +214,8 @@ public final class PlayerEmojiManager {
             String legacyAppEmojiId = appEmojis.get("mc_" + sanitizedName);
 
             Map<String, String> guildEmojis = (DiscordConfig.guildId != null && !DiscordConfig.guildId.isEmpty())
-                    ? fetchGuildEmojis(DiscordConfig.guildId, token) : Collections.emptyMap();
+                    ? fetchGuildEmojis(DiscordConfig.guildId, token)
+                    : Collections.emptyMap();
             String existingGuildEmojiId = guildEmojis.get(sanitizedName);
             String legacyGuildEmojiId = guildEmojis.get("mc_" + sanitizedName);
 
@@ -298,8 +303,8 @@ public final class PlayerEmojiManager {
     }
 
     /**
-     * 絵文字名を MCID と完全一致 (プレフィックスなし) で生成する。
-     * Discord の命名規則 (英数字とアンダースコアのみ、2〜32文字) に適合させる。
+     * 絵文字名を MCID と完全一致 (プレフィックスなし) で生成する。 Discord の命名規則 (英数字とアンダースコアのみ、2〜32文字)
+     * に適合させる。
      */
     private static String sanitizeEmojiName(String name) {
         if (name == null || name.isEmpty()) {
@@ -331,6 +336,7 @@ public final class PlayerEmojiManager {
 
             if (conn.getResponseCode() == 200) {
                 try (InputStreamReader reader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8)) {
+                    @SuppressWarnings("deprecation")
                     JsonObject json = PARSER.parse(reader).getAsJsonObject();
                     if (json.has("items") && json.get("items").isJsonArray()) {
                         JsonArray items = json.getAsJsonArray("items");
@@ -367,6 +373,7 @@ public final class PlayerEmojiManager {
 
             if (conn.getResponseCode() == 200) {
                 try (InputStreamReader reader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8)) {
+                    @SuppressWarnings("deprecation")
                     JsonArray arr = PARSER.parse(reader).getAsJsonArray();
                     for (JsonElement elem : arr) {
                         if (elem.isJsonObject()) {

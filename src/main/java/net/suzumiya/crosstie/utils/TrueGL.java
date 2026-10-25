@@ -17,6 +17,7 @@ public class TrueGL {
     private static Method m_glLoadName;
     private static Method m_glPopName;
     private static Method m_glGetInteger;
+    private static Method m_angelicaGlGetFloat;
 
     static {
         try {
@@ -30,6 +31,12 @@ public class TrueGL {
             m_glGetInteger = gl11.getMethod("glGetInteger", int.class);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+
+        try {
+            Class<?> glStateManagerClass = Class.forName("com.gtnewhorizons.angelica.glsm.GLStateManager");
+            m_angelicaGlGetFloat = glStateManagerClass.getMethod("glGetFloat", int.class, FloatBuffer.class);
+        } catch (Throwable ignored) {
         }
     }
 
@@ -123,5 +130,17 @@ public class TrueGL {
         } catch (Exception ignored) {
         }
         return 0;
+    }
+
+    public static void glGetFloat(int pname, FloatBuffer params) {
+        params.clear();
+        if (m_angelicaGlGetFloat != null) {
+            try {
+                m_angelicaGlGetFloat.invoke(null, pname, params);
+                return;
+            } catch (Exception ignored) {
+            }
+        }
+        org.lwjgl.opengl.GL11.glGetFloat(pname, params);
     }
 }
