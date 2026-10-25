@@ -148,27 +148,9 @@ def downloadWebCTC = tasks.register('downloadWebCTC') {
     }
 }
 
-// GitHub ReleaseからATSAssistModをダウンロードする設定（CI・ローカル共通）
-def atsAssistJarFile = file("$buildDir/downloaded-libs/ATSAssistMod-mc1.7.10-v1.8.0-rc.2.jar")
-def downloadATSAssist = tasks.register('downloadATSAssist') {
-    outputs.file(atsAssistJarFile)
-    doLast {
-        if (!atsAssistJarFile.exists()) {
-            atsAssistJarFile.parentFile.mkdirs()
-            println "Downloading ATSAssistMod jar from GitHub Release..."
-            new URL("https://github.com/Kai-Z-JP/ATSAssistMod/releases/download/1.8.0-rc.2/ATSAssistMod-mc1.7.10-v1.8.0-rc.2.jar").withInputStream { input ->
-                atsAssistJarFile.withOutputStream { output ->
-                    output << input
-                }
-            }
-        }
-    }
-}
-
 // Gradleのプロジェクト評価前にダウンロードを保証
 tasks.withType(JavaCompile).configureEach {
     dependsOn downloadWebCTC
-    dependsOn downloadATSAssist
 }
 
 dependencies {
@@ -239,9 +221,6 @@ dependencies {
 
     // WebCTC: GitHub Release から自動取得したファイルを rfg.deobf に渡す
     compileOnly rfg.deobf(files(webctcJarFile))
-
-    // ATSAssistMod: GitHub Release から自動取得したファイルを rfg.deobf に渡す
-    compileOnly rfg.deobf(files(atsAssistJarFile))
 
     // IFTTTUtilMixin用: ATSAssistModが実行時に提供するJacksonのDatabindを
     // コンパイル時のみ参照する(CrossTie本体には同梱しない)
