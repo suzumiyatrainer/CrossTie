@@ -1,13 +1,6 @@
 package net.suzumiya.crosstie.mixins.ngtlib;
 
 import jp.ngt.ngtlib.renderer.GLHelper;
-import jp.ngt.ngtlib.util.NGTUtilClient;
-import net.minecraft.util.MathHelper;
-import net.suzumiya.crosstie.utils.TrueGL;
-
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.glu.Project;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,69 +21,51 @@ public abstract class GLHelperSelectBypassMixin {
     @Shadow
     private static double DEPTH_RANGE;
 
+    private static boolean crosstie$shadersChecked = false;
+    private static java.lang.reflect.Field crosstie$shaderPackLoadedField = null;
+
+    @SuppressWarnings("unused")
     private static boolean crosstie$isOptiFineShadersActive() {
-        try {
-            Class<?> shadersClass = Class.forName("shadersmod.client.Shaders");
-            java.lang.reflect.Field field = shadersClass.getDeclaredField("shaderPackLoaded");
-            field.setAccessible(true);
-            return field.getBoolean(null);
-        } catch (Throwable t) {
-            return false;
+        if (!crosstie$shadersChecked) {
+            crosstie$shadersChecked = true;
+            try {
+                ClassLoader cl = GLHelperSelectBypassMixin.class.getClassLoader();
+                if (cl.getResource("shadersmod/client/Shaders.class") != null) {
+                    Class<?> shadersClass = Class.forName("shadersmod.client.Shaders", false, cl);
+                    crosstie$shaderPackLoadedField = shadersClass.getDeclaredField("shaderPackLoaded");
+                    crosstie$shaderPackLoadedField.setAccessible(true);
+                }
+            } catch (Throwable ignored) {
+                crosstie$shaderPackLoadedField = null;
+            }
         }
+        if (crosstie$shaderPackLoadedField != null) {
+            try {
+                return crosstie$shaderPackLoadedField.getBoolean(null);
+            } catch (Throwable ignored) {
+                return false;
+            }
+        }
+        return false;
     }
 
     /**
      * @author Suzumiya
-     * @reason AngelicaによるGL_SELECTのスタブ化を回避するため。
-     *         また、OptiFine Shaders環境下ではGL_SELECTにより行列が破壊され文字が巨大化するため、完全にバイパスする。
+     * @reason OpenGL Core Profile (Angelica/Iris/lwjgl3ify) 環境下で廃止された GL_SELECT /
+     *         glSelectBuffer によるJVMクラッシュを回避し、 CPU上での数学的ピッキング（Math Picking）に委譲する。
      */
     @Overwrite
     public static void startMousePicking(float range) {
-        if (crosstie$isOptiFineShadersActive()) {
-            return;
-        }
-
-        float mouseX = (float) Display.getWidth() / 2.0F;
-        float mouseY = (float) Display.getHeight() / 2.0F;
-
-        VIEWPORT_BUF.clear();
-        SELECT_BUF.clear();
-
-        GL11.glGetInteger(GL11.GL_VIEWPORT, VIEWPORT_BUF);
-
-        // Angelicaのバイトコード置換を回避するためリフレクションで呼ぶ
-        TrueGL.glSelectBuffer(SELECT_BUF);
-        TrueGL.glRenderMode(GL11.GL_SELECT);
-        TrueGL.glInitNames();
-        TrueGL.glPushName(0);
-
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glPushMatrix();
-        Project.gluPickMatrix(mouseX, VIEWPORT_BUF.get(3) - mouseY, range, range, VIEWPORT_BUF);
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-
-        DEPTH_RANGE = ((double) NGTUtilClient.getMinecraft().gameSettings.renderDistanceChunks * 16.0D
-                * MathHelper.sqrt_float(2.0F)) - 0.05D;
+        net.suzumiya.crosstie.utils.ActionPartsMathPicker.startPicking(range);
     }
 
     /**
      * @author Suzumiya
-     * @reason AngelicaによるGL_SELECTのスタブ化を回避するため。
-     *         また、OptiFine Shaders環境下ではGL_SELECTにより行列が破壊され文字が巨大化するため、完全にバイパスする。
+     * @reason OpenGL Core Profile (Angelica/Iris/lwjgl3ify) 環境下で廃止された GL_SELECT /
+     *         glSelectBuffer によるJVMクラッシュを回避し、 CPU上での数学的ピッキング（Math Picking）に委譲する。
      */
     @Overwrite
     public static int finishMousePicking() {
-        if (crosstie$isOptiFineShadersActive()) {
-            return 0;
-        }
-
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glPopMatrix();
-
-        // Angelicaのバイトコード置換を回避するためリフレクションで呼ぶ
-        int hits = TrueGL.glRenderMode(GL11.GL_RENDER);
-
-        GL11.glMatrixMode(GL11.GL_MODELVIEW);
-        return hits;
+        return net.suzumiya.crosstie.utils.ActionPartsMathPicker.finishPicking(SELECT_BUF);
     }
 }

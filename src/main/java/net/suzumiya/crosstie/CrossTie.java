@@ -34,6 +34,15 @@ public class CrossTie {
         // システムプロパティによるオーバーライドを適用
         CrossTieConfig.applySystemPropertyOverrides();
 
+        // RTM列車用最小限チャンクローダーコールバックおよびイベント登録
+        net.minecraftforge.common.ForgeChunkManager.setForcedChunkLoadingCallback(this,
+                net.suzumiya.crosstie.world.TrainChunkLoaderManager.INSTANCE);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS
+                .register(net.suzumiya.crosstie.world.TrainChunkLoaderManager.INSTANCE);
+
+        // サーバー側メモリ最適化マネージャー初期化
+        net.suzumiya.crosstie.server.ServerMemoryManager.INSTANCE.init();
+
         LOGGER.info("CrossTie preInit completed. Config file: {}",
                 event.getSuggestedConfigurationFile().getAbsolutePath());
     }
@@ -48,6 +57,8 @@ public class CrossTie {
                     .register(new net.suzumiya.crosstie.gui.CrossTieGuiEventHandler());
             net.minecraftforge.common.MinecraftForge.EVENT_BUS
                     .register(new net.suzumiya.crosstie.client.WireFastRemoveTracker());
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS
+                    .register(new net.suzumiya.crosstie.client.sound.SoundPreloadManager.SoundPreloadEventHandler());
             cpw.mods.fml.common.FMLCommonHandler.instance().bus()
                     .register(new net.suzumiya.crosstie.client.CrossTieDiagnosticsTicker());
             // lwjgl3ify(SDL3)環境のIME汎用補正
@@ -81,6 +92,8 @@ public class CrossTie {
 
     @Mod.EventHandler
     public void serverStopping(cpw.mods.fml.common.event.FMLServerStoppingEvent event) {
+        net.suzumiya.crosstie.world.TrainChunkLoaderManager.INSTANCE.clearAll();
+        net.suzumiya.crosstie.server.ServerMemoryManager.INSTANCE.onServerStopping();
         net.suzumiya.crosstie.discord.DiscordManager.onServerStopping(event);
     }
 

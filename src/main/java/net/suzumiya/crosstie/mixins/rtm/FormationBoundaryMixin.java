@@ -13,8 +13,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.entity.Entity;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 
 /**
  * {@link Formation} の配列境界外アクセス (ArrayIndexOutOfBoundsException) を防止し、
@@ -32,10 +37,55 @@ import java.util.List;
 public abstract class FormationBoundaryMixin {
 
     @Shadow
-    public final long id = 0;
+    public long id;
 
     @Shadow
     public FormationEntry[] entries;
+
+    /**
+     * PacketFormation 受信時にエンティティが未解決で null となったエントリ情報 (trainId, pos, dir)。
+     * 編成ID単位で保持し、get() 時に再解決する。
+     */
+    @Unique
+    private static final ConcurrentHashMap<Long, List<int[]>> crosstie$pending = new ConcurrentHashMap<>();
+
+    /**
+     * クライアントで Formation.readFromNBT した直後、未解決のエントリを記録する。
+     */
+    @Inject(method = "readFromNBT", at = @At("RETURN"), require = 0)
+    private static void crosstie$recordPending(NBTTagCompound nbt, boolean withEntries,
+            CallbackInfoReturnable<Formation> cir) {
+        Formation f = cir.getReturnValue();
+        if (f == null || !withEntries || f.entries == null) {
+            return;
+        }
+        List<int[]> pending = new ArrayList<>();
+        NBTTagList tagList = nbt.getTagList("Entries", 10);
+        for (int i = 0; i < tagList.tagCount(); i++) {
+            NBTTagCompound tag = tagList.getCompoundTagAt(i);
+            int pos = tag.getByte("EntryPos");
+            if (pos >= 0 && pos < f.entries.length && f.entries[pos] == null) {
+                pending.add(new int[] { tag.getInteger("TrainId"), pos, tag.getByte("EntryDir") });
+            }
+        }
+        if (pending.isEmpty()) {
+            crosstie$pending.remove(f.id);
+        } else {
+            crosstie$pending.put(f.id, pending);
+        }
+    }
+
+    /**
+     * getTrainStream が null 要素 (アンロード中などの車両) を含まないようにフィルタリングし、
+     * isControlCar などのメソッド参照呼び出しによる NullPointerException を防止する。
+     */
+    @Inject(method = "getTrainStream", at = @At("RETURN"), cancellable = true, require = 0)
+    private void crosstie$filterNullTrainsFromStream(CallbackInfoReturnable<java.util.stream.Stream<EntityTrainBase>> cir) {
+        java.util.stream.Stream<EntityTrainBase> original = cir.getReturnValue();
+        if (original != null) {
+            cir.setReturnValue(original.filter(java.util.Objects::nonNull));
+        }
+    }
 
     /**
      * setEntry 呼び出し時にインデックスが配列長以上の場合は自動拡張する。
@@ -89,6 +139,26 @@ public abstract class FormationBoundaryMixin {
             World world = NGTUtil.getClientWorld();
             if (world == null || world.loadedEntityList == null) {
                 return null;
+            }
+
+            // 1) パケットで受信済みだが当時エンティティが未解決だったエントリを再解決
+            List<int[]> pending = crosstie$pending.get(this.id);
+            if (pending != null) {
+                synchronized (pending) {
+                    for (java.util.Iterator<int[]> it = pending.iterator(); it.hasNext();) {
+                        int[] p = it.next();
+                        if (p[1] != targetPos) {
+                            continue;
+                        }
+                        Entity e = world.getEntityByID(p[0]);
+                        if (e instanceof EntityTrainBase) {
+                            EntityTrainBase t = (EntityTrainBase) e;
+                            it.remove();
+                            t.setFormation((Formation) (Object) this);
+                            return new FormationEntry(t, p[1], p[2]);
+                        }
+                    }
+                }
             }
 
             @SuppressWarnings("unused")

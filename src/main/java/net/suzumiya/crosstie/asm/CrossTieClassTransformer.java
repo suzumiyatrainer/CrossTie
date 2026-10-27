@@ -8,6 +8,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
@@ -134,6 +136,12 @@ public class CrossTieClassTransformer implements IClassTransformer {
         // FML Loader: sortModList() の先頭で ModID の大文字小文字の差異を自動正規化
         if (isClass(transformedName, name, "cpw.mods.fml.common.Loader", null)) {
             return patchFmlLoader(basicClass);
+        }
+
+        // VariableColorLight: ShaderBindTransformer の transform() で basicClass == null のときに
+        // NPE をスローするバグを防御 (未ロード/非存在クラス検索時の ClassNotFoundException を防ぐ)
+        if (isClass(transformedName, name, "jp.example.variablecolorlight.core.ShaderBindTransformer", null)) {
+            return patchShaderBindTransformer(basicClass);
         }
 
         // AngelicaConfig は ASM パッチしない。
@@ -616,5 +624,37 @@ public class CrossTieClassTransformer implements IClassTransformer {
 
         cw.visitEnd();
         return cw.toByteArray();
+    }
+
+    private byte[] patchShaderBindTransformer(byte[] basicClass) {
+        ClassNode classNode = new ClassNode();
+        new ClassReader(basicClass).accept(classNode, 0);
+
+        boolean changed = false;
+        for (Object methodObject : classNode.methods) {
+            MethodNode method = (MethodNode) methodObject;
+            if ("transform".equals(method.name) && "(Ljava/lang/String;Ljava/lang/String;[B)[B".equals(method.desc)) {
+                // 先頭に if (basicClass == null) return null; を挿入
+                LabelNode notNull = new LabelNode();
+                InsnList insns = new InsnList();
+                insns.add(new VarInsnNode(Opcodes.ALOAD, 3)); // 3rd parameter: basicClass
+                insns.add(new JumpInsnNode(Opcodes.IFNONNULL, notNull));
+                insns.add(new InsnNode(Opcodes.ACONST_NULL));
+                insns.add(new InsnNode(Opcodes.ARETURN));
+                insns.add(notNull);
+
+                method.instructions.insert(insns);
+                changed = true;
+                break;
+            }
+        }
+
+        if (!changed) {
+            return basicClass;
+        }
+
+        ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        classNode.accept(writer);
+        return writer.toByteArray();
     }
 }

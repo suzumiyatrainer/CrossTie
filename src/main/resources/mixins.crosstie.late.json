@@ -13,8 +13,6 @@
     "webctc.SignalRouterReflectionMixin",
     "webctc.RailGroupUtilsSignalLevelMixin"
   ],
-  "client": [
-    "atsassist.GUIIFTTTMaterialPlaySoundFixMixin"
-  ],
+  "client": [],
   "server": []
 }

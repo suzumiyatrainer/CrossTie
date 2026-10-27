@@ -59,19 +59,4 @@ public abstract class RTMEventHandlerMixin {
             }
         }
     }
-
-    /**
-     * クライアントがワールド/サーバーから切断された際、クライアント側の Formation キャッシュをクリアする。
-     */
-    @Inject(method = "connectedToServer", at = @At("HEAD"), require = 0)
-    private void crosstie$clearFormationsOnConnect(
-            cpw.mods.fml.common.network.FMLNetworkEvent.ClientConnectedToServerEvent event, CallbackInfo ci) {
-        try {
-            FormationManager fm = RTMCore.proxy.getFormationManager();
-            if (fm != null) {
-                fm.clearFormations();
-            }
-        } catch (Throwable ignored) {
-        }
-    }
 }

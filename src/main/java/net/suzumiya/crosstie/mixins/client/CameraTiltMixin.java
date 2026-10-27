@@ -27,10 +27,13 @@ public abstract class CameraTiltMixin {
         if (vehicle == null || vehicle.isDead) {
             return;
         }
-        float pitch = vehicle.prevRotationPitch + (vehicle.rotationPitch - vehicle.prevRotationPitch) * partialTicks;
-        float roll = vehicle.prevRotationRoll + (vehicle.rotationRoll - vehicle.prevRotationRoll) * partialTicks;
-        roll *= TrainCameraController.getRollMultiplier((EntityPlayer)player);
-        if (Math.abs(pitch) < 0.001f && Math.abs(roll) < 0.001f) {
+        float pitch = 0.0f;
+        float roll = 0.0f;
+        if (net.suzumiya.crosstie.CrossTieConfig.enableVehicleRollFollow) {
+            roll = vehicle.prevRotationRoll + (vehicle.rotationRoll - vehicle.prevRotationRoll) * partialTicks;
+            roll *= TrainCameraController.getRollMultiplier((EntityPlayer)player);
+        }
+        if (Math.abs(roll) < 0.001f) {
             return;
         }
         float vehicleYaw = vehicle.prevRotationYaw + MathHelper.wrapAngleTo180_float((float)(vehicle.rotationYaw - vehicle.prevRotationYaw)) * partialTicks;

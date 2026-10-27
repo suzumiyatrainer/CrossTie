@@ -55,7 +55,7 @@ public final class CrossTieConfig {
                         "config_version",
                         // Performance
                         "trainDistantCullingEnabled", "trainSpeedSyncEnabled", "railTesrThrottleEnabled",
-                        "largeRailCullingEnabled", "railTessellateOptimizationEnabled", "connectionCacheEnabled",
+                        "connectionCacheEnabled",
                         "signboardGuiPagingEnabled", "installedObjectCullingEnabled", "machineTesrCullingEnabled",
                         "decorativeWireOptimizationEnabled", "detectorThrottlingEnabled", "detectorThrottleInterval",
                         // Fixes
@@ -64,7 +64,10 @@ public final class CrossTieConfig {
                         "fixOptiFineWireShadowPass",
                         // Features
                         "enableWireFastRemove", "standingRoomEnabled", "enableCustomTitleScreen",
-                        "preventRainInVehicle"));
+                        "preventRainInVehicle", "enableVehicleRollFollow", "enableTrainMinimalChunkLoader",
+                        "enableSoundPreload",
+                        // Server Memory Optimization
+                        "enableServerMemoryOptimizer", "dormantChunkCacheLimit"));
 
         /** config_version プロパティの名前 */
         private static final String PROP_CONFIG_VERSION = "config_version";
@@ -115,6 +118,15 @@ public final class CrossTieConfig {
         /** 車両（Train/Vehicle）のモデル面が存在する箇所への雨・雪・パーティクルの侵入を防止するかどうか。 */
         public static boolean preventRainInVehicle;
 
+        /** 車両のロール（カント・傾き）に視点を追従させるかどうか。クライアント側でのみ機能します。 */
+        public static boolean enableVehicleRollFollow;
+
+        /** RTM列車の極軽量・最小限チャンクローダー（車両周囲+3ブロックのみロードし、8両以上での台車消失やドア/チャイム遅延を防止）を有効にするかどうか。 */
+        public static boolean enableTrainMinimalChunkLoader;
+
+        /** 列車のドア開閉音・チャイム等の初回再生遅延（未ロードラグ）を解消する事前キャッシュ（プリロード）機能を有効にするかどうか。 */
+        public static boolean enableSoundPreload;
+
         // ---- 設定項目 (Performance) ---- //
 
         /** 256m以上離れたTrainの更新頻度低減 */
@@ -125,12 +137,6 @@ public final class CrossTieConfig {
 
         /** LargeRail TESRの距離別スロットル */
         public static boolean railTesrThrottleEnabled;
-
-        /** LargeRailの距離/フラストラムカリング */
-        public static boolean largeRailCullingEnabled;
-
-        /** レールテッセレーションループ最適化。再起動必須。 */
-        public static boolean railTessellateOptimizationEnabled;
 
         /** 配線/支柱の接続キャッシュ */
         public static boolean connectionCacheEnabled;
@@ -155,6 +161,12 @@ public final class CrossTieConfig {
          * GUI 開き遅延を大幅に改善する。
          */
         public static boolean signboardGuiPagingEnabled;
+
+        /** サーバー実行時の休眠チャンクキャッシュ(dormantChunkCache)制限・定期クリーンアップによるメモリ最適化 */
+        public static boolean enableServerMemoryOptimizer;
+
+        /** Forge休眠チャンクキャッシュ(dormantChunkCache)の最大保持上限数。デフォルト32。0で完全無効化。 */
+        public static int dormantChunkCacheLimit;
 
         // ---- 設定項目 (Fixes) ---- //
 
@@ -211,10 +223,12 @@ public final class CrossTieConfig {
                 try {
                         config.load();
 
+                        // ---- 不要項目の自動削除（KNOWN_KEYSに含まれないキーを掃除） ---- //
+                        removeUnknownKeys();
+
                         // ---- Config バージョンチェック ---- //
                         int storedVersion = config.get(Configuration.CATEGORY_GENERAL, PROP_CONFIG_VERSION, 0).getInt();
                         if (storedVersion != CONFIG_VERSION) {
-                                removeUnknownKeys();
                                 config.get(Configuration.CATEGORY_GENERAL, PROP_CONFIG_VERSION, CONFIG_VERSION)
                                                 .set(CONFIG_VERSION);
                                 LOGGER.info("Config version updated: {} -> {}", storedVersion, CONFIG_VERSION);
@@ -252,9 +266,11 @@ public final class CrossTieConfig {
 
                 // 現在の値をスナップショット（再起動必須項目のみ）
                 boolean oldNativeRender = enableNativeRenderGlobalDisplayLists;
-                boolean oldRailTessellate = railTessellateOptimizationEnabled;
 
                 config.load();
+
+                // 未知キーの削除
+                removeUnknownKeys();
 
                 // 再読み込み
                 try {
@@ -264,8 +280,7 @@ public final class CrossTieConfig {
                 }
 
                 // 再起動必須項目の変更検出
-                requiresRestart = (oldNativeRender != enableNativeRenderGlobalDisplayLists)
-                                || (oldRailTessellate != railTessellateOptimizationEnabled);
+                requiresRestart = (oldNativeRender != enableNativeRenderGlobalDisplayLists);
 
                 if (config.hasChanged()) {
                         config.save();
@@ -311,6 +326,15 @@ public final class CrossTieConfig {
                 preventRainInVehicle = config.getBoolean("preventRainInVehicle", CAT_FEATURES, true,
                                 "車両（Train/Vehicle）のモデル面が存在する箇所への雨・雪・パーティクルの侵入を防止します。");
 
+                enableVehicleRollFollow = config.getBoolean("enableVehicleRollFollow", CAT_FEATURES, true,
+                                "車両（列車・車など）のロール（カント・傾き）にプレイヤーの視点を追従させるかどうかを設定します。");
+
+                enableTrainMinimalChunkLoader = config.getBoolean("enableTrainMinimalChunkLoader", CAT_FEATURES, true,
+                                "RTM列車の極軽量・最小限チャンクローダー（車両周囲+3ブロックのみロードし、8両以上での台車消失やドア/チャイムの遅延・ズレを防止）を有効にします。");
+
+                enableSoundPreload = config.getBoolean("enableSoundPreload", CAT_FEATURES, true,
+                                "列車のドア開閉音・チャイム等の初回再生遅延（未ロードラグ）を解消する事前キャッシュ（プリロード）機能を有効にします。");
+
                 // ---- 2. Performance カテゴリ ---- //
                 trainDistantCullingEnabled = config.getBoolean("trainDistantCullingEnabled", CAT_PERFORMANCE, true,
                                 "256m以上離れたTrain Entityのクライアント側更新頻度を低減します。");
@@ -320,14 +344,6 @@ public final class CrossTieConfig {
 
                 railTesrThrottleEnabled = config.getBoolean("railTesrThrottleEnabled", CAT_PERFORMANCE, true,
                                 "LargeRail TESR の距離に応じた描画頻度スロットルを有効にします。");
-
-                largeRailCullingEnabled = config.getBoolean("largeRailCullingEnabled", CAT_PERFORMANCE, true,
-                                "LargeRail の距離カリングとフラストラムカリングを有効にします。");
-
-                prop = config.get(CAT_PERFORMANCE, "railTessellateOptimizationEnabled", true);
-                prop.comment = "レールテッセレーションループの最適化を有効にします。 [再起動必須]";
-                prop.setRequiresMcRestart(true);
-                railTessellateOptimizationEnabled = prop.getBoolean(true);
 
                 connectionCacheEnabled = config.getBoolean("connectionCacheEnabled", CAT_PERFORMANCE, true,
                                 "配線/支柱の接続判定結果をキャッシュし、パフォーマンスを向上します。");
@@ -351,6 +367,12 @@ public final class CrossTieConfig {
 
                 detectorThrottleInterval = config.getInt("detectorThrottleInterval", CAT_PERFORMANCE, 4, 1, 20,
                                 "EntityTrainDetector のスロットリング間隔（tick単位）。デフォルト: 4。" + " 320km/h列車でも1ブロック未満の移動量なので安全です。");
+
+                enableServerMemoryOptimizer = config.getBoolean("enableServerMemoryOptimizer", CAT_PERFORMANCE, true,
+                                "サーバー実行時において、Forgeの休眠チャンクキャッシュ(dormantChunkCache)の定期クリーンアップや不要キャッシュのトリミングを行い、メモリ(ヒープ・ネイティブ)の枯渇を防ぐ最適化を有効にします。");
+
+                dormantChunkCacheLimit = config.getInt("dormantChunkCacheLimit", CAT_PERFORMANCE, 32, 0, 500,
+                                "Forge休眠チャンクキャッシュ(dormantChunkCache)の最大保持上限数。バニラ/Forgeのデフォルト(100〜200)から引き下げることで、アンロード済みチャンクのメモリ滞留を大幅に抑制します。0で完全無効化。");
 
                 // ---- 3. Fixes カテゴリ ---- //
                 fixAngelicaCloudRendering = config.getBoolean("fixAngelicaCloudRendering", CAT_FIXES, true,
@@ -388,11 +410,12 @@ public final class CrossTieConfig {
                 standingRoomEnabled = false;
                 enableCustomTitleScreen = true;
                 preventRainInVehicle = true;
+                enableVehicleRollFollow = true;
+                enableTrainMinimalChunkLoader = true;
+                enableSoundPreload = true;
                 trainDistantCullingEnabled = true;
                 trainSpeedSyncEnabled = false;
                 railTesrThrottleEnabled = true;
-                largeRailCullingEnabled = true;
-                railTessellateOptimizationEnabled = true;
                 connectionCacheEnabled = true;
                 signboardGuiPagingEnabled = true;
                 installedObjectCullingEnabled = true;
@@ -400,6 +423,8 @@ public final class CrossTieConfig {
                 decorativeWireOptimizationEnabled = true;
                 detectorThrottlingEnabled = true;
                 detectorThrottleInterval = 4;
+                enableServerMemoryOptimizer = true;
+                dormantChunkCacheLimit = 32;
                 fixAngelicaCloudRendering = true;
                 fixAngelicaRebuildSync = true;
                 fixAngelicaWaterRenderDistance = true;

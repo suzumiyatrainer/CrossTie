@@ -42,6 +42,17 @@ public abstract class NGTTessellatorSelectModeFixMixin {
 
     @Inject(method = "draw", at = @At("HEAD"), cancellable = true)
     private void injectDrawForSelectMode(CallbackInfoReturnable<Integer> cir) {
+        if (net.suzumiya.crosstie.utils.ActionPartsMathPicker.isPickingActive()) {
+            if (!this.isDrawing) {
+                throw new IllegalStateException("Not tesselating!");
+            }
+            this.isDrawing = false;
+            net.suzumiya.crosstie.utils.ActionPartsMathPicker.processTessellator(this.drawMode, this.vertexCount, this.rawBuffer);
+            this.reset();
+            cir.setReturnValue(0);
+            return;
+        }
+
         if (TrueGL.isSelectMode()) {
             if (!this.isDrawing) {
                 throw new IllegalStateException("Not tesselating!");
@@ -78,15 +89,15 @@ public abstract class NGTTessellatorSelectModeFixMixin {
                 // Angelicaのソフトウェア行列スタックをドライバに同期させる
                 TrueGL.syncMatricesToDriver();
 
-                GL11.glBegin(this.drawMode);
+                TrueGL.glBegin(this.drawMode);
                 for (int i = 0; i < this.vertexCount; i++) {
                     int index = i * 8;
                     float x = Float.intBitsToFloat(this.rawBuffer[index]);
                     float y = Float.intBitsToFloat(this.rawBuffer[index + 1]);
                     float z = Float.intBitsToFloat(this.rawBuffer[index + 2]);
-                    GL11.glVertex3f(x, y, z);
+                    TrueGL.glVertex3f(x, y, z);
                 }
-                GL11.glEnd();
+                TrueGL.glEnd();
             }
 
             int result = this.rawBufferIndex;

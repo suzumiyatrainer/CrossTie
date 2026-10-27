@@ -17,26 +17,51 @@ public class TrueGL {
     private static Method m_glLoadName;
     private static Method m_glPopName;
     private static Method m_glGetInteger;
+    private static Method m_glMatrixMode;
+    private static Method m_glLoadMatrix;
+    private static Method m_glBegin;
+    private static Method m_glVertex3f;
+    private static Method m_glEnd;
     private static Method m_angelicaGlGetFloat;
 
     static {
+        Class<?> gl11 = null;
         try {
-            Class<?> gl11 = Class.forName("org.lwjgl.opengl.GL11");
-            m_glSelectBuffer = gl11.getMethod("glSelectBuffer", IntBuffer.class);
-            m_glRenderMode = gl11.getMethod("glRenderMode", int.class);
-            m_glInitNames = gl11.getMethod("glInitNames");
-            m_glPushName = gl11.getMethod("glPushName", int.class);
-            m_glLoadName = gl11.getMethod("glLoadName", int.class);
-            m_glPopName = gl11.getMethod("glPopName");
-            m_glGetInteger = gl11.getMethod("glGetInteger", int.class);
-        } catch (Exception e) {
+            gl11 = Class.forName("org.lwjgl.opengl.GL11");
+        } catch (Throwable e) {
             e.printStackTrace();
+        }
+        if (gl11 != null) {
+            m_glSelectBuffer = find(gl11, "glSelectBuffer", IntBuffer.class);
+            m_glRenderMode = find(gl11, "glRenderMode", int.class);
+            m_glInitNames = find(gl11, "glInitNames");
+            m_glPushName = find(gl11, "glPushName", int.class);
+            m_glLoadName = find(gl11, "glLoadName", int.class);
+            m_glPopName = find(gl11, "glPopName");
+            m_glGetInteger = find(gl11, "glGetInteger", int.class);
+            m_glMatrixMode = find(gl11, "glMatrixMode", int.class);
+            // LWJGL2: glLoadMatrix / LWJGL3: glLoadMatrixf
+            m_glLoadMatrix = find(gl11, "glLoadMatrix", FloatBuffer.class);
+            if (m_glLoadMatrix == null) {
+                m_glLoadMatrix = find(gl11, "glLoadMatrixf", FloatBuffer.class);
+            }
+            m_glBegin = find(gl11, "glBegin", int.class);
+            m_glVertex3f = find(gl11, "glVertex3f", float.class, float.class, float.class);
+            m_glEnd = find(gl11, "glEnd");
         }
 
         try {
             Class<?> glStateManagerClass = Class.forName("com.gtnewhorizons.angelica.glsm.GLStateManager");
             m_angelicaGlGetFloat = glStateManagerClass.getMethod("glGetFloat", int.class, FloatBuffer.class);
         } catch (Throwable ignored) {
+        }
+    }
+
+    private static Method find(Class<?> cls, String name, Class<?>... params) {
+        try {
+            return cls.getMethod(name, params);
+        } catch (Throwable t) {
+            return null;
         }
     }
 
@@ -78,16 +103,56 @@ public class TrueGL {
 
             // Sync GL_PROJECTION
             glGetFloatMethod.invoke(null, org.lwjgl.opengl.GL11.GL_PROJECTION_MATRIX, buf);
-            org.lwjgl.opengl.GL11.glMatrixMode(org.lwjgl.opengl.GL11.GL_PROJECTION);
-            org.lwjgl.opengl.GL11.glLoadMatrix(buf);
+            glMatrixMode(org.lwjgl.opengl.GL11.GL_PROJECTION);
+            glLoadMatrix(buf);
 
             // Sync GL_MODELVIEW
             buf.clear();
             glGetFloatMethod.invoke(null, org.lwjgl.opengl.GL11.GL_MODELVIEW_MATRIX, buf);
-            org.lwjgl.opengl.GL11.glMatrixMode(org.lwjgl.opengl.GL11.GL_MODELVIEW);
-            org.lwjgl.opengl.GL11.glLoadMatrix(buf);
+            glMatrixMode(org.lwjgl.opengl.GL11.GL_MODELVIEW);
+            glLoadMatrix(buf);
         } catch (Exception e) {
             // AngelicaGlsmが導入されていない、またはリフレクションに失敗した場合は無視
+        }
+    }
+
+    public static void glMatrixMode(int mode) {
+        try {
+            if (m_glMatrixMode != null)
+                m_glMatrixMode.invoke(null, mode);
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static void glLoadMatrix(FloatBuffer buffer) {
+        try {
+            if (m_glLoadMatrix != null)
+                m_glLoadMatrix.invoke(null, buffer);
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static void glBegin(int mode) {
+        try {
+            if (m_glBegin != null)
+                m_glBegin.invoke(null, mode);
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static void glVertex3f(float x, float y, float z) {
+        try {
+            if (m_glVertex3f != null)
+                m_glVertex3f.invoke(null, x, y, z);
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static void glEnd() {
+        try {
+            if (m_glEnd != null)
+                m_glEnd.invoke(null);
+        } catch (Exception ignored) {
         }
     }
 

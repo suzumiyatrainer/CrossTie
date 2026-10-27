@@ -21,9 +21,11 @@
         "rtm.RenderVehicleBaseContextMixin",
         "rtm.PartsRendererCheckMouseActionGuardMixin",
         "rtm.PartsRendererPickPassGuardMixin",
+        "rtm.PartsRendererActionPartsMixin",
         "rtm.TileEntityCrossingGateNoCullingMixin",
         "rtm.TileEntitySignalNoCullingMixin",
         "client.GuiMainMenuPanoramaMixin",
+        "client.CameraTiltMixin",
         "rtm.RailRenderSamplingMixin"
     ]
 }

@@ -265,9 +265,23 @@ public abstract class ScriptUtilInvocableCacheMixin {
         } catch (NoSuchMethodException e) {
             return null;
         } catch (ScriptException e) {
+            // 描画スクリプト内の null 参照 (例: SuperRailBuilder3 の getAroundRailData で
+            // レール未ロード時に TileEntity が null) によるクラッシュを、そのフレームの描画スキップで回避する
+            String msg = e.getMessage();
+            if ("render".equals(func) && msg != null && msg.contains("TypeError")
+                    && (msg.contains("of null") || msg.contains("of undefined"))) {
+                if (!crosstie$renderErrorLogged) {
+                    crosstie$renderErrorLogged = true;
+                    System.err.println("[CrossTie] Suppressed render script null error (further ones hidden): " + msg);
+                }
+                return null;
+            }
             throw new RuntimeException("Script exec error : " + func, e);
         }
     }
+
+    @Unique
+    private static volatile boolean crosstie$renderErrorLogged;
 
     /**
      * @author CrossTie

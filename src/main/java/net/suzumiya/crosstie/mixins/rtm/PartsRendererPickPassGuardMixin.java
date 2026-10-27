@@ -55,7 +55,17 @@ public abstract class PartsRendererPickPassGuardMixin<T, MS> {
     )
     private void crosstie$guardPickPassDuplicate(T t, int pass, float partialTick,
                                                   CallbackInfo ci) {
+        if (pass == RenderPass.NORMAL.id) {
+            this.crosstie$pickedThisFrame = false;
+            return;
+        }
+
         if (pass != RenderPass.PICK.id) {
+            return;
+        }
+
+        if (net.suzumiya.crosstie.utils.ActionPartsMathPicker.isShadowPassActive()) {
+            ci.cancel();
             return;
         }
 

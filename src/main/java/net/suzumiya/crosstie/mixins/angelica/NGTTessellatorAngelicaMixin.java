@@ -27,6 +27,7 @@ public abstract class NGTTessellatorAngelicaMixin {
     /**
      * @author Suzumiya
      * @reason Angelica環境で、MCのTessellator (TessellatorManager) に頂点データを流し込む。
+     *         GL_SELECTモード時はネイティブ固定機能描画で直接ドライバへ送る。
      */
     @Overwrite
     public int draw() {
@@ -34,6 +35,11 @@ public abstract class NGTTessellatorAngelicaMixin {
             throw new IllegalStateException("Not tesselating!");
         }
         this.isDrawing = false;
+        if (net.suzumiya.crosstie.utils.ActionPartsMathPicker.isPickingActive()) {
+            net.suzumiya.crosstie.utils.ActionPartsMathPicker.processTessellator(this.drawMode, this.vertexCount, this.rawBuffer);
+            this.reset();
+            return 0;
+        }
         return crosstie$drawWithTessellatorManager();
     }
 

@@ -231,8 +231,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 shouldApply = hasNgtLib;
                 debugReason = "NGTLib=" + hasNgtLib;
             }
-        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.client.CameraTiltMixin")
-                || mixinClassName.endsWith(".EntityTrainBaseRiderPitchCompensationMixin")
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.client.CameraTiltMixin")) {
+            boolean hasRtm = isModPresent("RTM");
+            shouldApply = isClient && hasRtm;
+            debugReason = "isClient=" + isClient + ", RTM=" + hasRtm;
+        } else if (mixinClassName.endsWith(".EntityTrainBaseRiderPitchCompensationMixin")
                 || mixinClassName.endsWith(".TrainStandingMixin")
                 || mixinClassName.endsWith(".VehicleTrackerEntryMixin")
                 || mixinClassName.endsWith(".VehicleTrackerThrottleMixin")
@@ -250,8 +253,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                     || mixinClassName.endsWith(".RenderVehicleBaseContextMixin")
                     || mixinClassName.endsWith(".PartsRendererCheckMouseActionGuardMixin")
                     || mixinClassName.endsWith(".PartsRendererPickPassGuardMixin")
+                    || mixinClassName.endsWith(".PartsRendererActionPartsMixin")
                     || mixinClassName.endsWith(".ModelObjectMixin")
-                    || mixinClassName.endsWith(".MixinSoundAPIEntityTrainBase")) {
+                    || mixinClassName.endsWith(".MixinSoundAPIEntityTrainBase")
+                    || mixinClassName.endsWith(".TrainSoundPreloadMixin")) {
                 // クライアント専用パッチ/API: クライアントかつRTM存在時のみ適用
                 shouldApply = isClient && hasRtm;
                 debugReason = "isClient=" + isClient + ", RTM=" + hasRtm;
@@ -399,6 +404,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.RailPropertyAutoSplitLegacyMixin");
             mixins.add("rtm.EntityFloorSeatCollisionMixin");
             mixins.add("rtm.EntityVehicleBaseFixRiderPosMixin");
+            mixins.add("rtm.TrainMinimalChunkLoaderMixin");
+            mixins.add("rtm.TrainSoundPreloadMixin");
 
             if (isModPresent("KaizPatch")) {
                 mixins.add("kaizpatch.RailTransitionSearchRangeMixin");
@@ -512,6 +519,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.MixinSoundAPIEntityTrainBase");
                 mixins.add("rtm.PartsDoorGhostFixMixin");
                 mixins.add("rtm.NGTRenderHelperDoorFilterMixin");
+                mixins.add("rtm.PartsRendererActionPartsMixin");
                 // EntityVehicleBasePacketSmoothingMixin handles train and vehicle snapshots
                 // on one timeline, including the vehicle currently carrying the player.
 

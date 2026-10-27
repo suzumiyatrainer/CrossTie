@@ -114,7 +114,7 @@ public abstract class InternalGUIMathPickingMixin {
         // ボタン面がカメラ側を向いているか判定 (視線 (0,0,-1) と法線 N の内積 < 0 <=> -nZ < 0 <=> nZ > 0)
         if (nZ > 1e-4f) {
             float qDotN = qX * nX + qY * nY + qZ * nZ;
-            float t = qDotN / nZ;
+            float t = -qDotN / nZ;
 
             // カメラ前方かつ操作有効距離内 (0.05m < t <= 64.0m)
             if (t > 0.05f && t <= 64.0f) {
@@ -146,14 +146,21 @@ public abstract class InternalGUIMathPickingMixin {
                 Vec3 look = mc.thePlayer.getLook(1.0F);
                 if (look != null) {
                     Vec3 eyeVec = Vec3.createVectorHelper(eyeX, eyeY, eyeZ);
-                    Vec3 hitVec = Vec3.createVectorHelper(
-                        eyeX + look.xCoord * hitDistance,
-                        eyeY + look.yCoord * hitDistance,
-                        eyeZ + look.zCoord * hitDistance
-                    );
-                    MovingObjectPosition mop = mc.theWorld.rayTraceBlocks(eyeVec, hitVec, false);
-                    if (mop != null && mop.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
-                        canInteract = false;
+                    // ボタン面より少し手前 (0.25m) までレイキャストして遮蔽物をチェック
+                    double checkDist = Math.max(0.0, hitDistance - 0.25);
+                    if (checkDist > 0.1) {
+                        Vec3 checkVec = Vec3.createVectorHelper(
+                            eyeX + look.xCoord * checkDist,
+                            eyeY + look.yCoord * checkDist,
+                            eyeZ + look.zCoord * checkDist
+                        );
+                        MovingObjectPosition mop = mc.theWorld.rayTraceBlocks(eyeVec, checkVec, false);
+                        if (mop != null && mop.typeOfHit == MovingObjectPosition.MovingObjectType.BLOCK) {
+                            net.minecraft.block.Block hitBlock = mc.theWorld.getBlock(mop.blockX, mop.blockY, mop.blockZ);
+                            if (hitBlock != null && !(hitBlock instanceof jp.ngt.rtm.rail.BlockMarker)) {
+                                canInteract = false;
+                            }
+                        }
                     }
                 }
             }
