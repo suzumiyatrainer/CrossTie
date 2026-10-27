@@ -1,6 +1,6 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
-import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.WeakHashMap;
 import net.minecraft.world.IBlockAccess;
@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *
  * <p>このキャッシュはクライアントスレッドのみで使用されるため、
  * synchronized ラッパーは不要。WeakHashMap で十分。
+ * また、GTNHLib/fastutil 非導入環境でも動作するよう自前の軽量プリミティブマップを使用する。
  */
 @Mixin(targets = "jp.ngt.rtm.block.BlockLinePole", remap = false)
 public abstract class BlockLinePoleConnectionCacheMixin {
@@ -46,7 +47,7 @@ public abstract class BlockLinePoleConnectionCacheMixin {
             return;
         }
 
-        byte cached = cache.values.get(crosstie$packKey(x, y, z, connectOther));
+        byte cached = cache.get(crosstie$packKey(x, y, z, connectOther));
         if (cached != -1) {
             cir.setReturnValue(cached == 1);
         }
@@ -62,7 +63,7 @@ public abstract class BlockLinePoleConnectionCacheMixin {
             CallbackInfoReturnable<Boolean> cir) {
         TickCache cache = crosstie$getClientTickCache(world);
         if (cache != null) {
-            cache.values.put(crosstie$packKey(x, y, z, connectOther), cir.getReturnValue() ? (byte) 1 : (byte) 0);
+            cache.put(crosstie$packKey(x, y, z, connectOther), cir.getReturnValue() ? (byte) 1 : (byte) 0);
         }
     }
 
@@ -88,7 +89,7 @@ public abstract class BlockLinePoleConnectionCacheMixin {
         long tick = mcWorld.getTotalWorldTime();
         if (cache.tick != tick) {
             cache.tick = tick;
-            cache.values.clear();
+            cache.clear();
         }
         return cache;
     }
@@ -101,13 +102,91 @@ public abstract class BlockLinePoleConnectionCacheMixin {
         return connectOther ? key ^ Long.MIN_VALUE : key;
     }
 
+    /**
+     * Lightweight open-addressing long-to-byte cache without fastutil dependency.
+     * Values stored in {@code states}: 0 = empty, 1 = false (cached 0), 2 = true (cached 1).
+     */
     @Unique
     private static final class TickCache {
         private long tick;
-        private final Long2ByteOpenHashMap values = new Long2ByteOpenHashMap();
-        
-        public TickCache() {
-            values.defaultReturnValue((byte) -1);
+        private long[] keys = new long[256];
+        private byte[] states = new byte[256];
+        private int mask = 255;
+        private int size = 0;
+        private int maxFill = 192;
+
+        byte get(long key) {
+            if (size == 0) {
+                return -1;
+            }
+            int idx = mix64(key) & mask;
+            while (true) {
+                byte st = states[idx];
+                if (st == 0) {
+                    return -1;
+                }
+                if (keys[idx] == key) {
+                    return (byte) (st - 1);
+                }
+                idx = (idx + 1) & mask;
+            }
+        }
+
+        void put(long key, byte val) {
+            byte stVal = (byte) (val + 1);
+            int idx = mix64(key) & mask;
+            while (true) {
+                byte st = states[idx];
+                if (st == 0) {
+                    keys[idx] = key;
+                    states[idx] = stVal;
+                    if (++size >= maxFill) {
+                        rehash(keys.length << 1);
+                    }
+                    return;
+                }
+                if (keys[idx] == key) {
+                    states[idx] = stVal;
+                    return;
+                }
+                idx = (idx + 1) & mask;
+            }
+        }
+
+        void clear() {
+            if (size != 0) {
+                Arrays.fill(states, (byte) 0);
+                size = 0;
+            }
+        }
+
+        private void rehash(int newCap) {
+            long[] oldKeys = this.keys;
+            byte[] oldStates = this.states;
+
+            this.keys = new long[newCap];
+            this.states = new byte[newCap];
+            this.mask = newCap - 1;
+            this.maxFill = (newCap * 3) >>> 2;
+
+            for (int i = 0; i < oldStates.length; i++) {
+                byte st = oldStates[i];
+                if (st != 0) {
+                    long k = oldKeys[i];
+                    int idx = mix64(k) & mask;
+                    while (states[idx] != 0) {
+                        idx = (idx + 1) & mask;
+                    }
+                    keys[idx] = k;
+                    states[idx] = st;
+                }
+            }
+        }
+
+        private static int mix64(long z) {
+            z = (z ^ (z >>> 33)) * 0xff51afd7ed558ccdL;
+            z = (z ^ (z >>> 33)) * 0xc4ceb9fe1a85ec53L;
+            return (int) (z ^ (z >>> 33));
         }
     }
 }
