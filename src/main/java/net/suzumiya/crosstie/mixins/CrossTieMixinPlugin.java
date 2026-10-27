@@ -251,7 +251,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasRtm = isModPresent("RTM");
             if (mixinClassName.endsWith(".EntityVehicleBaseModelSetGuardMixin")
                     || mixinClassName.endsWith(".RenderVehicleBaseContextMixin")
-                    || mixinClassName.endsWith(".PartsRendererCheckMouseActionGuardMixin")
                     || mixinClassName.endsWith(".PartsRendererPickPassGuardMixin")
                     || mixinClassName.endsWith(".PartsRendererActionPartsMixin")
                     || mixinClassName.endsWith(".ModelObjectMixin")

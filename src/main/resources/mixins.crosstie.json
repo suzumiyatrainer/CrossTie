@@ -19,7 +19,6 @@
         "optifine.WireColorShaderFixMixin",
         "rtm.EntityVehicleBaseModelSetGuardMixin",
         "rtm.RenderVehicleBaseContextMixin",
-        "rtm.PartsRendererCheckMouseActionGuardMixin",
         "rtm.PartsRendererPickPassGuardMixin",
         "rtm.PartsRendererActionPartsMixin",
         "rtm.TileEntityCrossingGateNoCullingMixin",
