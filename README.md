@@ -33,7 +33,7 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 | **Java** | `25(mod:8)` |
 | **Gradle** | `9.9.0` |
 | **必須Mod** | `UniMixins 0.3.1+` |
-| **ビルドシステム** | RetroFuturaGradle 2.0.3 |
+| **ビルドシステム** | RetroFuturaGradle 2.0.4 |
 | **最終確認** | `2026-11-11` |
 
 ### 🔍 内部構造インデックス

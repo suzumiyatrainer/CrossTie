@@ -33,7 +33,7 @@ CrossTie 将跨越多个模组（如 RTM / NGTLib / MCTE (KaizPatchX)、Angelica
 | **Java** | `25(mod:8)` |
 | **Gradle** | `9.9.0` |
 | **前置模组** | `UniMixins 0.3.1+` |
-| **构建系统** | RetroFuturaGradle 2.0.3 |
+| **构建系统** | RetroFuturaGradle 2.0.4 |
 | **最后确认** | `2026-11-11` |
 
 ### 🔍 内部结构索引

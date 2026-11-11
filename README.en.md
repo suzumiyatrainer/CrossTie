@@ -33,7 +33,7 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | **Java** | `25(mod:8)` |
 | **Gradle** | `9.9.0` |
 | **Required Mod** | `UniMixins 0.3.1+` |
-| **Build System** | RetroFuturaGradle 2.0.3 |
+| **Build System** | RetroFuturaGradle 2.0.4 |
 | **Last Checked** | `2026-11-11` |
 
 ### 🔍 Internal Structure Index
