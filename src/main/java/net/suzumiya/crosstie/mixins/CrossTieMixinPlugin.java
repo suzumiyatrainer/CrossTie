@@ -301,10 +301,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasHodgepodge = isModPresent("Hodgepodge");
             shouldApply = isClient && hasHodgepodge;
             debugReason = "isClient=" + isClient + ", Hodgepodge=" + hasHodgepodge;
-        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.worldedit.")) {
-            boolean hasWorldEdit = isModPresent("WorldEdit");
-            shouldApply = hasWorldEdit;
-            debugReason = "WorldEdit=" + hasWorldEdit;
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.customnpc.")) {
             boolean hasCustomNpc = isModPresent("CustomNpc");
             shouldApply = hasCustomNpc;

@@ -66,9 +66,6 @@ public class ModDetector {
         // CustomNPC+
         MOD_PATTERNS.put("CustomNpc", new String[] { "customnpc" });
 
-        // WorldEdit
-        MOD_PATTERNS.put("WorldEdit", new String[] { "worldedit" });
-
         // JourneyMap
         MOD_PATTERNS.put("journeymap", new String[] { "journeymap" });
 

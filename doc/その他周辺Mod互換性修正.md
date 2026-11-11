@@ -1,7 +1,7 @@
-# その他周辺Mod（WorldEdit, ATSAssistMod, CustomNPC+, 竹Mod, SignPicture, ArchitectureCraft等）互換性修正仕様書
+# その他周辺Mod（ATSAssistMod, CustomNPC+, 竹Mod, SignPicture, ArchitectureCraft等）互換性修正仕様書
 
 ## 1. 概要
-Minecraft 1.7.10 の鉄道系・建築系環境で併用されることが多い、周辺支援Mod（**WorldEdit**、**ATSAssistMod**、**CustomNPC+**、**竹Mod (Bamboo)**、**SignPicture**、**ArchitectureCraft** 等）と、RTMやCrossTie環境を同時に運用した際に発生する、処理遅延（ラグ）やデータ破損、機能制限などのバグを修正するパッチ群です。
+Minecraft 1.7.10 の鉄道系・建築系環境で併用されることが多い、周辺支援Mod（**ATSAssistMod**、**CustomNPC+**、**竹Mod (Bamboo)**、**SignPicture**、**ArchitectureCraft** 等）と、RTMやCrossTie環境を同時に運用した際に発生する、処理遅延（ラグ）やデータ破損、機能制限などのバグを修正するパッチ群です。
 
 > [!NOTE]
 > **MCTE (MC Terrain Editor) および RTM/NGTLib 関連の修正・最適化について**:
@@ -9,31 +9,7 @@ Minecraft 1.7.10 の鉄道系・建築系環境で併用されることが多い
 
 ---
 
-## 2. WorldEdit と ID拡張Mod（NotEnoughIDs 等）の競合およびデータ破損バグ修正
-
-WorldEditは非常に便利な建築支援Modですが、ID拡張Mod（NotEnoughIDs等）を導入した環境において、ブロックIDデータが崩壊し、致命的エラーを吐いてしまう致命的な競合問題がありました。
-
-### 2.1 Schematic（設計図）保存および配置時におけるID化け・データ欠落の修正
-- **対象ファイル**: `MixinBaseBlock.java`, `MixinSchematicWriter.java`, `MixinSchematicReader.java`
-- **問題の背景**: 
-  RTMで敷設した複雑なレール構造や信号システムなどを WorldEdit の `//copy` でコピーし、`//schematic save` でファイルに保存して別の場所や別ワールドに `//paste` して展開した際、ブロックIDが全く別の無関係なブロックに化けてしまったり、配置後にレール情報などのTileEntityデータが欠損して列車を走らせようとするとゲームが強制クラッシュする問題がありました。この不具合は、ブロックIDの上限を拡張するMod（**NotEnoughIDs (NEID)** 等）を併用している環境下で特に顕著に発生していました。
-- **バグの根本原因**: 
-  1. 通常のWorldEditおよび一般的なSchematic形式（MCEdit形式）では、ブロックIDを格納するために「1バイト（0〜255）」の `Blocks` 配列と、上4ビットを格納する `AddBlocks` 配列しか想定していません。
-  2. NotEnoughIDsなどのID拡張Modを導入すると、ブロックIDは256〜4095（またはそれ以上）の16ビット値（2バイト）へと拡張されます。この環境下でSchematicファイルを書き出すと、255を超えるIDデータがバイト値に丸められて切り捨てられるため、読み込み時に全く異なるブロックIDへと「化ける」ことになり、それに依存するRTM等の複雑なTileEntityデータ（NBTタグ）も不整合を起こして崩壊していました。
-- **修正内容**: 
-  WorldEditがブロック情報およびTileEntityのNBTを Schematic 形式で入出力するコアメソッドに介入しました。
-  - **書き出し時 (`MixinSchematicWriter`)**: 
-    コピー範囲内にIDが255を超えるブロックが存在する場合、16ビット（2バイト）のブロックIDを直接丸ごと保持するための独自NBTタグ **`Blocks16`**（リトルエンディアン形式のバイト配列）を自動的に作成し、Schematicファイルに追加書き込みする処理を実装しました。
-  - **読み込み時 (`MixinSchematicReader`)**: 
-    ファイル読み込み時に `Blocks16` タグを検知した場合、優先的にその16ビット配列からブロックIDを復元する処理を記述しました。
-  - **座標補正 (`MixinBaseBlock`)**: 
-    RTM固有のデータ構造を検知した場合、データのバイナリデータを破損させることなく完全に保持し、貼り付け時には座標のオフセット（配置位置のズレ）をRTMの複雑な座標システムに合わせて自動的に計算し直してNBTへ書き込む処理を適用しました。
-- **結果**: 
-  NotEnoughIDsなどのID拡張Modを導入した大規模な工業・都市開発環境下であっても、WorldEditのSchematic機能を用いてRTMのレールや信号、複雑なModブロックの設計図を安全に保存・読込・配置できるようになります。
-
----
-
-## 3. ATSAssistMod 関連の修正および最適化
+## 2. ATSAssistMod 関連の修正および最適化
 
 ATSAssistMod（RTM向けのIFTTT信号・ATS制御補助Mod）におけるスクリプト恒久ロックの解除、ブレーキノッチ制御、およびシリアライザの最適化を行います。
 
@@ -69,11 +45,11 @@ ATSAssistMod（RTM向けのIFTTT信号・ATS制御補助Mod）におけるスク
 
 ---
 
-## 4. CustomNPC+ 関連のバグ修正
+## 3. CustomNPC+ 関連のバグ修正
 
 CustomNPC+（カスタムNPC追加Mod）において、Java 8 環境での起動時クラッシュを引き起こすバグがありました。
 
-### 4.1 ScriptEngineManagerの初期化によるUnsupportedClassVersionErrorクラッシュの修正
+### 3.1 ScriptEngineManagerの初期化によるUnsupportedClassVersionErrorクラッシュの修正
 - **対象ファイル**: `ScriptControllerInitMixin.java`
 - **問題の背景**:
   CustomNPC+ の `ScriptController` コンストラクタは、スクリプト機能の有効・無効チェック（`isScriptingEnabled()` の確認）よりも前に `new ScriptEngineManager()` を呼び出します。このコンストラクタはJava SPI（ServiceLoader）を通じて利用可能な全スクリプトエンジンファクトリを即座にスキャンするため、CustomNPC+ JARに同梱されている Java 11+ でコンパイルされた `org.openjdk.nashorn.NashornScriptEngineFactory` が検出されてしまい、Java 8 環境では `UnsupportedClassVersionError` が発生してサーバーがクラッシュしていました。
@@ -84,9 +60,9 @@ CustomNPC+（カスタムNPC追加Mod）において、Java 8 環境での起動
 
 ---
 
-## 5. 竹Mod (Bamboo) 関連のパッチおよびシェーダー互換
+## 4. 竹Mod (Bamboo) 関連のパッチおよびシェーダー互換
 
-### 5.1 温泉水（BlockSpaWater）への OptiFine / Angelica シェーダー水面効果の適用
+### 4.1 温泉水（BlockSpaWater）への OptiFine / Angelica シェーダー水面効果の適用
 - **対象ファイル**: `MixinBlockSpaWater.java`
 - **問題の背景**:
   竹Modの温泉水ブロック（`BlockSpaWater`）は独自のマテリアル定義を持っていたため、OptiFine や Angelica（Iris）などのシェーダー環境下において「水」として判定されず、シェーダーパックが提供する美しい波・光の反射・屈折効果が適用されない問題がありました。
@@ -95,34 +71,34 @@ CustomNPC+（カスタムNPC追加Mod）において、Java 8 環境での起動
 - **結果**:
   竹Modの温泉水に対して、OptiFine や Angelica のシェーダーパックによる波や水面反射、透明感のあるグラフィック効果が正しく適用されるようになります。
 
-### 5.2 キャンプファイヤー描画の最適化（スタブ）
+### 4.2 キャンプファイヤー描画の最適化（スタブ）
 - **対象ファイル**: `BambooRenderCampfireMixin.java`
 - **概要**:
   竹Mod（`ruby.bamboo`）のキャンプファイヤーや和風光源ブロックの TileEntity レンダラー（`RenderCampfire`）において、プレイヤーの視界外や遠距離での描画を間引くフックが存在します。
 
 ---
 
-## 6. SignPicture 関連のパッチ
+## 5. SignPicture 関連のパッチ
 
-### 6.1 看板画像レンダラーの最適化（スタブ）
+### 5.1 看板画像レンダラーの最適化（スタブ）
 - **対象ファイル**: `SignPictureRendererMixin.java`
 - **概要**:
   SignPicture Mod（`com.kamesuta.mc.signpic`）のカスタム看板画像レンダラー（`CustomTileEntitySignRenderer`）において、未ロード画像や視界外画像の描画を効率化するフックが存在します。
 
 ---
 
-## 7. ArchitectureCraft 関連のパッチ
+## 6. ArchitectureCraft 関連のパッチ
 
-### 7.1 ベースモデルレンダラーの最適化（スタブ）
+### 6.1 ベースモデルレンダラーの最適化（スタブ）
 - **対象ファイル**: `BaseModelRendererMixin.java`
 - **概要**:
   ArchitectureCraft（`gcewing.architecture`）のベースモデルレンダラー（`BaseModelRenderer`）において、ブロック描画時の不可視面計算のキャッシュおよび`Vector3`/`Trans3`オブジェクトのアロケーション削減を行うフックが存在します。
 
 ---
 
-## 8. JourneyMap 関連の互換性修正と最適化
+## 7. JourneyMap 関連の互換性修正と最適化
 
-### 8.1 列車名表示（ターゲットマーカー）の直接描画と競合修正
+### 7.1 列車名表示（ターゲットマーカー）の直接描画と競合修正
 - **対象ファイル**: `WaypointBeaconRendererMixin.java`, `DataCacheMixin.java`
 - **問題の背景**:
   一部の環境や古い実装において、JourneyMap 上に列車名（TargetTrainId）を表示させる際、別スレッドから共有リスト（Stringリスト等）を操作してレンダラー側で読み取る方式がとられていました。これにより `ConcurrentModificationException` によるクラッシュや、データの同期ズレ、無駄なリスト確保によるメモリ消費が発生していました。
@@ -133,9 +109,9 @@ CustomNPC+（カスタムNPC追加Mod）において、Java 8 環境での起動
 
 ---
 
-## 9. Hodgepodge 関連のバグ修正
+## 8. Hodgepodge 関連のバグ修正
 
-### 9.1 チャットGUI表示時のクラッシュ（NullGuard）修正
+### 8.1 チャットGUI表示時のクラッシュ（NullGuard）修正
 - **対象ファイル**: `ChatHandlerNullGuardMixin.java`, `ChatComponentStyleNullGuardMixin.java`, `ChatComponentTextNullGuardMixin.java`
 - **問題の背景**:
   最適化Mod「Hodgepodge」を導入した環境において、MinecraftのチャットGUIを開いた際や特定のチャットメッセージ（チャットスタイル）を受信・処理した際に、`NullPointerException` が発生してゲームがクラッシュする問題がありました。
