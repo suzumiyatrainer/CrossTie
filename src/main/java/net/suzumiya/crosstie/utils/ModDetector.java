@@ -75,6 +75,9 @@ public class ModDetector {
         // WebCTC
         MOD_PATTERNS.put("WebCTC", new String[] { "webctc" });
 
+        // RecipePlusMod
+        MOD_PATTERNS.put("RecipePlusMod", new String[] { "recipeplus" });
+
         // lwjgl3ify (LWJGL 2 to LWJGL 3 / SDL compatibility layer)
         MOD_PATTERNS.put("lwjgl3ify", new String[] { "lwjgl3ify" });
     }

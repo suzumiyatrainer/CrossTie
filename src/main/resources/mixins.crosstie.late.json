@@ -11,7 +11,9 @@
     "webctc.RailCacheDataUpdateOptimizationMixin",
     "webctc.SignalCacheDataUpdateOptimizationMixin",
     "webctc.SignalRouterReflectionMixin",
-    "webctc.RailGroupUtilsSignalLevelMixin"
+    "webctc.RailGroupUtilsSignalLevelMixin",
+    "recipeplus.BlockExSlabGlassMixin",
+    "recipeplus.BlockExStairsGlassMixin"
   ],
   "client": [],
   "server": []

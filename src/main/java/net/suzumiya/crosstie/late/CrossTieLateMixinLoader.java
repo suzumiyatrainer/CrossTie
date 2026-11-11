@@ -33,6 +33,10 @@ public class CrossTieLateMixinLoader
             mixins.add("webctc.SignalRouterReflectionMixin");
             mixins.add("webctc.RailGroupUtilsSignalLevelMixin");
         }
+        if (loadedMods.contains("RecipePlusMod")) {
+            mixins.add("recipeplus.BlockExSlabGlassMixin");
+            mixins.add("recipeplus.BlockExStairsGlassMixin");
+        }
         return mixins;
     }
 }

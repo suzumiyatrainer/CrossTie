@@ -3,17 +3,23 @@ package net.suzumiya.crosstie.mixins.rtm;
 import java.util.List;
 import jp.ngt.ngtlib.math.PooledVec3;
 import jp.ngt.ngtlib.math.Vec3;
+import jp.ngt.ngtlib.renderer.GLHelper;
 import jp.ngt.ngtlib.util.NGTUtil;
 import jp.ngt.rtm.electric.Connection;
+import jp.ngt.rtm.electric.TileEntityConnectorBase;
 import jp.ngt.rtm.electric.TileEntityElectricalWiring;
 import jp.ngt.rtm.electric.TileEntityDummyEW;
 import jp.ngt.rtm.electric.TileEntityInsulator;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.util.MathHelper;
+import net.minecraft.world.World;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.suzumiya.crosstie.CrossTieConfig;
 import net.suzumiya.crosstie.cache.ElectricalWiringCacheManager;
 import net.suzumiya.crosstie.utils.CrossTieDiagnostics;
 import net.suzumiya.crosstie.mixins.CrossTieMixinPlugin;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
@@ -135,16 +141,95 @@ public abstract class RenderElectricalWiringOptimizationMixin {
     @Shadow
     protected abstract void renderWire(TileEntityElectricalWiring tileEntity, Connection connection, double par2, double par4, double par6, float par8, int pass);
 
+    @Unique
+    private static int crosstie$getConnectorBrightness(TileEntityConnectorBase tileEntity) {
+        World world = tileEntity.getWorldObj();
+        if (world == null) {
+            return -1;
+        }
+        int bx = MathHelper.floor_double(tileEntity.xCoord + 0.5D + tileEntity.getOffsetX());
+        int by = MathHelper.floor_double(tileEntity.yCoord + 0.5D + tileEntity.getOffsetY());
+        int bz = MathHelper.floor_double(tileEntity.zCoord + 0.5D + tileEntity.getOffsetZ());
+        if (by < 0) {
+            by = 0;
+        }
+        if (world.blockExists(bx, by, bz)) {
+            return world.getLightBrightnessForSkyBlocks(bx, by, bz, 0);
+        }
+        if (world.blockExists(tileEntity.xCoord, tileEntity.yCoord, tileEntity.zCoord)) {
+            return world.getLightBrightnessForSkyBlocks(tileEntity.xCoord, tileEntity.yCoord, tileEntity.zCoord, 0);
+        }
+        return -1;
+    }
+
+    @Unique
+    private static int crosstie$getWireRootBrightness(TileEntityElectricalWiring tileEntity) {
+        World world = tileEntity.getWorldObj();
+        if (world == null) {
+            return -1;
+        }
+        Vec3 pos = tileEntity.getWirePos();
+        double yOffset = (tileEntity instanceof TileEntityDummyEW) ? 0.0D : 0.5D;
+        int bx = MathHelper.floor_double(tileEntity.xCoord + 0.5D + (pos != null ? pos.getX() : 0.0D));
+        int by = MathHelper.floor_double(tileEntity.yCoord + yOffset + (pos != null ? pos.getY() : 0.0D));
+        int bz = MathHelper.floor_double(tileEntity.zCoord + 0.5D + (pos != null ? pos.getZ() : 0.0D));
+        if (by < 0) {
+            by = 0;
+        }
+        if (world.blockExists(bx, by, bz)) {
+            return world.getLightBrightnessForSkyBlocks(bx, by, bz, 0);
+        }
+        if (world.blockExists(tileEntity.xCoord, tileEntity.yCoord, tileEntity.zCoord)) {
+            return world.getLightBrightnessForSkyBlocks(tileEntity.xCoord, tileEntity.yCoord, tileEntity.zCoord, 0);
+        }
+        return -1;
+    }
+
+    @Inject(method = "renderConnector", at = @At("HEAD"), require = 0, remap = false)
+    private void crosstie$preRenderConnector(TileEntityConnectorBase tileEntity, double par2, double par4, double par6, float par8, int pass, CallbackInfo ci) {
+        GL11.glEnable(GL11.GL_NORMALIZE);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        if (OpenGlHelper.lightmapTexUnit != 0 && !GLHelper.isCompiling()) {
+            int brightness = crosstie$getConnectorBrightness(tileEntity);
+            if (brightness >= 0) {
+                GLHelper.setBrightness(brightness);
+            }
+        }
+    }
+
+    @Inject(method = "renderConnector", at = @At("RETURN"), require = 0, remap = false)
+    private void crosstie$postRenderConnector(TileEntityConnectorBase tileEntity, double par2, double par4, double par6, float par8, int pass, CallbackInfo ci) {
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GL11.glDisable(GL11.GL_NORMALIZE);
+        if (OpenGlHelper.lightmapTexUnit != 0 && !GLHelper.isCompiling()) {
+            int brightness = crosstie$getWireRootBrightness(tileEntity);
+            if (brightness >= 0) {
+                GLHelper.setBrightness(brightness);
+            }
+        }
+    }
+
+    @Inject(method = "renderElectricalWiring", at = @At("RETURN"), require = 0, remap = false)
+    private void crosstie$postRenderElectricalWiring(TileEntityElectricalWiring tileEntity, double par2, double par4, double par6, float par8, CallbackInfo ci) {
+        GL11.glDisable(GL12.GL_RESCALE_NORMAL);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
     /**
      * @author CrossTie
-     * @reason Optimize renderAllWire by removing high-overhead Java Stream API calls.
+     * @reason Optimize renderAllWire by removing high-overhead Java Stream API calls
+     *         and ensure normal/color/lightmap state is clean across each wire connection.
      */
     @Overwrite
     protected void renderAllWire(TileEntityElectricalWiring tileEntity, double par2, double par4, double par6, float par8, int pass) {
-        boolean hasShadersFix = CrossTieMixinPlugin.hasOptiFineLikeEnv() && CrossTieConfig.fixOptiFineWireNormalize;
+        boolean hasShadersFix = CrossTieConfig.fixOptiFineWireNormalize;
         if (hasShadersFix) {
             GL11.glEnable(GL11.GL_NORMALIZE);
         }
+
+        int baseBrightness = (OpenGlHelper.lightmapTexUnit != 0 && !GLHelper.isCompiling())
+                ? crosstie$getWireRootBrightness(tileEntity)
+                : -1;
 
         GL11.glPushMatrix();
         Vec3 vec = tileEntity.getWirePos();
@@ -156,12 +241,17 @@ public abstract class RenderElectricalWiringOptimizationMixin {
             for (int i = 0; i < size; i++) {
                 Connection connection = connections.get(i);
                 if (connection != null && connection.type.isVisible && connection.isRoot) {
+                    GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                    if (baseBrightness >= 0 && !GLHelper.isCompiling()) {
+                        GLHelper.setBrightness(baseBrightness);
+                    }
                     this.renderWire(tileEntity, connection, par2, par4, par6, par8, pass);
                 }
             }
         }
         GL11.glPopMatrix();
 
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         if (hasShadersFix) {
             GL11.glDisable(GL11.GL_NORMALIZE);
         }

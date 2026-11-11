@@ -254,6 +254,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                     || mixinClassName.endsWith(".PartsRendererPickPassGuardMixin")
                     || mixinClassName.endsWith(".PartsRendererActionPartsMixin")
                     || mixinClassName.endsWith(".ModelObjectMixin")
+                    || mixinClassName.endsWith(".WirePartsRendererLightingMixin")
                     || mixinClassName.endsWith(".MixinSoundAPIEntityTrainBase")
                     || mixinClassName.endsWith(".TrainSoundPreloadMixin")) {
                 // クライアント専用パッチ/API: クライアントかつRTM存在時のみ適用
@@ -321,6 +322,15 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             boolean hasJourneyMap = isModPresent("journeymap");
             shouldApply = isClient && hasJourneyMap;
             debugReason = "isClient=" + isClient + ", JourneyMap=" + hasJourneyMap;
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.recipeplus.")) {
+            boolean hasRecipePlus = isModPresent("RecipePlusMod");
+            if (mixinClassName.endsWith(".BlockPaneRecipePlusMixin")) {
+                shouldApply = hasRecipePlus;
+                debugReason = "RecipePlusMod=" + hasRecipePlus;
+            } else {
+                shouldApply = isClient && hasRecipePlus;
+                debugReason = "isClient=" + isClient + ", RecipePlusMod=" + hasRecipePlus;
+            }
         } else {
             shouldApply = true;
             debugReason = "default=true";
@@ -341,6 +351,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 + isModPresent("MacroMod") + ", OptiFine=" + isModPresent("OptiFine") + ", FastCraft="
                 + isModPresent("FastCraft") + ", WebCTC=" + isModPresent("WebCTC") + ", JourneyMap="
                 + isModPresent("journeymap") + ", PanoramaMaker=" + isModPresent("PanoramaMaker")
+                + ", RecipePlusMod=" + isModPresent("RecipePlusMod")
                 + ", lwjgl3ify=" + isModPresent("lwjgl3ify")
                 + ", nativeRenderGlobalDisplayLists=" + isNativeRenderGlobalDisplayListsEnabled());
     }
@@ -463,7 +474,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             // OptiFine / FastCraft - LargeRail brightness fix (Angelicaがある場合は追加しない)
             if ((isModPresent("OptiFine") || isModPresent("FastCraft")) && !isModPresent("AngelicaGlsm")) {
                 mixins.add("optifine.RailBrightnessDisplayListSafeMixin");
-                mixins.add("optifine.WireColorShaderFixMixin");
                 if (isModPresent("RTM")) {
                     mixins.add("optifine.NGTTessellatorOptiFineShaderMixin");
                 }
@@ -473,6 +483,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 // B-01: バックグラウンドでワールドを開いた際のブラックスクリーン修正
                 // Angelica の FpsReducer が未レンダリング状態でポーズメニューを開くのを防ぐ
                 mixins.add("angelica.FpsReducerMixin");
+                mixins.add("angelica.AngelicaGlassPaneCtmPropertiesFixMixin");
+                mixins.add("angelica.AngelicaGlassPaneRendererFixMixin");
+                mixins.add("angelica.AngelicaCtmTextureGeneratorFixMixin");
 
                 if (isModPresent("RTM")) {
                     mixins.add("angelica.WeatherColumnsAccessor");
@@ -503,7 +516,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.RenderElectricalWiringOptimizationMixin");
                 mixins.add("rtm.BlockLinePoleConnectionCacheMixin");
                 mixins.add("rtm.RenderLargeRailOptimizationMixin");
-                // RenderMachine（照明/スピーカー/券売機のみ）の距離カリング
+                // RenderMachine（機械類全般）の距離描画制御（半分まで通常、半分以遠は頻度半減、最大距離外は描画スキップ）
                 mixins.add("rtm.RenderMachineCullingMixin");
                 mixins.add("rtm.RailTessellateOptimizationMixin");
                 mixins.add("rtm.RailPartsRendererScriptGuardMixin");
@@ -527,6 +540,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.ModelObjectMixin");
                 mixins.add("rtm.ModelObjectRenderMixin");
                 mixins.add("rtm.RailPartsRendererMixin");
+                mixins.add("rtm.WirePartsRendererLightingMixin");
                 mixins.add("rtm.MixinRenderUtil");
                 mixins.add("rtm.CameraCopyImageSubDataMixin");
 
@@ -642,6 +656,14 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             // ScreenEventHandler.onScreenMousePressedEvent NPE修正:
             // RenderBackends.get() が null のまま呼ばれると NPE になるため早期 return を挿入
             mixins.add("journeymap.ScreenEventHandlerMixin");
+        }
+
+        // RecipePlusMod (BlockBreakable / BlockPane hooks are registered here; RecipePlusMod target mixins are registered in CrossTieLateMixinLoader)
+        if (isModPresent("RecipePlusMod")) {
+            mixins.add("recipeplus.BlockPaneRecipePlusMixin");
+            if (isClient) {
+                mixins.add("recipeplus.BlockBreakableRecipePlusMixin");
+            }
         }
 
         System.out.println(

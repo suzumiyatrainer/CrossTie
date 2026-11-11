@@ -26,6 +26,9 @@ public class CrossTieLateMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.webctc.")) {
             return cpw.mods.fml.common.Loader.isModLoaded("webctc") || cpw.mods.fml.common.Loader.isModLoaded("WebCTC");
         }
+        if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.recipeplus.")) {
+            return cpw.mods.fml.common.Loader.isModLoaded("RecipePlusMod");
+        }
         return true;
     }
 

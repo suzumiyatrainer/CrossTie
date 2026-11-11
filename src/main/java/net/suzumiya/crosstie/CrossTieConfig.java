@@ -144,7 +144,7 @@ public final class CrossTieConfig {
         /** 設置物エンティティ（車止め）のカリング有効化 */
         public static boolean installedObjectCullingEnabled;
 
-        /** RenderMachine（照明・スピーカー・券売機）の遠距離描画カリング有効化 */
+        /** RenderMachine（機械類全般）の距離描画制御（総チャンクの半分まで通常描画、半分以遠は頻度半減、最大距離外は描画スキップ）の有効化 */
         public static boolean machineTesrCullingEnabled;
 
         /** お飾り架線（電力供給に関与しない架線）の信号伝播除外 */
@@ -356,8 +356,9 @@ public final class CrossTieConfig {
                                                 + " 描画距離はバニラの Render Distance 設定を使用します。");
 
                 machineTesrCullingEnabled = config.getBoolean("machineTesrCullingEnabled", CAT_PERFORMANCE, true,
-                                "RTM の照明・スピーカー・券売機（RenderMachine）を、描画距離+1チャンクより遠い場合に描画スキップします。"
-                                                + " 13ブロック以内は常に描画します。内部状態には影響しません。");
+                                "RTM の machine（RenderMachine）の距離描画制御を有効にします。"
+                                                + " クライアント描画距離の半分までは通常描画、半分以遠〜最大距離までは描画頻度を半減、"
+                                                + " 最大距離以降は描画のみスキップします。内部変数処理には影響しません。");
 
                 decorativeWireOptimizationEnabled = config.getBoolean("decorativeWireOptimizationEnabled",
                                 CAT_PERFORMANCE, true, "電力供給に関与しないお飾り架線のネットワークを信号伝播処理から除外し、MSPT を低減します。");

@@ -105,11 +105,14 @@ public abstract class AngelicaRenderGlobalDisplayListCrashMixin {
      */
     @Unique
     private static boolean crosstie$isNativeDisplayListTarget() {
-        // Parts.render() のコンテキスト内であれば RTM パーツのディスプレイリスト
-        if (CrossTiePartsRenderContext.isInsidePartsRender()) {
-            return true;
-        }
         // RenderGlobal.<init> からの呼び出しは opt-in フラグで制御
+        // ※ Parts.render() をネイティブ DisplayList にバイパスすると、Angelica の
+        // TessellatorStreamingDrawer (expandVertexFormats=true) がコンパイル時点の
+        // packedLastBrightness() (最初に描画された TileEntity のライトマップ) を
+        // DisplayList の VAO/VBO に永久に焼き込んでしまい、また glCallList 時に
+        // GLStateManager.preDraw() がバイパスされて行列・カラー・ライトマップの
+        // シェーダーユニフォーム更新が行われなくなるため、Parts.render() は
+        // Angelica 標準の DisplayListManager に処理させる。
         return crosstie$nativeRenderGlobalListsEnabled && crosstie$isCalledFromRenderGlobalInit();
     }
 

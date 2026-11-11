@@ -24,6 +24,9 @@ public abstract class NGTTessellatorAngelicaMixin {
     @Shadow public abstract void reset();
     @Shadow private boolean isDrawing;
 
+    @org.spongepowered.asm.mixin.Unique
+    private static int crosstie$whiteTexture = -1;
+
     /**
      * @author Suzumiya
      * @reason Angelica環境で、MCのTessellator (TessellatorManager) に頂点データを流し込む。
@@ -45,6 +48,25 @@ public abstract class NGTTessellatorAngelicaMixin {
 
     private int crosstie$drawWithTessellatorManager() {
         Tessellator mc = TessellatorManager.get();
+
+        boolean textureDisabledByScript = false;
+        int previousTexture = 0;
+        if (!GL11.glIsEnabled(GL11.GL_TEXTURE_2D)) {
+            previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+            GL11.glEnable(GL11.GL_TEXTURE_2D);
+            textureDisabledByScript = true;
+
+            if (crosstie$whiteTexture == -1) {
+                crosstie$whiteTexture = GL11.glGenTextures();
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, crosstie$whiteTexture);
+                java.nio.ByteBuffer buffer = org.lwjgl.BufferUtils.createByteBuffer(4);
+                buffer.put((byte) 255).put((byte) 255).put((byte) 255).put((byte) 255);
+                buffer.flip();
+                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, 1, 1, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
+            } else {
+                GL11.glBindTexture(GL11.GL_TEXTURE_2D, crosstie$whiteTexture);
+            }
+        }
 
         if (this.drawMode == GL11.GL_TRIANGLE_STRIP && this.vertexCount >= 3) {
             mc.startDrawing(GL11.GL_TRIANGLES);
@@ -81,6 +103,11 @@ public abstract class NGTTessellatorAngelicaMixin {
 
         int result = mc.draw();
 
+        if (textureDisabledByScript) {
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, previousTexture);
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+        }
+
         if (this.rawBufferSize > 0x20000 && this.rawBufferIndex < (this.rawBufferSize >> 3)) {
             this.rawBufferSize = 0x10000;
             this.rawBuffer = new int[this.rawBufferSize];
@@ -98,6 +125,8 @@ public abstract class NGTTessellatorAngelicaMixin {
             float ny = ((byte) ((n >> 8) & 0xFF)) / 127.0f;
             float nz = ((byte) ((n >> 16) & 0xFF)) / 127.0f;
             mc.setNormal(nx, ny, nz);
+        } else {
+            mc.setNormal(0.0F, 1.0F, 0.0F);
         }
         if (this.hasBrightness) {
             mc.setBrightness(this.rawBuffer[base + 7]);
@@ -120,7 +149,7 @@ public abstract class NGTTessellatorAngelicaMixin {
             float v = Float.intBitsToFloat(this.rawBuffer[base + 4]);
             mc.addVertexWithUV(x, y, z, u, v);
         } else {
-            mc.addVertex(x, y, z);
+            mc.addVertexWithUV(x, y, z, 0.0F, 0.0F);
         }
     }
 }

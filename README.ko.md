@@ -34,7 +34,7 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 | **Gradle** | `9.8.2` |
 | **필수 모드** | `UniMixins 0.3.1+` |
 | **빌드 시스템** | RetroFuturaGradle 2.0.3 |
-| **최종 확인** | `2026-10-27` |
+| **최종 확인** | `2026-11-11` |
 
 ### 🔍 내부 구조 인덱스
 * **Mixin 제어**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
@@ -51,7 +51,7 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 
 | 모드명 | 권장 버전 | 구분 |
 | --- | --- | --- |
-| **CrossTie** | `1.0.0-Alpha17` | **코어** |
+| **CrossTie** | `1.0.0-Alpha18` | **코어** |
 | **UniMixins** | `0.3.1+` | **필수** |
 | **KaizPatchX** | `1.10.4` | 권장 |
 | **Angelica** | `2.2.30+` | 권장 |

@@ -61,6 +61,8 @@ public class CrossTie {
                     .register(new net.suzumiya.crosstie.client.sound.SoundPreloadManager.SoundPreloadEventHandler());
             cpw.mods.fml.common.FMLCommonHandler.instance().bus()
                     .register(new net.suzumiya.crosstie.client.CrossTieDiagnosticsTicker());
+            cpw.mods.fml.common.FMLCommonHandler.instance().bus()
+                    .register(new net.suzumiya.crosstie.client.CrossTieRenderFrameTracker());
             // lwjgl3ify(SDL3)環境のIME汎用補正
             try {
                 Class.forName("org.lwjglx.opengl.Display");

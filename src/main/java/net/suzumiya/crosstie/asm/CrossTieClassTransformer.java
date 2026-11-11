@@ -31,11 +31,6 @@ public class CrossTieClassTransformer implements IClassTransformer {
      */
     @Deprecated
     private static final String GTNHLIB_BLOCK_ICON_MIXIN = "com.gtnewhorizon.gtnhlib.mixins.early.models.MixinBlock_IconWrapper";
-    private static final String ANGELICA_CTM_RENDER_BLOCKS_MIXIN = "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm.MixinRenderBlocks";
-    private static final String ANGELICA_CTM_CC_RENDER_BLOCKS_MIXIN = "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm_cc.MixinRenderBlocks";
-    private static final String ANGELICA_CTM_CC_RENDER_BLOCKS_NO_CC = "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm_cc.MixinRenderBlocksNoCC";
-    private static final String ANGELICA_CTM_CC_RENDER_BLOCKS_NO_CTM = "com.gtnewhorizons.angelica.mixins.early.mcpatcherforge.ctm_cc.MixinRenderBlocksNoCTM";
-    private static final String MCPATCHER_GLASS_PANE_RENDERER = "com.prupe.mcpatcher.ctm.GlassPaneRenderer";
 
     /**
      * Hodgepodge の GuavaPooler クラス名。
@@ -111,16 +106,6 @@ public class CrossTieClassTransformer implements IClassTransformer {
             return patchGtnhLibBlockIconMixin(basicClass);
         }
 
-        if (isClass(transformedName, name, ANGELICA_CTM_RENDER_BLOCKS_MIXIN, null)
-                || isClass(transformedName, name, ANGELICA_CTM_CC_RENDER_BLOCKS_MIXIN, null)
-                || isClass(transformedName, name, ANGELICA_CTM_CC_RENDER_BLOCKS_NO_CC, null)
-                || isClass(transformedName, name, ANGELICA_CTM_CC_RENDER_BLOCKS_NO_CTM, null)) {
-            return patchAngelicaPaneIconRedirect(basicClass);
-        }
-        if (isClass(transformedName, name, MCPATCHER_GLASS_PANE_RENDERER, null)) {
-            return patchGlassPaneRenderer(basicClass);
-        }
-
         // Hodgepodge: GuavaPooler の getString() を String.intern() にリダイレクト
         // Mixin では MixinTargetAlreadyLoadedException が発生するため ASM で対処する
         if (isClass(transformedName, name, HODGEPODGE_GUAVA_POOLER, null)) {
@@ -138,7 +123,8 @@ public class CrossTieClassTransformer implements IClassTransformer {
             return patchFmlLoader(basicClass);
         }
 
-        // VariableColorLight: ShaderBindTransformer の transform() で basicClass == null のときに
+        // VariableColorLight: ShaderBindTransformer の transform() で basicClass == null
+        // のときに
         // NPE をスローするバグを防御 (未ロード/非存在クラス検索時の ClassNotFoundException を防ぐ)
         if (isClass(transformedName, name, "jp.example.variablecolorlight.core.ShaderBindTransformer", null)) {
             return patchShaderBindTransformer(basicClass);
@@ -229,6 +215,7 @@ public class CrossTieClassTransformer implements IClassTransformer {
         return changed ? writeClass(classNode) : basicClass;
     }
 
+    @SuppressWarnings("unused")
     private byte[] patchAngelicaPaneIconRedirect(byte[] basicClass) {
         ClassNode classNode = new ClassNode();
         new ClassReader(basicClass).accept(classNode, 0);
@@ -252,6 +239,7 @@ public class CrossTieClassTransformer implements IClassTransformer {
         return changed ? writeClass(classNode) : basicClass;
     }
 
+    @SuppressWarnings("unused")
     private byte[] patchGlassPaneRenderer(byte[] basicClass) {
         ClassNode classNode = new ClassNode();
         new ClassReader(basicClass).accept(classNode, 0);
