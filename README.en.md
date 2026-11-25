@@ -6,16 +6,12 @@ A comprehensive optimization and compatibility patch mod for RTM (RealTrainMod) 
 > `src/main/java/jp/kaiz/atsassistmod/block/tileentity/TileEntityIFTTT.java` is a **compile-only dummy class (stub)** used to prevent compilation errors in CI environments (such as GitHub Actions).
 > Since it is automatically excluded from the final production JAR during the build process, it does not affect game execution.
 
-[![日本語](README.md)](/README.md)
-[![English](README.en.md)](/README.en.md)
-[![한국어](README.ko.md)](/README.ko.md)
-[![简体中文](README.zh-cn.md)](/README.zh-cn.md)
-[![繁體中文](README.zh-tw.md)](/README.zh-tw.md)
+[🇯🇵 日本語](./README.md) | [🇺🇸 English](./README.en.md) | [🇰🇷 한국어](./README.ko.md) | [🇨🇳 简体中文](./README.zh-cn.md) | [🇹🇼 繁體中文](./README.zh-tw.md)
 
 ---
 
 ### 📝 Project Overview
-CrossTie provides **rendering load reduction, update frequency suppression, and compatibility fixes** across multiple mods such as RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GTNHLib, Hodgepodge, LiteLoader / Macro / Keybind Mod, ProjectRed, CustomNPC+, JourneyMap, and more — all in a single JAR.
+CrossTie provides **rendering load reduction, update frequency suppression, and compatibility fixes** across multiple mods such as RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GTNHLib, Hodgepodge, LiteLoader / Macro / Keybind Mod, ProjectRed, CustomNPC+, JourneyMap, WebCTC, RecipePlusMod, lwjgl3ify, and more — all in a single JAR.
 
 > 💡 **Auto-Detection Feature**: Target mods are automatically detected at launch, and the corresponding patches are enabled only if they exist.
 
@@ -31,17 +27,17 @@ CrossTie provides **rendering load reduction, update frequency suppression, and 
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
-| **Gradle** | `9.9.0` |
+| **Gradle** | `9.9.2` |
 | **Required Mod** | `UniMixins 0.3.1+` |
 | **Build System** | RetroFuturaGradle 2.0.4 |
-| **Last Checked** | `2026-11-11` |
+| **Last Checked** | `2026-11-25` |
 
 ### 🔍 Internal Structure Index
 * **Mixin Control**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
-* **Late Mixin Control**: [`CrossTieLateMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieLateMixinPlugin.java)
+* **Late Mixin Control**: [`CrossTieLateMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/late/CrossTieLateMixinPlugin.java)
 * **ASM CoreMod**: [`CrossTieCorePlugin.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieCorePlugin.java)
 * **ASM Transformer**: [`CrossTieClassTransformer.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieClassTransformer.java)
-* **Detectable Mods**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `ProjectRed`, `CustomNPC+`, `JourneyMap`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`
+* **Detectable Mods**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `ProjectRed`, `CustomNPC+`, `JourneyMap`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`, `WebCTC`, `RecipePlusMod`, `lwjgl3ify`
 
 ---
 
@@ -67,7 +63,7 @@ Recommended mod versions for a smooth experience.
 CrossTie collectively solves and provides the following **4 core features** regarding issues between RTM-related mods (KaizPatchX) and performance mods.
 
 1. **🏃 FPS Optimization**
-   * LargeRail rendering optimization, ultra-fast Nashorn script engine caching for KaizPatch / NGTLib, signboard GUI virtual scrolling, display list optimization, etc.
+   * LargeRail rendering optimization, 3-tier distance-based rendering control for machines (distant frame throttling), overhead wire rendering optimization, ultra-fast Nashorn script engine caching for KaizPatch / NGTLib, signboard GUI virtual scrolling, display list optimization, etc.
    * Details: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 2. **⏳ TPS / Server Load Optimization**
@@ -75,7 +71,7 @@ CrossTie collectively solves and provides the following **4 core features** rega
    * Details: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 Compatibility & Rendering Bug Fixes**
-   * RTM/MCTE rendering bug fixes under Angelica or OptiFine (dynamic lighting, 1.12.2 manifest marker modernization), vehicle part hover data corruption guards, shader water effects for Bamboo Spa Water, crash fix when breaking special blocks in bulk with MCTE, and compatibility fixes for other surrounding mods.
+   * RTM/MCTE rendering and lighting fixes under Angelica or OptiFine (dynamic lighting, wire lighting, 1.12.2 manifest marker modernization), connected train clipping prevention (experimental) and `Formation` synchronization recovery, bogie errorLog NPE crash fix, adjacent face culling / glass pane connection for RecipePlusMod transparent blocks and Angelica CTM bug fixes, IME input compatibility and inline composition overlay on LWJGL3ify / SDL3, IntelliInput startup freeze workaround, JourneyMap × GTNHLib (DFU) compatibility fix, shader water effects for Bamboo Spa Water, and compatibility fixes for other surrounding mods.
    * Details:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)
@@ -83,7 +79,7 @@ CrossTie collectively solves and provides the following **4 core features** rega
      * [`doc/その他周辺Mod互換性修正.md`](./doc/その他周辺Mod互換性修正.md)
 
 4. **✨ New Features**
-   * Hot-reload of model packs without restart, 2-point wire removal feature, and sound API for in-car announcements, etc.
+   * Hot-reload of model packs without restart, 2-point wire removal feature, sound API for in-car announcements, glass CTM toggle configuration, etc.
    * Details: [`doc/新規機能の使い方/`](./doc/新規機能の使い方/)
 
 ---
@@ -94,7 +90,7 @@ CrossTie has a **3-layer patch mechanism** that safely intervenes at appropriate
 
 ### 1. ASM CoreMod (`CrossTieCorePlugin`)
 Runs in the very first phase immediately after Minecraft starts as an `IFMLLoadingPlugin`.
-* **ModDetector**: Scans the `mods/` folder and automatically detects installed mods from JAR/ZIP/litemod filenames.
+* **ModDetector**: Scans the `mods/` folder and automatically detects installed mods from JAR/ZIP/litemod filenames (automatically excludes modelpack-only ZIPs and `mods/modelpacks/`).
 * **MinFo Detection + Angelica Settings Auto-Adjustment**: If MinFo is detected, forcibly rewrites `B:enableFontRenderer` in `config/angelica-modules.cfg` to `false`.
 
 ### 2. ASM Class Transformer (`CrossTieClassTransformer`)
@@ -103,14 +99,16 @@ Directly rewrites bytecodes at class loading, before the Mixin phase. It complet
 | Target Class / Method | Action |
 | --- | --- |
 | **GTNHLib 0.9.x** `MixinBlock_IconWrapper` | Redirects `nhlib$getParticleIcon` to `GtnhLibIconCompat` *(deprecated in GTNHLib 0.10.0+; auto-skipped)* |
-| **Angelica CTM** `MixinRenderBlocks` | Redirects glass pane icon resolution like `tweakPaneIcons` to `AngelicaPaneIconCompat` |
-| **MCPatcher** `GlassPaneRenderer` | Replaces `setupIcons` with `return false` |
 | **Hodgepodge** `StringPooler$GuavaPooler` | Replaces `getString(s)` with `s.intern()` to avoid Guava classloader conflicts |
 | **NGTLib/RTM** `ScriptUtil` | Replaces `doScript(String)` with `ScriptUtilFallback.doScript(String)` (for environments without Nashorn) |
+| **IntelliInput** `IntelliInput$1` | Restricts `GetWindowText` in the `EnumWindows` callback to the current process to prevent startup freezes |
+| **JourneyMap** `journeymap.*` | Redirects DFU calls to `JourneyMapDfuBridge` to fix conflicts with GTNHLib's newer DFU (`DataResult` interface change) |
+| **FML** `Loader` | Automatically normalizes ModID case differences at the start of `sortModList()` |
+| **VariableColorLight** `ShaderBindTransformer` | Guards against NPE when `basicClass == null` |
 
 ### 3. Mixin (Dynamic Application)
 `CrossTieMixinPlugin` dynamically applies only the necessary Mixins based on the detected installed mods.
-To avoid early classloading issues, some Mixins are applied via deferred loading through `CrossTieLateMixinPlugin` (e.g., ProjectRed).
+To avoid early classloading issues, some Mixins are applied via deferred loading through `CrossTieLateMixinPlugin` (e.g., ProjectRed, WebCTC, RecipePlusMod).
 
 Please refer to the documents in the `doc/` directory for detailed patch contents.
 

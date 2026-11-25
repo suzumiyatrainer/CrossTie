@@ -1,7 +1,7 @@
-# その他周辺Mod（ATSAssistMod, CustomNPC+, 竹Mod, SignPicture, ArchitectureCraft等）互換性修正仕様書
+# その他周辺Mod（ATSAssistMod, CustomNPC+, 竹Mod, JourneyMap, RecipePlusMod, LWJGL3ify等）互換性修正仕様書
 
 ## 1. 概要
-Minecraft 1.7.10 の鉄道系・建築系環境で併用されることが多い、周辺支援Mod（**ATSAssistMod**、**CustomNPC+**、**竹Mod (Bamboo)**、**SignPicture**、**ArchitectureCraft** 等）と、RTMやCrossTie環境を同時に運用した際に発生する、処理遅延（ラグ）やデータ破損、機能制限などのバグを修正するパッチ群です。
+Minecraft 1.7.10 の鉄道系・建築系環境で併用されることが多い周辺Mod（**ATSAssistMod**、**CustomNPC+**、**竹Mod (Bamboo)**、**SignPicture**、**ArchitectureCraft**、**JourneyMap**、**Hodgepodge**、**RecipePlusMod**、**LWJGL3ify / IntelliInput** 等）と、RTM や CrossTie 環境を同時に運用した際に発生するクラッシュ・フリーズ・表示崩れ・入力不具合を修正するパッチ群です。
 
 > [!NOTE]
 > **MCTE (MC Terrain Editor) および RTM/NGTLib 関連の修正・最適化について**:
@@ -13,7 +13,7 @@ Minecraft 1.7.10 の鉄道系・建築系環境で併用されることが多い
 
 ATSAssistMod（RTM向けのIFTTT信号・ATS制御補助Mod）におけるスクリプト恒久ロックの解除、ブレーキノッチ制御、およびシリアライザの最適化を行います。
 
-### 3.1 JavaScriptエラーによるデッドロック（恒久停止）の修正
+### 2.1 JavaScriptエラーによるデッドロック（恒久停止）の修正
 - **対象ファイル**: `ATSAssistJavaScriptUnlockMixin.java`
 - **問題の背景**:
   ATSAssistModのIFTTTコンテナが抱えるJavaScriptスクリプトに一度でも実行エラーが発生すると、内部の `error` フラグが `true` に設定されてNBTに永続化されます。このフラグが立つと、GUI編集（`setJSText()`）以外にリセットする手段がなく、スクリプトを修正しても再起動しても `doThat()` が実行されない状態（恒久デッドロック）に陥っていました。
@@ -23,7 +23,7 @@ ATSAssistMod（RTM向けのIFTTT信号・ATS制御補助Mod）におけるスク
 - **結果**:
   ATSAssistModのJavaScriptスクリプトが一度エラーになっても自動回復するようになり、スクリプト修正後の反映が即座に行われます。
 
-### 3.2 ATSAssist TASC 自動定位停止ブレーキ制御の統合
+### 2.2 ATSAssist TASC 自動定位停止ブレーキ制御の統合
 - **対象ファイル**: `EntityTrainBaseMixin.java`
 - **概要**:
   ATSAssistModの `TrainController` が `TASCController`（定位停止制御：TASC）を有効化している場合、列車の速度更新処理（`EntityTrainBase.updateSpeed()`）にフックして、現在速度と停止目標距離から必要減速度を計算し、適切なブレーキノッチを自動選択して設定します。
@@ -34,7 +34,7 @@ ATSAssistMod（RTM向けのIFTTT信号・ATS制御補助Mod）におけるスク
 - **結果**:
   ATSAssistModのTASC機能が有効な場合に、列車が停止目標位置に対して物理的に正確なブレーキング制御を行えるようになります。
 
-### 3.3 IFTTTUtil における Jackson ObjectMapper シリアライザの最適化
+### 2.3 IFTTTUtil における Jackson ObjectMapper シリアライザの最適化
 - **対象ファイル**: `IFTTTUtilMixin.java`
 - **問題の背景**:
   ATSAssistMod の `IFTTTUtil` は、`IFTTTContainer` のバイナリ/JSON シリアライズ・デシリアライズ（`convertClassSafe`）のたびに `new ObjectMapper()` を新規生成していました。Jackson の `ObjectMapper` は構築時に非常に重いリフレクション解析とモジュールスキャンを行うため、シリアライズが頻繁に発生すると大きなCPU負荷とメモリ確保が発生していました。
@@ -107,6 +107,15 @@ CustomNPC+（カスタムNPC追加Mod）において、Java 8 環境での起動
 - **結果**:
   マルチスレッド環境下でもクラッシュや同期ズレが発生せず、安全かつ軽量に列車のマーカーや名前が JourneyMap の画面上に表示されるようになります。
 
+### 7.2 GTNHLib（最新 DFU）併用時のウェイポイント保存・読み込みクラッシュ修正
+- **対象ファイル**: `CrossTieClassTransformer.java`, `JourneyMapDfuBridge.java`, `Jm12NbtOpsHelper.java`
+- **問題の背景**:
+  GTNHLib が導入する最新版の DataFixerUpper（DFU）では `DataResult` がクラスからインターフェースへ変更されています。旧版を前提に作られた JourneyMap 1.7.10 と併用すると、ウェイポイントの保存や読み込み時に `IncompatibleClassChangeError` が発生してクラッシュしていました。
+- **修正内容**:
+  ASM トランスフォーマーで `journeymap.*` 配下の該当呼び出しを安全なブリッジクラス（`JourneyMapDfuBridge`）経由へリダイレクトし、新旧 DFU の差異を吸収しました。
+- **結果**:
+  最新の GTNHLib 環境でも JourneyMap のウェイポイント機能をクラッシュせずに利用できます。
+
 ---
 
 ## 8. Hodgepodge 関連のバグ修正
@@ -119,4 +128,41 @@ CustomNPC+（カスタムNPC追加Mod）において、Java 8 環境での起動
   チャットのスタイルやテキスト処理のコア部分に対してNullガード（値がnullだった場合の安全な早期リターン処理やフォールバック）を注入し、Hodgepodgeの内部最適化処理とバニラの描画処理の間の不整合を吸収しました。
 - **結果**:
   Hodgepodge導入環境下でも、チャットGUIを安全に開くことができ、クラッシュすることなくプレイを継続できます。
+
+---
+
+## 9. RecipePlusMod 関連の透過ガラス・板ガラス互換
+
+### 9.1 ガラス・氷系ハーフ/1/4/階段ブロックの隣接面カリングと板ガラス接続対応
+- **対象ファイル**: `RecipePlusGlassCompat.java`, `IRecipePlusGlassBlock.java`, `BlockBreakableRecipePlusMixin.java`, `BlockPaneRecipePlusMixin.java`, `BlockExSlabGlassMixin.java`, `BlockExStairsGlassMixin.java`
+- **問題の背景**:
+  RecipePlusMod が追加するガラス・色付きガラス・氷系のハーフブロック・1/4ブロック・階段は、バニラのガラスと隣り合わせに置いたときに接合面が消えず二重に見えたり、板ガラスが正しく接続されなかったりする問題がありました。
+- **修正内容**:
+  - 透過ガラス・氷系ブロック同士の接触面を判定し、バニラガラスと同様に不要な接合面を非表示（カリング）にする互換ヘルパーを追加しました。
+  - バニラの板ガラス（`BlockPane`）が RecipePlusMod のハーフ・1/4・階段ブロックの面にも自然に接続できるようにしました。
+- **結果**:
+  RecipePlusMod のガラス系建材をバニラガラスや板ガラスと組み合わせても、継ぎ目がすっきり綺麗に表示されます。
+
+---
+
+## 10. LWJGL3ify / SDL3 IME 入力互換および IntelliInput 起動時フリーズ修正
+
+### 10.1 LWJGL3ify（SDL3）環境での日本語 IME 入力・インライン変換オーバーレイ
+- **対象ファイル**: `ImeCompat.java`, `SdlImeBridge.java`, `ImeTicker.java`, `GuiScreenImeMixin.java`, `GuiTextFieldImeMixin.java`, `GuiTextFieldCustomImeMixin.java`, `Lwjgl3ifyImeKeyboardMixin.java`
+- **問題の背景**:
+  Java 17/21/25 環境で Minecraft 1.7.10 を動かす LWJGL3ify（SDL3）環境では、テキスト入力欄（チャット・看板・RTM 各種 GUI 等）で日本語 IME の変換候補窓が画面の端へ飛んだり、変換中の未確定文字列が見えなくなったりする問題がありました。
+- **修正内容**:
+  - `SdlImeBridge` を通じて SDL3 のネイティブ IME 機能と連携し、入力欄のフォーカス状態に応じて IME を自動オン/オフし、候補窓の位置をカーソル付近へ通知します。
+  - 変換中の文字列（未確定テキスト）をテキスト欄の上にリアルタイム描画するインライン変換オーバーレイを実装しました。
+- **結果**:
+  LWJGL3ify 環境でも、チャットや RTM の各種テキスト入力欄で快適に日本語入力・変換が行えるようになります。
+
+### 10.2 IntelliInput の起動時フリーズ回避
+- **対象ファイル**: `IntelliInputCompat.java`, `CrossTieClassTransformer.java`
+- **問題の背景**:
+  IntelliInput は起動時に OS 上の全ウィンドウに対して `GetWindowText` を問い合わせるため、応答しない他プロセスのウィンドウ（IDE や親プロセス等）があると永久に待ち続けて Minecraft が起動途中でフリーズすることがありました。
+- **修正内容**:
+  ASM パッチで `IntelliInput$1` の `EnumWindows` コールバックを安全なラッパーへ差し替え、自プロセス以外のウィンドウには問い合わせを行わないようにしました。
+- **結果**:
+  他アプリを起動したままでも、IntelliInput 導入環境で Minecraft が起動時にフリーズしなくなります。
 

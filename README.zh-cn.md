@@ -6,16 +6,12 @@
 > `src/main/java/jp/kaiz/atsassistmod/block/tileentity/TileEntityIFTTT.java` 是一个**仅用于编译的虚构类（Stub）**，用于防止在 CI 环境（如 GitHub Actions 等）下发生编译错误。
 > 该类在构建最终发布 JAR 文件时会自动被排除（exclude），因此不会影响游戏运行时的行为。
 
-[![日本語](README.md)](/README.md)
-[![English](README.en.md)](/README.en.md)
-[![한국어](README.ko.md)](/README.ko.md)
-[![简体中文](README.zh-cn.md)](/README.zh-cn.md)
-[![繁體中文](README.zh-tw.md)](/README.zh-tw.md)
+[🇯🇵 日本語](./README.md) | [🇺🇸 English](./README.en.md) | [🇰🇷 한국어](./README.ko.md) | [🇨🇳 简体中文](./README.zh-cn.md) | [🇹🇼 繁體中文](./README.zh-tw.md)
 
 ---
 
 ### 📝 项目简介
-CrossTie 将跨越多个模组（如 RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInput、GTNHLib、Hodgepodge、LiteLoader / Macro / Keybind Mod、ProjectRed、CustomNPC+ 等）的**渲染负载降低、更新频率抑制与兼容性修复**功能集成在一个 JAR 文件中提供。
+CrossTie 将跨越多个模组（如 RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInput、GTNHLib、Hodgepodge、LiteLoader / Macro / Keybind Mod、ProjectRed、CustomNPC+、JourneyMap、WebCTC、RecipePlusMod、lwjgl3ify 等）的**渲染负载降低、更新频率抑制与兼容性修复**功能集成在一个 JAR 文件中提供。
 
 > 💡 **自动检测功能**: 启动时会自动检测目标模组，仅在模组存在时启用对应的补丁。
 
@@ -31,17 +27,17 @@ CrossTie 将跨越多个模组（如 RTM / NGTLib / MCTE (KaizPatchX)、Angelica
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
-| **Gradle** | `9.9.0` |
+| **Gradle** | `9.9.2` |
 | **前置模组** | `UniMixins 0.3.1+` |
 | **构建系统** | RetroFuturaGradle 2.0.4 |
-| **最后确认** | `2026-11-11` |
+| **最后确认** | `2026-11-25` |
 
 ### 🔍 内部结构索引
 * **Mixin 控制**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
-* **延迟 Mixin 控制**: [`CrossTieLateMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieLateMixinPlugin.java)
+* **延迟 Mixin 控制**: [`CrossTieLateMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/late/CrossTieLateMixinPlugin.java)
 * **ASM CoreMod**: [`CrossTieCorePlugin.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieCorePlugin.java)
 * **ASM Transformer**: [`CrossTieClassTransformer.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieClassTransformer.java)
-* **可检测模组**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `ProjectRed`, `CustomNPC+`, `JourneyMap`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`
+* **可检测模组**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `ProjectRed`, `CustomNPC+`, `JourneyMap`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`, `WebCTC`, `RecipePlusMod`, `lwjgl3ify`
 
 ---
 
@@ -67,7 +63,7 @@ CrossTie 将跨越多个模组（如 RTM / NGTLib / MCTE (KaizPatchX)、Angelica
 CrossTie 汇总解决了 RTM 相关模组（KaizPatchX）与性能优化模组之间发生的以下 **4 项核心内容**。
 
 1. **🏃 FPS 优化**
-   * LargeRail 渲染优化、KaizPatch / NGTLib 的 Nashorn 脚本执行引擎超高速缓存、站牌 GUI 虚拟滚动化、显示列表（Display List）优化等。
+   * LargeRail 渲染优化、机械类整体的三阶段距离渲染控制（远距离降频渲染）、架空线/电线渲染优化、KaizPatch / NGTLib 的 Nashorn 脚本执行引擎超高速缓存、站牌 GUI 虚拟滚动化、显示列表（Display List）优化等。
    * 详情: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 2. **⏳ TPS / 服务器负载优化**
@@ -75,7 +71,7 @@ CrossTie 汇总解决了 RTM 相关模组（KaizPatchX）与性能优化模组�
    * 详情: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 兼容性与渲染错误修复**
-   * 修复在 Angelica 或 OptiFine 环境下的 RTM/MCTE 渲染错误（动态光源、1.12.2 Manifest 标记现代化）、列车部件悬停数据串扰防护、竹 Mod 温泉水应用光影水面效果、修复 MCTE 等工具批量破坏特殊方块时的崩溃问题、以及其他周边模组的冲突。
+   * 修复在 Angelica 或 OptiFine 环境下的 RTM/MCTE 渲染与光照问题（动态光源、架空线光照、1.12.2 Manifest 标记现代化）、连挂列车行驶时的穿模防止（实验性）与编组（`Formation`）同步修复、转向架错误日志 NPE 崩溃修复、RecipePlusMod 透明方块的相邻面剔除/玻璃板连接及 Angelica CTM 错误修复、LWJGL3ify / SDL3 环境的 IME 输入兼容与内联候选覆盖层、IntelliInput 启动卡死规避、JourneyMap × GTNHLib (DFU) 兼容性修复、竹 Mod 温泉水应用光影水面效果、以及其他周边模组的冲突。
    * 详情:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)
@@ -83,7 +79,7 @@ CrossTie 汇总解决了 RTM 相关模组（KaizPatchX）与性能优化模组�
      * [`doc/その他周辺Mod互換性修正.md`](./doc/その他周辺Mod互換性修正.md)
 
 4. **✨ 新功能添加**
-   * 免重启重新加载模型包功能、两点间电线删除功能、车厢内广播用音效 API 等。
+   * 免重启重新加载模型包功能、两点间电线删除功能、车厢内广播用音效 API、玻璃 CTM 开关配置等。
    * 详情: [`doc/新規機能の使い方/`](./doc/新規機能の使い方/)
 
 ---
@@ -94,7 +90,7 @@ CrossTie 具有 **3 层补丁机制**，在合适的阶段安全地介入。
 
 ### 1. ASM CoreMod (`CrossTieCorePlugin`)
 作为 `IFMLLoadingPlugin`，在 Minecraft 启动后的最初阶段运行。
-* **ModDetector**: 扫描 `mods/` 文件夹，根据 JAR/ZIP/litemod 的文件名自动检测已安装的模组。
+* **ModDetector**: 扫描 `mods/` 文件夹，根据 JAR/ZIP/litemod 的文件名自动检测已安装的模组（自动排除纯模型包 ZIP 与 `mods/modelpacks/`）。
 * **MinFo 检测与 Angelica 设置自动调整**: 如果检测到 MinFo，则强制将 `config/angelica-modules.cfg` 中的 `B:enableFontRenderer` 改写为 `false`。
 
 ### 2. ASM Class Transformer (`CrossTieClassTransformer`)
@@ -103,14 +99,16 @@ CrossTie 具有 **3 层补丁机制**，在合适的阶段安全地介入。
 | 目标类 / 方法 | 内容 |
 | --- | --- |
 | **GTNHLib 0.9.x** `MixinBlock_IconWrapper` | 将 `nhlib$getParticleIcon` 重定向到 `GtnhLibIconCompat` *(旧版本: GTNHLib 0.10.0+ 中已废弃，自动跳过)* |
-| **Angelica CTM** `MixinRenderBlocks` | 将 `tweakPaneIcons` 等玻璃板图标解析重定向到 `AngelicaPaneIconCompat` |
-| **MCPatcher** `GlassPaneRenderer` | 将 `setupIcons` 替换为 `return false` |
 | **Hodgepodge** `StringPooler$GuavaPooler` | 将 `getString(s)` 替换为 `s.intern()`（避免 Guava 类加载器冲突） |
 | **NGTLib/RTM** `ScriptUtil` | `doScript(String)` → `ScriptUtilFallback.doScript(String)`（适配缺失 Nashorn 的环境） |
+| **IntelliInput** `IntelliInput$1` | 将 `EnumWindows` 回调中的 `GetWindowText` 限制为当前进程，规避启动卡死 |
+| **JourneyMap** `journeymap.*` | 将与 GTNHLib 最新 DFU（`DataResult` 接口化）的冲突重定向至 `JourneyMapDfuBridge` 修复 |
+| **FML** `Loader` | 在 `sortModList()` 开头自动规范化 ModID 大小写差异 |
+| **VariableColorLight** `ShaderBindTransformer` | 防御 `basicClass == null` 时抛出的 NPE |
 
 ### 3. Mixin (动态应用)
 `CrossTieMixinPlugin` 会根据检测到的已安装模组，动态应用所需的 Mixin。
-为防止早期类加载冲突，部分 Mixin 通过 `CrossTieLateMixinPlugin` 进行延迟加载（例如：ProjectRed）。
+为防止早期类加载冲突，部分 Mixin 通过 `CrossTieLateMixinPlugin` 进行延迟加载（例如：ProjectRed、WebCTC、RecipePlusMod）。
 
 详细的补丁内容，请参阅 `doc/` 目录下的各文档。
 

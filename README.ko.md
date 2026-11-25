@@ -6,16 +6,12 @@ Minecraft 1.7.10용 RTM(RealTrainMod) 관련 모드 종합 최적화 및 호환�
 > `src/main/java/jp/kaiz/atsassistmod/block/tileentity/TileEntityIFTTT.java`는 CI 환경(GitHub Actions 등)에서의 컴파일 오류를 방지하기 위한 **컴파일 전용 더미 클래스(스텁)**입니다.
 > 빌드 시 최종 배포 JAR 파일에서는 자동으로 제외(exclude)되므로, 게임 실행 시 동작에는 영향을 주지 않습니다.
 
-[![日本語](README.md)](/README.md)
-[![English](README.en.md)](/README.en.md)
-[![한국어](README.ko.md)](/README.ko.md)
-[![简体中文](README.zh-cn.md)](/README.zh-cn.md)
-[![繁體中文](README.zh-tw.md)](/README.zh-tw.md)
+[🇯🇵 日本語](./README.md) | [🇺🇸 English](./README.en.md) | [🇰🇷 한국어](./README.ko.md) | [🇨🇳 简体中文](./README.zh-cn.md) | [🇹🇼 繁體中文](./README.zh-tw.md)
 
 ---
 
 ### 📝 프로젝트 개요
-CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GTNHLib, Hodgepodge, LiteLoader / Macro / Keybind Mod, ProjectRed, CustomNPC+, JourneyMap 등 여러 모드에 걸친 **렌더링 부하 감소, 업데이트 빈도 억제 및 호환성 수정**을 단일 JAR로 제공합니다.
+CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GTNHLib, Hodgepodge, LiteLoader / Macro / Keybind Mod, ProjectRed, CustomNPC+, JourneyMap, WebCTC, RecipePlusMod, lwjgl3ify 등 여러 모드에 걸친 **렌더링 부하 감소, 업데이트 빈도 억제 및 호환성 수정**을 단일 JAR로 제공합니다.
 
 > 💡 **자동 감지 기능**: 대상 모드는 시작 시 자동으로 감지되며, 존재하는 경우에만 해당 패치가 활성화됩니다.
 
@@ -31,17 +27,17 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
-| **Gradle** | `9.9.0` |
+| **Gradle** | `9.9.2` |
 | **필수 모드** | `UniMixins 0.3.1+` |
 | **빌드 시스템** | RetroFuturaGradle 2.0.4 |
-| **최종 확인** | `2026-11-11` |
+| **최종 확인** | `2026-11-25` |
 
 ### 🔍 내부 구조 인덱스
 * **Mixin 제어**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
-* **Late Mixin 제어**: [`CrossTieLateMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieLateMixinPlugin.java)
+* **Late Mixin 제어**: [`CrossTieLateMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/late/CrossTieLateMixinPlugin.java)
 * **ASM CoreMod**: [`CrossTieCorePlugin.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieCorePlugin.java)
 * **ASM Transformer**: [`CrossTieClassTransformer.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieClassTransformer.java)
-* **감지 가능 모드**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `ProjectRed`, `CustomNPC+`, `JourneyMap`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`
+* **감지 가능 모드**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `ProjectRed`, `CustomNPC+`, `JourneyMap`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`, `WebCTC`, `RecipePlusMod`, `lwjgl3ify`
 
 ---
 
@@ -67,7 +63,7 @@ CrossTie는 RTM / NGTLib / MCTE (KaizPatchX), Angelica, Bamboo, IntelliInput, GT
 CrossTie는 RTM 관련 모드군(KaizPatchX)과 성능 최적화 모드군 사이에서 발생하는 다음 **4가지 핵심 항목**을 통합하여 해결하고 제공합니다.
 
 1. **🏃 FPS 최적화**
-   * LargeRail 렌더링 최적화, KaizPatch / NGTLib의 Nashorn 스크립트 실행 엔진 초고속 캐싱, 표지판 GUI 가상 스크롤화, 디스플레이 리스트 최적화 등.
+   * LargeRail 렌더링 최적화, 기계류 전반의 3단계 거리별 렌더링 제어(원거리 프레임 간격 조정), 가선·와이어 렌더링 최적화, KaizPatch / NGTLib의 Nashorn 스크립트 실행 엔진 초고속 캐싱, 표지판 GUI 가상 스크롤화, 디스플레이 리스트 최적화 등.
    * 자세히: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 2. **⏳ TPS / 서버 부하 최적화**
@@ -75,7 +71,7 @@ CrossTie는 RTM 관련 모드군(KaizPatchX)과 성능 최적화 모드군 사�
    * 자세히: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 호환성 및 렌더링 버그 수정**
-   * Angelica 및 OptiFine 환경에서의 RTM/MCTE 렌더링 버그 수정(동적 광원·1.12.2 매니페스트 마커 현대화), 차량 파츠 호버 데이터 혼선 방지, 대나무 모드 온천수에 셰이더 수면 효과 적용, MCTE 등에서 특수 블록 일괄 파괴 시 크래시 수정, 기타 주변 모드 충돌 수정.
+   * Angelica 및 OptiFine 환경에서의 RTM/MCTE 렌더링·라이팅 수정(동적 광원·가선 라이팅·1.12.2 매니페스트 마커 현대화), 연결 차량 주행 시 겹침 방지(실험적) 및 편성(`Formation`) 동기화 복구, 대차 오류 로그 NPE 크래시 수정, RecipePlusMod 투명 블록의 인접면 컬링·유리판 연결 및 Angelica CTM 버그 수정, LWJGL3ify / SDL3 환경의 IME 입력 호환·인라인 변환 오버레이, IntelliInput 시작 시 프리징 회피, JourneyMap × GTNHLib (DFU) 호환성 수정, 대나무 모드 온천수에 셰이더 수면 효과 적용, 기타 주변 모드 충돌 수정.
    * 자세히:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)
@@ -83,7 +79,7 @@ CrossTie는 RTM 관련 모드군(KaizPatchX)과 성능 최적화 모드군 사�
      * [`doc/その他周辺Mod互換性修正.md`](./doc/その他周辺Mod互換性修正.md)
 
 4. **✨ 새로운 기능 추가**
-   * 재시작 없는 모델 팩 재로드 기능, 2점간 와이어 삭제 기능, 차내 방송용 사운드 API 추가 등.
+   * 재시작 없는 모델 팩 재로드 기능, 2점간 와이어 삭제 기능, 차내 방송용 사운드 API, 유리 CTM 활성화/비활성화 설정 등.
    * 자세히: [`doc/新規機能の使い方/`](./doc/新規機能の使い方/)
 
 ---
@@ -94,7 +90,7 @@ CrossTie는 적절한 단계에서 안전하게 개입하는 **3계층 패치 �
 
 ### 1. ASM CoreMod (`CrossTieCorePlugin`)
 Minecraft 시작 직후 가장 초기 단계에서 `IFMLLoadingPlugin`으로 작동합니다.
-* **ModDetector**: `mods/` 폴더를 스캔하여 JAR/ZIP/litemod 파일명에서 설치된 모드를 자동 감지.
+* **ModDetector**: `mods/` 폴더를 스캔하여 JAR/ZIP/litemod 파일명에서 설치된 모드를 자동 감지(모델 팩 전용 ZIP 및 `mods/modelpacks/`는 자동 제외).
 * **MinFo 감지 + Angelica 설정 자동 조정**: MinFo가 감지된 경우 `config/angelica-modules.cfg`의 `B:enableFontRenderer`를 강제로 `false`로 재작성합니다.
 
 ### 2. ASM Class Transformer (`CrossTieClassTransformer`)
@@ -103,14 +99,16 @@ Mixin 단계 이전 클래스 로드 시에 바이트 코드를 직접 재작성
 | 대상 클래스 / 메서드 | 내용 |
 | --- | --- |
 | **GTNHLib 0.9.x** `MixinBlock_IconWrapper` | `nhlib$getParticleIcon`을 `GtnhLibIconCompat`으로 리디렉션 *(구버전: GTNHLib 0.10.0+ 에서는 폐지됨 / 자동 스킵)* |
-| **Angelica CTM** `MixinRenderBlocks` | `tweakPaneIcons` 등의 glass pane 아이콘 해결을 `AngelicaPaneIconCompat`으로 리디렉션 |
-| **MCPatcher** `GlassPaneRenderer` | `setupIcons`를 `return false`로 치환 |
 | **Hodgepodge** `StringPooler$GuavaPooler` | `getString(s)` → `s.intern()`으로 치환 (Guava 클래스 로더 충돌 회피) |
 | **NGTLib/RTM** `ScriptUtil` | `doScript(String)` → `ScriptUtilFallback.doScript(String)` (Nashorn 부재 환경 대응) |
+| **IntelliInput** `IntelliInput$1` | `EnumWindows` 콜백의 `GetWindowText`를 자체 프로세스로 제한하여 시작 시 프리징 회피 |
+| **JourneyMap** `journeymap.*` | GTNHLib의 최신 DFU(`DataResult`의 interface화)와의 충돌을 `JourneyMapDfuBridge`로 리디렉션하여 복구 |
+| **FML** `Loader` | `sortModList()` 선두에서 ModID의 대소문자 차이를 자동 정규화 |
+| **VariableColorLight** `ShaderBindTransformer` | `basicClass == null` 시 발생하는 NPE 방어 |
 
 ### 3. Mixin (동적 적용)
 `CrossTieMixinPlugin`이 감지된 설치 모드에 따라 필요한 Mixin만을 동적으로 적용합니다.
-클래스 로더 문제를 방지하기 위해 일부 Mixin은 `CrossTieLateMixinPlugin`을 통한 지연 로드로 적용됩니다（예: ProjectRed）.
+클래스 로더 문제를 방지하기 위해 일부 Mixin은 `CrossTieLateMixinPlugin`을 통한 지연 로드로 적용됩니다（예: ProjectRed, WebCTC, RecipePlusMod）.
 
 상세한 패치 내용은 `doc/` 디렉터리 내의 각 문서를 참조해 주십시오.
 

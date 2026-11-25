@@ -6,16 +6,12 @@ Minecraft 1.7.10 向けの RTM（RealTrainMod）系総合最適化・互換パ�
 > `src/main/java/jp/kaiz/atsassistmod/block/tileentity/TileEntityIFTTT.java` は、CI環境（GitHub Actions等）でのコンパイル時エラーを防止するための**コンパイル専用ダミークラス（スタブ）**です。
 > ビルド時に出力される製品JARからは自動的に除外（exclude）されるため、ゲーム実行時には影響しません。
 
-[![日本語](README.md)](/README.md)
-[![English](README.en.md)](/README.en.md)
-[![한국어](README.ko.md)](/README.ko.md)
-[![简体中文](README.zh-cn.md)](/README.zh-cn.md)
-[![繁體中文](README.zh-tw.md)](/README.zh-tw.md)
+[🇯🇵 日本語](./README.md) | [🇺🇸 English](./README.en.md) | [🇰🇷 한국어](./README.ko.md) | [🇨🇳 简体中文](./README.zh-cn.md) | [🇹🇼 繁體中文](./README.zh-tw.md)
 
 ---
 
 ### 📝 プロジェクト概要
-CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInput、GTNHLib、Hodgepodge、LiteLoader / Macro / Keybind Mod、ProjectRed、CustomNPC+、JourneyMap など、複数 Mod にわたる**描画負荷削減・更新頻度抑制・互換性修正**を 1 つの JAR で提供します。
+CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInput、GTNHLib、Hodgepodge、LiteLoader / Macro / Keybind Mod、ProjectRed、CustomNPC+、JourneyMap、WebCTC、RecipePlusMod、lwjgl3ify など、複数 Mod にわたる**描画負荷削減・更新頻度抑制・互換性修正**を 1 つの JAR で提供します。
 
 > 💡 **自動検出機能**: 対象 Mod は起動時に自動検出され、存在する場合にのみ対応するパッチが有効化されます。
 
@@ -31,17 +27,17 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 | **Minecraft** | `1.7.10` |
 | **Forge** | `10.13.4.1614` |
 | **Java** | `25(mod:8)` |
-| **Gradle** | `9.9.0` |
+| **Gradle** | `9.9.2` |
 | **必須Mod** | `UniMixins 0.3.1+` |
 | **ビルドシステム** | RetroFuturaGradle 2.0.4 |
-| **最終確認** | `2026-11-11` |
+| **最終確認** | `2026-11-25` |
 
 ### 🔍 内部構造インデックス
 * **Mixin 制御**: [`CrossTieMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieMixinPlugin.java)
-* **Late Mixin 制御**: [`CrossTieLateMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/mixins/CrossTieLateMixinPlugin.java)
+* **Late Mixin 制御**: [`CrossTieLateMixinPlugin.java`](./src/main/java/net/suzumiya/crosstie/late/CrossTieLateMixinPlugin.java)
 * **ASM CoreMod**: [`CrossTieCorePlugin.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieCorePlugin.java)
 * **ASM Transformer**: [`CrossTieClassTransformer.java`](./src/main/java/net/suzumiya/crosstie/asm/CrossTieClassTransformer.java)
-* **検出可能Mod**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `ProjectRed`, `CustomNPC+`, `JourneyMap`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`
+* **検出可能Mod**: `RealTrainMod`, `NGTLib`, `MCTE`, `Angelica`, `Bamboo`, `IntelliInput`, `GTNHLib`, `Hodgepodge`, `LiteLoader`, `MacroMod`, `Keybind Mod`, `RailMapCustom`, `MinFo`, `ProjectRed`, `CustomNPC+`, `JourneyMap`, `ATSAssist`, `SignPicture`, `ArchitectureCraft`, `WebCTC`, `RecipePlusMod`, `lwjgl3ify`
 
 ---
 
@@ -67,7 +63,7 @@ CrossTie は、RTM / NGTLib / MCTE (KaizPatchX)、Angelica、Bamboo、IntelliInp
 CrossTie は、RTM 関連の Mod 群（KaizPatchX）とパフォーマンス系 Mod 群の間で発生する、以下の **4つのコア項目**をまとめて解決・提供します。
 
 1. **🏃 FPS 最適化**
-   * LargeRail の描画最適化、KaizPatch / NGTLib の Nashorn スクリプト実行エンジン超高速キャッシュ、サインボード GUI 仮想スクロール化、ディスプレイリスト最適化など。
+   * LargeRail の描画最適化、機械類全般の3段階距離描画制御（遠距離フレーム間引き）、架線・ワイヤーの描画最適化、KaizPatch / NGTLib の Nashorn スクリプト実行エンジン超高速キャッシュ、サインボード GUI 仮想スクロール化、ディスプレイリスト最適化など。
    * 詳細: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 2. **⏳ TPS / サーバー負荷最適化**
@@ -75,7 +71,7 @@ CrossTie は、RTM 関連の Mod 群（KaizPatchX）とパフォーマンス系 
    * 詳細: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 互換性・描画バグ修正**
-   * Angelica や OptiFine 環境下での RTM/MCTE 描画バグ修正（動的光源・1.12.2マニフェストマーカー現代化）、車両パーツホバー混線防止、竹Mod温泉水へのシェーダー水面効果適用、MCTE等での特殊ブロック一括破壊時のクラッシュ修正、その他周辺Modの競合修正。
+   * Angelica や OptiFine 環境下での RTM/MCTE 描画・ライティング修正（動的光源・架線ライティング・1.12.2マニフェストマーカー現代化）、連結車両走行時のめり込み防止（実験的）および編成 (`Formation`) 同期修復、台車エラーログ NPE クラッシュ修正、RecipePlusMod 透過ブロックの隣接面カリング・板ガラス接続および Angelica CTM バグ修正、LWJGL3ify / SDL3 環境の IME 入力互換・インライン変換オーバーレイ、IntelliInput 起動時フリーズ回避、JourneyMap × GTNHLib (DFU) 互換性修正、竹Mod温泉水へのシェーダー水面効果適用、その他周辺Modの競合修正。
    * 詳細:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)
@@ -83,7 +79,7 @@ CrossTie は、RTM 関連の Mod 群（KaizPatchX）とパフォーマンス系 
      * [`doc/その他周辺Mod互換性修正.md`](./doc/その他周辺Mod互換性修正.md)
 
 4. **✨ 新機能の追加**
-   * 再起動不要のモデルパック再読み込み機能、2点間ワイヤ削除機能、車内放送用サウンドAPIの追加など。
+   * 再起動不要のモデルパック再読み込み機能、2点間ワイヤ削除機能、車内放送用サウンドAPI、ガラス CTM の有効化/無効化設定など。
    * 詳細: [`doc/新規機能の使い方/`](./doc/新規機能の使い方/)
 
 ---
@@ -94,7 +90,7 @@ CrossTie は **3層のパッチ機構** を持ち、適切なフェーズで安�
 
 ### 1. ASM CoreMod (`CrossTieCorePlugin`)
 `IFMLLoadingPlugin` として Minecraft 起動直後の最先発フェーズで動作します。
-* **ModDetector**: `mods/` フォルダをスキャンし、JAR/ZIP/litemod のファイル名から導入Modを自動検出。
+* **ModDetector**: `mods/` フォルダをスキャンし、JAR/ZIP/litemod のファイル名から導入Modを自動検出（モデルパック専用 ZIP や `mods/modelpacks/` は自動除外）。
 * **MinFo 検出 + Angelica 設定自動調整**: MinFo が検出された場合、`config/angelica-modules.cfg` の `B:enableFontRenderer` を強制的に `false` に書き換えます。
 
 ### 2. ASM Class Transformer (`CrossTieClassTransformer`)
@@ -103,14 +99,16 @@ Mixin フェーズより前にクラスロード時にバイトコードを直�
 | 対象クラス / メソッド | 内容 |
 | --- | --- |
 | **GTNHLib 0.9.x** `MixinBlock_IconWrapper` | `nhlib$getParticleIcon` を `GtnhLibIconCompat` にリダイレクト *(GTNHLib 0.10.0+ では廃止済み・自動スキップ)* |
-| **Angelica CTM** `MixinRenderBlocks` | `tweakPaneIcons` 等の glass pane アイコン解決を `AngelicaPaneIconCompat` にリダイレクト |
-| **MCPatcher** `GlassPaneRenderer` | `setupIcons` を `return false` に置換 |
 | **Hodgepodge** `StringPooler$GuavaPooler` | `getString(s)` → `s.intern()` に置換 (Guava クラスローダー競合回避) |
 | **NGTLib/RTM** `ScriptUtil` | `doScript(String)` → `ScriptUtilFallback.doScript(String)` (Nashorn 不在環境対応) |
+| **IntelliInput** `IntelliInput$1` | `EnumWindows` コールバックの `GetWindowText` を自プロセス限定にし、起動時フリーズを回避 |
+| **JourneyMap** `journeymap.*` | GTNHLib の最新 DFU (`DataResult` の interface 化) との衝突を `JourneyMapDfuBridge` へリダイレクトして修復 |
+| **FML** `Loader` | `sortModList()` 先頭で ModID の大文字小文字差異を自動正規化 |
+| **VariableColorLight** `ShaderBindTransformer` | `basicClass == null` 時の NPE を防御 |
 
 ### 3. Mixin (動的適用)
 `CrossTieMixinPlugin` が、検出された導入Modに応じて必要な Mixin のみを動的に適用します。
-クラスローダーの問題を避けるため、一部の Mixin は `CrossTieLateMixinPlugin` による遅延ロードで適用されます（例: ProjectRed）。
+クラスローダーの問題を避けるため、一部の Mixin は `CrossTieLateMixinPlugin` による遅延ロードで適用されます（例: ProjectRed, WebCTC, RecipePlusMod）。
 
 詳細なパッチ内容については、`doc/` ディレクトリ内の各ドキュメントをご参照ください。
 
