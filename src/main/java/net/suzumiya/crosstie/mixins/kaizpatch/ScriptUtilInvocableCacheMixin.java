@@ -148,6 +148,8 @@ public abstract class ScriptUtilInvocableCacheMixin {
             return realEngine;
         }
 
+        script = net.suzumiya.crosstie.compat.ScriptUtilFallback.redirectLwjgl3ifyKeyboardCalls(script);
+
         ScriptContext context = new SimpleScriptContext();
         Bindings bindings = realEngine.createBindings();
         context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
@@ -269,7 +271,8 @@ public abstract class ScriptUtilInvocableCacheMixin {
             // レール未ロード時に TileEntity が null) によるクラッシュを、そのフレームの描画スキップで回避する
             String msg = e.getMessage();
             if ("render".equals(func) && msg != null && msg.contains("TypeError")
-                    && (msg.contains("of null") || msg.contains("of undefined"))) {
+                    && (msg.contains("of null") || msg.contains("of undefined")
+                            || msg.contains("from null") || msg.contains("from undefined"))) {
                 if (!crosstie$renderErrorLogged) {
                     crosstie$renderErrorLogged = true;
                     System.err.println("[CrossTie] Suppressed render script null error (further ones hidden): " + msg);

@@ -50,11 +50,21 @@ public class TrueGL {
             m_glEnd = find(gl11, "glEnd");
         }
 
+        m_angelicaGlGetFloat = resolveAngelicaGlGetFloat();
+    }
+
+    private static Method resolveAngelicaGlGetFloat() {
         try {
-            Class<?> glStateManagerClass = Class.forName("com.gtnewhorizons.angelica.glsm.GLStateManager");
-            m_angelicaGlGetFloat = glStateManagerClass.getMethod("glGetFloat", int.class, FloatBuffer.class);
+            Class<?> glsmQueriesClass = Class.forName("com.gtnewhorizons.angelica.glsm.GLSMQueries");
+            return glsmQueriesClass.getMethod("glGetFloat", int.class, FloatBuffer.class);
         } catch (Throwable ignored) {
         }
+        try {
+            Class<?> glStateManagerClass = Class.forName("com.gtnewhorizons.angelica.glsm.GLStateManager");
+            return glStateManagerClass.getMethod("glGetFloat", int.class, FloatBuffer.class);
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     private static Method find(Class<?> cls, String name, Class<?>... params) {
@@ -96,8 +106,10 @@ public class TrueGL {
      */
     public static void syncMatricesToDriver() {
         try {
-            Class<?> glStateManagerClass = Class.forName("com.gtnewhorizons.angelica.glsm.GLStateManager");
-            Method glGetFloatMethod = glStateManagerClass.getMethod("glGetFloat", int.class, FloatBuffer.class);
+            Method glGetFloatMethod = m_angelicaGlGetFloat;
+            if (glGetFloatMethod == null) {
+                return;
+            }
 
             FloatBuffer buf = org.lwjgl.BufferUtils.createFloatBuffer(16);
 

@@ -24,6 +24,9 @@ public final class ScriptGlRedirector {
 
     private static Method getMethodRedirectPattern;
     private static Method getTargetMethodName;
+    private static Method getTargetReference;
+    private static Method redirectScriptMethod;
+    private static boolean modernMethodsChecked;
 
     private ScriptGlRedirector() {
     }
@@ -48,13 +51,24 @@ public final class ScriptGlRedirector {
             return script;
         }
 
-        Method targetMethod = getTargetMethodName();
-        if (targetMethod == null) {
+        ensureMethodsInitialized();
+        if (getTargetReference == null && getTargetMethodName == null && redirectScriptMethod == null) {
             return script;
         }
 
-        TransformResult qualifiedNames = redirectQualifiedGlCalls(script, targetMethod);
-        TransformResult shortNames = redirectShortGlCalls(qualifiedNames.script, targetMethod);
+        TransformResult qualifiedNames = redirectQualifiedGlCalls(script);
+
+        if (redirectScriptMethod != null) {
+            String delegated = invokeRedirectScript(qualifiedNames.script);
+            if (delegated != null) {
+                if (!qualifiedNames.changed && delegated.equals(script)) {
+                    return script;
+                }
+                return hasGlsmImport(delegated) ? delegated : GLSM_IMPORT + delegated;
+            }
+        }
+
+        TransformResult shortNames = redirectShortGlCalls(qualifiedNames.script);
         if (!shortNames.changed && !qualifiedNames.changed) {
             return script;
         }
@@ -62,7 +76,7 @@ public final class ScriptGlRedirector {
         return hasGlsmImport(shortNames.script) ? shortNames.script : GLSM_IMPORT + shortNames.script;
     }
 
-    private static TransformResult redirectShortGlCalls(String script, Method targetMethod) {
+    private static TransformResult redirectShortGlCalls(String script) {
         Method patternMethod = getMethodRedirectPattern();
         if (patternMethod == null) {
             return new TransformResult(script, false);
@@ -78,12 +92,12 @@ public final class ScriptGlRedirector {
             StringBuffer result = new StringBuffer();
             boolean changed = false;
             while (matcher.find()) {
-                String targetMethodName = getTargetMethodName(targetMethod, matcher.group());
-                if (targetMethodName == null) {
+                String targetReference = resolveTargetReference(matcher.group());
+                if (targetReference == null) {
                     continue;
                 }
 
-                matcher.appendReplacement(result, Matcher.quoteReplacement("GLStateManager." + targetMethodName));
+                matcher.appendReplacement(result, Matcher.quoteReplacement(targetReference));
                 changed = true;
             }
             matcher.appendTail(result);
@@ -93,7 +107,7 @@ public final class ScriptGlRedirector {
         }
     }
 
-    private static TransformResult redirectQualifiedGlCalls(String script, Method targetMethod) {
+    private static TransformResult redirectQualifiedGlCalls(String script) {
         if (script.indexOf("org.lwjgl.opengl.") < 0) {
             return new TransformResult(script, false);
         }
@@ -103,52 +117,53 @@ public final class ScriptGlRedirector {
         boolean changed = false;
         while (matcher.find()) {
             String classAndMethod = matcher.group(1) + "." + matcher.group(2);
-            String targetMethodName = getTargetMethodName(targetMethod, classAndMethod);
-            if (targetMethodName == null) {
+            String targetReference = resolveTargetReference(classAndMethod);
+            if (targetReference == null) {
                 continue;
             }
 
-            matcher.appendReplacement(result, Matcher.quoteReplacement("GLStateManager." + targetMethodName));
+            matcher.appendReplacement(result, Matcher.quoteReplacement(targetReference));
             changed = true;
         }
         matcher.appendTail(result);
         return new TransformResult(changed ? result.toString() : script, changed);
     }
 
-    private static Method getMethodRedirectPattern() {
-        if (getMethodRedirectPattern != null) {
-            return getMethodRedirectPattern;
+    private static synchronized void ensureMethodsInitialized() {
+        if (modernMethodsChecked) {
+            return;
         }
+        modernMethodsChecked = true;
 
         Class<?> redirects = getGlRedirectsClass();
         if (redirects == null) {
-            return null;
+            return;
         }
 
         try {
             getMethodRedirectPattern = redirects.getMethod("getMethodRedirectPattern");
-            return getMethodRedirectPattern;
-        } catch (ReflectiveOperationException e) {
-            return null;
-        }
-    }
-
-    private static Method getTargetMethodName() {
-        if (getTargetMethodName != null) {
-            return getTargetMethodName;
-        }
-
-        Class<?> redirects = getGlRedirectsClass();
-        if (redirects == null) {
-            return null;
+        } catch (ReflectiveOperationException ignored) {
         }
 
         try {
             getTargetMethodName = redirects.getMethod("getTargetMethodName", String.class);
-            return getTargetMethodName;
-        } catch (ReflectiveOperationException e) {
-            return null;
+        } catch (ReflectiveOperationException ignored) {
         }
+
+        try {
+            getTargetReference = redirects.getMethod("getTargetReference", String.class);
+        } catch (ReflectiveOperationException ignored) {
+        }
+
+        try {
+            redirectScriptMethod = redirects.getMethod("redirectScript", String.class);
+        } catch (ReflectiveOperationException ignored) {
+        }
+    }
+
+    private static Method getMethodRedirectPattern() {
+        ensureMethodsInitialized();
+        return getMethodRedirectPattern;
     }
 
     private static Class<?> getGlRedirectsClass() {
@@ -159,10 +174,38 @@ public final class ScriptGlRedirector {
         }
     }
 
-    private static String getTargetMethodName(Method targetMethod, String classAndMethod) {
+    private static String resolveTargetReference(String classAndMethod) {
+        ensureMethodsInitialized();
+        if (getTargetReference != null) {
+            try {
+                Object target = getTargetReference.invoke(null, classAndMethod);
+                if (target instanceof String) {
+                    return (String) target;
+                }
+            } catch (ReflectiveOperationException ignored) {
+            }
+        }
+
+        if (getTargetMethodName != null) {
+            try {
+                Object target = getTargetMethodName.invoke(null, classAndMethod);
+                if (target instanceof String) {
+                    return "GLStateManager." + (String) target;
+                }
+            } catch (ReflectiveOperationException ignored) {
+            }
+        }
+
+        return null;
+    }
+
+    private static String invokeRedirectScript(String script) {
+        if (redirectScriptMethod == null) {
+            return null;
+        }
         try {
-            Object target = targetMethod.invoke(null, classAndMethod);
-            return target instanceof String ? (String) target : null;
+            Object transformed = redirectScriptMethod.invoke(null, script);
+            return transformed instanceof String ? (String) transformed : null;
         } catch (ReflectiveOperationException e) {
             return null;
         }

@@ -11,3 +11,13 @@ crosstie.gui.reloadPacks.done=重新加載完成
 crosstie.gui.reloadPacks.clearing_caches=Clearing caches...
 crosstie.gui.reloadPacks.reloading_fileloader=Reloading FileLoader...
 crosstie.gui.reloadPacks.recreating_cachedpolygonmodel=Recreating CachedPolygonModel...
+
+crosstie.config.category.features=功能設定
+crosstie.config.category.features.tooltip=CrossTie 功能設定
+crosstie.config.category.performance=效能
+crosstie.config.category.performance.tooltip=渲染與同步最佳化
+crosstie.config.category.fixes=相容性修復
+crosstie.config.category.fixes.tooltip=Angelica, OptiFine 與 RTM 錯誤修復
+
+crosstie.config.enableGlassConnectedTextures.name=玻璃連接紋理 (CTM)
+crosstie.config.enableGlassConnectedTextures.tooltip=啟用玻璃系方塊（普通玻璃、玻璃板、染色玻璃、遮光玻璃）的連接紋理(CTM)。禁用(false)時不會連接，僅顯示單獨的紋理。需要重載資源包(F3+T)或重啟生效。

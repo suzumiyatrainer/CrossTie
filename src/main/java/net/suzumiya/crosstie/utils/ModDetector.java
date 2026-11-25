@@ -38,15 +38,14 @@ public class ModDetector {
         MOD_PATTERNS.put("UniMixins", new String[] { "unimixins" });
 
         // RTM ecosystem
-        // Do not treat KaizPatch as RTM/NGTLib/MCTE. KaizPatch can be installed
-        // without those mods, and enabling their mixins from its filename can make
-        // LaunchClassLoader resolve absent RTM classes during another mod's init.
-        MOD_PATTERNS.put("RTM", new String[] { "rtm", "realtrainmod" });
-        MOD_PATTERNS.put("NGTLib", new String[] { "ngtlib" });
-        MOD_PATTERNS.put("MCTE", new String[] { "mcte", "mcterraineditor" });
-        MOD_PATTERNS.put("NGTScriptUtil", new String[] { "ngtscriptutil", "ngtlib" });
+        // KaizPatchX bundles RTM, NGTLib, MCTE, and RailMapCustom in a single JAR.
+        // Standalone KaizPatch vs KaizPatchX is also verified via class entry inspection.
+        MOD_PATTERNS.put("RTM", new String[] { "rtm", "realtrainmod", "kaizpatchx" });
+        MOD_PATTERNS.put("NGTLib", new String[] { "ngtlib", "kaizpatchx" });
+        MOD_PATTERNS.put("MCTE", new String[] { "mcte", "mcterraineditor", "kaizpatchx" });
+        MOD_PATTERNS.put("NGTScriptUtil", new String[] { "ngtscriptutil", "ngtlib", "kaizpatchx" });
         MOD_PATTERNS.put("KaizPatch", new String[] { "kaizpatch" });
-        MOD_PATTERNS.put("RailMapCustom", new String[] { "rtm", "realtrainmod", "railmapcustom" });
+        MOD_PATTERNS.put("RailMapCustom", new String[] { "rtm", "realtrainmod", "railmapcustom", "kaizpatchx" });
 
         // ProjectRed
         MOD_PATTERNS.put("ProjectRed", new String[] { "projectred" });
@@ -131,11 +130,18 @@ public class ModDetector {
                 return true;
             }
 
-            // Check subdirectories (e.g. mods/1.7.10/)
+            // Check subdirectories (e.g. mods/1.7.10/), but skip modelpacks directory
+            // because modelpack archives (such as [RTM]modelpacks.zip) are asset packs, not mods.
             try (DirectoryStream<Path> subDirs = Files.newDirectoryStream(dir.toPath())) {
                 for (Path sub : subDirs) {
-                    if (Files.isDirectory(sub) && scanDirectory(sub, patterns)) {
-                        return true;
+                    if (Files.isDirectory(sub)) {
+                        String subName = sub.getFileName() != null ? sub.getFileName().toString() : "";
+                        if ("modelpacks".equalsIgnoreCase(subName)) {
+                            continue;
+                        }
+                        if (scanDirectory(sub, patterns)) {
+                            return true;
+                        }
                     }
                 }
             } catch (IOException ignored) {
@@ -153,6 +159,10 @@ public class ModDetector {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(dirPath, "*.{jar,zip}")) {
             for (Path entry : stream) {
                 String fileName = entry.getFileName().toString().toLowerCase();
+                // Ignore pure RTM modelpack zip files placed directly in mods/ (e.g. [RTM]*.zip)
+                if (fileName.endsWith(".zip") && isModelPackZipOnly(entry)) {
+                    continue;
+                }
                 for (String pattern : patterns) {
                     if (fileName.contains(pattern.toLowerCase())) {
                         return true;
@@ -176,6 +186,33 @@ public class ModDetector {
         }
 
         return false;
+    }
+
+    /**
+     * Checks whether a {@code .zip} file is a pure modelpack/asset pack (contains {@code assets/}
+     * or {@code pack.json}, and does NOT contain any root/package mod {@code .class} files
+     * outside {@code jp/ngt/rtm/modelpack/model/}).
+     */
+    private static boolean isModelPackZipOnly(Path zipPath) {
+        try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(zipPath.toFile())) {
+            boolean hasModClass = false;
+            boolean hasAssetsOrPackJson = false;
+            java.util.Enumeration<? extends java.util.zip.ZipEntry> entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                java.util.zip.ZipEntry ze = entries.nextElement();
+                String name = ze.getName();
+                if (name.startsWith("assets/") || "pack.json".equals(name)) {
+                    hasAssetsOrPackJson = true;
+                }
+                if (name.endsWith(".class") && !name.startsWith("jp/ngt/rtm/modelpack/model/")) {
+                    hasModClass = true;
+                    break;
+                }
+            }
+            return hasAssetsOrPackJson && !hasModClass;
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     /**

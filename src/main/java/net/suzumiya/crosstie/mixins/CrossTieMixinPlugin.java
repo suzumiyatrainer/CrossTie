@@ -29,6 +29,13 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         logDetectedCompatMods();
 
+        if (isClient && isModPresent("lwjgl3ify")) {
+            try {
+                net.suzumiya.crosstie.compat.lwjgl3ify.ImeCompat.registerEarlyHooks();
+            } catch (Throwable ignored) {
+            }
+        }
+
         // Angelica and PanoramaMaker compatibility
         // if (isModPresent("PanoramaMaker")) {
         // try {
@@ -149,6 +156,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 boolean hasRtm = isModPresent("RTM");
                 shouldApply = hasLwjgl3ify && hasRtm;
                 debugReason = "lwjgl3ify=" + hasLwjgl3ify + ", RTM=" + hasRtm;
+            } else if (mixinClassName.endsWith(".GuiTextFieldCustomImeMixin")) {
+                boolean hasNgtLib = isModPresent("NGTLib");
+                shouldApply = isClient && hasLwjgl3ify && hasNgtLib;
+                debugReason = "isClient=" + isClient + ", lwjgl3ify=" + hasLwjgl3ify + ", NGTLib=" + hasNgtLib;
             } else {
                 shouldApply = isClient && hasLwjgl3ify;
                 debugReason = "isClient=" + isClient + ", lwjgl3ify=" + hasLwjgl3ify;
@@ -256,7 +267,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                     || mixinClassName.endsWith(".ModelObjectMixin")
                     || mixinClassName.endsWith(".WirePartsRendererLightingMixin")
                     || mixinClassName.endsWith(".MixinSoundAPIEntityTrainBase")
-                    || mixinClassName.endsWith(".TrainSoundPreloadMixin")) {
+                    || mixinClassName.endsWith(".TrainSoundPreloadMixin")
+                    || mixinClassName.endsWith(".GuiTrainControlPanelFormationSyncMixin")
+                    || mixinClassName.endsWith(".PacketVehicleMovementSyncMixin")
+                    || mixinClassName.endsWith(".EntityVehicleBaseSyncInterpMixin")) {
                 // クライアント専用パッチ/API: クライアントかつRTM存在時のみ適用
                 shouldApply = isClient && hasRtm;
                 debugReason = "isClient=" + isClient + ", RTM=" + hasRtm;
@@ -338,12 +352,13 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
     }
 
     private void logDetectedCompatMods() {
-        System.out.println("[CrossTieMixin] Detected mods (file-based scan): " + "Angelica=" + isModPresent("Angelica")
+        System.out.println("[CrossTieMixin] Detected mods (file-based scan): " + "RTM=" + isModPresent("RTM")
+                + ", NGTLib=" + isModPresent("NGTLib") + ", KaizPatch=" + isModPresent("KaizPatch")
+                + ", MCTE=" + isModPresent("MCTE") + ", Angelica=" + isModPresent("Angelica")
                 + ", AngelicaGLSM=" + isModPresent("AngelicaGlsm") + ", ArchaicFix=" + isModPresent("ArchaicFix")
                 + ", CoreTweaks=" + isModPresent("CoreTweaks") + ", GTNHLib=" + isModPresent("GTNHLib")
                 + ", Hodgepodge=" + isModPresent("Hodgepodge") + ", UniMixins=" + isModPresent("UniMixins")
-                + ", KaizPatch=" + isModPresent("KaizPatch") + ", MinFo=" + isModPresent("MinFo") + ", MCTE="
-                + isModPresent("MCTE") + ", LiteLoader=" + isModPresent("LiteLoader") + ", MacroMod="
+                + ", MinFo=" + isModPresent("MinFo") + ", LiteLoader=" + isModPresent("LiteLoader") + ", MacroMod="
                 + isModPresent("MacroMod") + ", OptiFine=" + isModPresent("OptiFine") + ", FastCraft="
                 + isModPresent("FastCraft") + ", WebCTC=" + isModPresent("WebCTC") + ", JourneyMap="
                 + isModPresent("journeymap") + ", PanoramaMaker=" + isModPresent("PanoramaMaker")
@@ -394,9 +409,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.EntityTrainBasePhysicsMixin");
             mixins.add("rtm.EntityBogiePhysicsMixin");
             mixins.add("rtm.EntityBogieChunkCacheMixin");
+            mixins.add("rtm.EntityBogieErrorLogNullMixin");
             mixins.add("rtm.FormationManagerConcurrentMapMixin");
             mixins.add("rtm.FormationBoundaryMixin");
             mixins.add("rtm.EntityTrainBaseFormationSafeMixin");
+            mixins.add("rtm.ContainerTrainControlPanelFormationSyncMixin");
             mixins.add("rtm.RTMEventHandlerMixin");
             mixins.add("rtm.TileEntityPoleOptimizationMixin");
             mixins.add("rtm.TileEntityMachineUpdateOptimizationMixin");
@@ -412,6 +429,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.EntityVehicleBaseFixRiderPosMixin");
             mixins.add("rtm.TrainMinimalChunkLoaderMixin");
             mixins.add("rtm.TrainSoundPreloadMixin");
+            mixins.add("rtm.VehicleTrackerSyncPhaseMixin");
 
             if (isModPresent("KaizPatch")) {
                 mixins.add("kaizpatch.RailTransitionSearchRangeMixin");
@@ -457,9 +475,14 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("lwjgl3ify.Lwjgl3ifyKeyboardIsKeyDownMixin");
                 mixins.add("lwjgl3ify.Lwjgl3ifyKeyboardRedirectMixin");
                 mixins.add("lwjgl3ify.Lwjgl3ifyMouseButtonMixin");
-                // IME汎用補正(自動TextInput有効化・二重入力除去・クリック位置記録)
+                // IME汎用補正(自動TextInput有効化・二重入力除去・クリック位置記録・アクティブテキスト欄追跡)
                 mixins.add("lwjgl3ify.Lwjgl3ifyImeKeyboardMixin");
                 mixins.add("lwjgl3ify.Lwjgl3ifyImeMouseMixin");
+                mixins.add("lwjgl3ify.GuiScreenImeMixin");
+                mixins.add("lwjgl3ify.GuiTextFieldImeMixin");
+                if (isModPresent("NGTLib")) {
+                    mixins.add("lwjgl3ify.GuiTextFieldCustomImeMixin");
+                }
                 // GuiSelectModel モデルプレビューを GLStateManager 経由に切り替え
                 // lwjgl3ify + Angelica 環境での投影行列 desync / ライティング破壊を修正
                 if (isModPresent("RTM") && isModPresent("AngelicaGlsm")) {
@@ -521,6 +544,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.TileEntityCrossingGateNoCullingMixin");
                 mixins.add("rtm.RenderEntityInstalledObjectCullingMixin");
                 mixins.add("rtm.GuiSelectTexturePagingMixin");
+                mixins.add("rtm.GuiTrainControlPanelFormationSyncMixin");
                 mixins.add("rtm.RtmPartsMatrixPushMixin");
                 mixins.add("rtm.BasicVehiclePartsRendererMixin");
                 mixins.add("rtm.ItemWithModelNbtSyncGuardMixin");
@@ -539,6 +563,8 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.WirePartsRendererLightingMixin");
                 mixins.add("rtm.MixinRenderUtil");
                 mixins.add("rtm.CameraCopyImageSubDataMixin");
+                mixins.add("rtm.PacketVehicleMovementSyncMixin");
+                mixins.add("rtm.EntityVehicleBaseSyncInterpMixin");
 
 
                 if (isModPresent("NGTLib")) {

@@ -89,13 +89,16 @@ public abstract class GuiSelectModelRenderMixin {
     }
 
     /**
-     * {@code org.lwjgl.util.glu.Project.gluPerspective} を Reflection で呼ぶ。
-     *
-     * <p>lwjgl3ify の lwjglx 互換レイヤーが {@code org.lwjgl.util.glu.Project} を
-     * 提供しているため、実行時に解決できる。
+     * {@link ScriptGL#gluPerspective(float, float, float, float)} で GLSM 経由の透視投影を適用する。
+     * 万一失敗した場合のみ {@code org.lwjgl.util.glu.Project.gluPerspective} にフォールバックする。
      */
     private static void crosstie$gluPerspective(float fovy, float aspect, float zNear, float zFar)
             throws ReflectiveOperationException {
+        try {
+            ScriptGL.gluPerspective(fovy, aspect, zNear, zFar);
+            return;
+        } catch (Throwable ignored) {
+        }
         Class<?> project = Class.forName("org.lwjgl.util.glu.Project");
         Method gluPerspective = project.getMethod("gluPerspective",
                 float.class, float.class, float.class, float.class);

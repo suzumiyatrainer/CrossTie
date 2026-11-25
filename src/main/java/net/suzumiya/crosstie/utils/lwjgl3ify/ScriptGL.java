@@ -49,6 +49,7 @@ public final class ScriptGL {
 
     // ---- Reflection キャッシュ ----
     private static final Class<?> GLSM_CLASS = loadGlsmClass();
+    private static final Method GET_TARGET_OWNER = loadGetTargetOwnerMethod();
     private static final Method GL_PUSH_MATRIX = findMethod("glPushMatrix");
     private static final Method GL_POP_MATRIX = findMethod("glPopMatrix");
     private static final Method GL_PUSH_ATTRIB = findMethod("glPushAttrib", int.class);
@@ -65,6 +66,8 @@ public final class ScriptGL {
     private static final Method GL_LOAD_IDENTITY = findMethod("glLoadIdentity");
     private static final Method GL_ORTHO = findMethod("glOrtho", double.class, double.class, double.class, double.class,
             double.class, double.class);
+    private static final Method GLU_PERSPECTIVE = findMethod("gluPerspective", float.class, float.class, float.class,
+            float.class);
     private static final Method GL_ENABLE = findMethod("glEnable", int.class);
     private static final Method GL_DISABLE = findMethod("glDisable", int.class);
     private static final Method GL_BLEND_FUNC = findMethod("glBlendFunc", int.class, int.class);
@@ -140,6 +143,11 @@ public final class ScriptGL {
                 Double.valueOf(zNear), Double.valueOf(zFar));
     }
 
+    public static void gluPerspective(float fovy, float aspect, float zNear, float zFar) {
+        invokeVoid(GLU_PERSPECTIVE, Float.valueOf(fovy), Float.valueOf(aspect), Float.valueOf(zNear),
+                Float.valueOf(zFar));
+    }
+
     public static void glEnable(int cap) {
         invokeVoid(GL_ENABLE, Integer.valueOf(cap));
     }
@@ -212,13 +220,35 @@ public final class ScriptGL {
         }
     }
 
+    private static Method loadGetTargetOwnerMethod() {
+        try {
+            Class<?> redirectorClass = Class.forName("com.gtnewhorizons.angelica.glsm.redirect.GLSMRedirector");
+            return redirectorClass.getMethod("getTargetOwner", String.class);
+        } catch (ReflectiveOperationException e) {
+            return null;
+        }
+    }
+
     private static Method findMethod(String name, Class<?>... params) {
+        if (GET_TARGET_OWNER != null) {
+            try {
+                Object ownerInternalName = GET_TARGET_OWNER.invoke(null, name);
+                if (ownerInternalName instanceof String) {
+                    Class<?> ownerClass = Class.forName(((String) ownerInternalName).replace('/', '.'));
+                    Method m = ownerClass.getMethod(name, params);
+                    m.setAccessible(true);
+                    return m;
+                }
+            } catch (ReflectiveOperationException ignored) {
+                // Fall back to GLStateManager lookup below
+            }
+        }
         try {
             Method m = GLSM_CLASS.getMethod(name, params);
             m.setAccessible(true);
             return m;
         } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("[CrossTie/ScriptGL] GLStateManager." + name + " の解決に失敗しました。", e);
+            throw new IllegalStateException("[CrossTie/ScriptGL] GLSM." + name + " の解決に失敗しました。", e);
         }
     }
 
@@ -226,7 +256,7 @@ public final class ScriptGL {
         try {
             m.invoke(null, args);
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("[CrossTie/ScriptGL] GLStateManager." + m.getName() + " の呼び出しに失敗しました。", e);
+            throw new RuntimeException("[CrossTie/ScriptGL] GLSM." + m.getName() + " の呼び出しに失敗しました。", e);
         }
     }
 }

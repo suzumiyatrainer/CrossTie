@@ -153,6 +153,17 @@ public class CrossTieCorePlugin implements IFMLLoadingPlugin,
         if (mcDataDir == null) {
             return;
         }
+        // 数百個のモデルパックZIPをLaunchClassLoaderに登録すると、クラス探索の失敗
+        // (Nashorn生成クラスJO*等の "Could not find type" が数千回発生) の度に全ZIPを
+        // 走査してしまい、RTMモデルパック読込が極端に遅くなり画面がフリーズする
+        // (lwjgl3ify + Angelica + GTNHLib 環境で確認、386個で約88秒)。
+        // リソース解決はKaizPatchXのFIXFileLoaderが行うため、既定では無効とし
+        // -Dcrosstie.injectModelpackZips=true の場合のみ有効化する。
+        if (!Boolean.getBoolean("crosstie.injectModelpackZips")) {
+            System.out.println("[CrossTieCore] モデルパックZIPのクラスパス追加をスキップしました"
+                    + " (有効化: -Dcrosstie.injectModelpackZips=true)");
+            return;
+        }
         File modelpackDir = new File(mcDataDir, "mods/modelpacks");
         if (!modelpackDir.isDirectory()) {
             System.out.println("[CrossTieCore] mods/modelpacks ディレクトリが見つかりません: " + modelpackDir.getAbsolutePath());
@@ -166,10 +177,25 @@ public class CrossTieCorePlugin implements IFMLLoadingPlugin,
             return;
         }
         Arrays.sort(files);
+        java.util.Set<String> existingUrls = new java.util.HashSet<>();
+        try {
+            java.net.URL[] urls = Launch.classLoader.getURLs();
+            if (urls != null) {
+                for (java.net.URL u : urls) {
+                    if (u != null) {
+                        existingUrls.add(u.toString());
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
         for (File archive : files) {
             try {
-                Launch.classLoader.addURL(archive.toURI().toURL());
-                System.out.println("[CrossTieCore] モデルパックアーカイブをクラスパスに追加しました: " + archive.getName());
+                java.net.URL url = archive.toURI().toURL();
+                if (existingUrls.add(url.toString())) {
+                    Launch.classLoader.addURL(url);
+                    System.out.println("[CrossTieCore] モデルパックアーカイブをクラスパスに追加しました: " + archive.getName());
+                }
             } catch (MalformedURLException e) {
                 System.err.println("[CrossTieCore] モデルパックアーカイブの追加に失敗しました: "
                         + archive.getAbsolutePath() + " - " + e.getMessage());

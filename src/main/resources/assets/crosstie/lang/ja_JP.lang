@@ -14,3 +14,13 @@ crosstie.gui.reloadPacks.recreating_cachedpolygonmodel=ポリゴンモデルの�
 
 key.categories.crosstie=CrossTie
 key.crosstie.remove_wire=ワイヤー削除 (2点指定)
+
+crosstie.config.category.features=機能設定
+crosstie.config.category.features.tooltip=各種追加機能の設定
+crosstie.config.category.performance=パフォーマンス
+crosstie.config.category.performance.tooltip=描画・同期・メモリの最適化設定
+crosstie.config.category.fixes=互換性修正
+crosstie.config.category.fixes.tooltip=Angelica / OptiFine / RTM の不具合修正設定
+
+crosstie.config.enableGlassConnectedTextures.name=ガラスの隣接結合 (CTM)
+crosstie.config.enableGlassConnectedTextures.tooltip=ガラス系ブロック（通常ガラス・板ガラス・色付きガラス・色付き板ガラス・遮光ガラス）の隣接結合テクスチャ (CTM) を有効化します。無効(false)時は隣接結合を行わず単体テクスチャで固定表示されます。変更の反映にはリソース再読み込み(F3+T)または再起動が必要です。

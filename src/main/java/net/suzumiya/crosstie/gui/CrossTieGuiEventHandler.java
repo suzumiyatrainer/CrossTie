@@ -35,6 +35,13 @@ public class CrossTieGuiEventHandler {
         }
     }
 
+    @SubscribeEvent
+    public void onConfigChanged(cpw.mods.fml.client.event.ConfigChangedEvent.OnConfigChangedEvent event) {
+        if (Tags.MODID.equals(event.modID)) {
+            net.suzumiya.crosstie.CrossTieConfig.saveAndSync();
+        }
+    }
+
     private static final java.util.regex.Pattern COORD_PATTERN = java.util.regex.Pattern.compile(
             "(-?\\d+(?:\\.\\d+)?)[^\\d-]+(-?\\d+(?:\\.\\d+)?)[^\\d-]+(-?\\d+(?:\\.\\d+)?)"
     );

@@ -5,6 +5,7 @@ import net.minecraft.launchwrapper.IClassTransformer;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
@@ -12,6 +13,7 @@ import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 public class CrossTieClassTransformer implements IClassTransformer {
@@ -118,6 +120,12 @@ public class CrossTieClassTransformer implements IClassTransformer {
             return patchScriptUtil(basicClass);
         }
 
+        // IntelliInput: EnumWindows の全ウィンドウに GetWindowText を発行するため、
+        // 応答しない他プロセスのウィンドウで永久にブロックし起動時にフリーズする。
+        if (isClass(transformedName, name, "com.tsoft_web.IntelliInput.IntelliInput$1", null)) {
+            return patchIntelliInputEnumCallback(basicClass);
+        }
+
         // FML Loader: sortModList() の先頭で ModID の大文字小文字の差異を自動正規化
         if (isClass(transformedName, name, "cpw.mods.fml.common.Loader", null)) {
             return patchFmlLoader(basicClass);
@@ -128,6 +136,12 @@ public class CrossTieClassTransformer implements IClassTransformer {
         // NPE をスローするバグを防御 (未ロード/非存在クラス検索時の ClassNotFoundException を防ぐ)
         if (isClass(transformedName, name, "jp.example.variablecolorlight.core.ShaderBindTransformer", null)) {
             return patchShaderBindTransformer(basicClass);
+        }
+
+        // JourneyMap: GTNHLib の最新 DFU (DataResult が interface) との衝突による
+        // IncompatibleClassChangeError (ウェイポイント保存・読み込み時のクラッシュ) を修復
+        if (transformedName != null && transformedName.startsWith("journeymap.")) {
+            return patchJourneyMapDfu(basicClass);
         }
 
         // AngelicaConfig は ASM パッチしない。
@@ -142,6 +156,43 @@ public class CrossTieClassTransformer implements IClassTransformer {
         return dottedName.equals(transformedName) || dottedName.equals(name)
                 || dottedName.replace('.', '/').equals(transformedName) || dottedName.replace('.', '/').equals(name)
                 || (internalName != null && (internalName.equals(transformedName) || internalName.equals(name)));
+    }
+
+    /**
+     * IntelliInput の {@code IntelliInput$1.callback} 内の {@code User32.GetWindowText} 呼び出しを
+     * {@link net.suzumiya.crosstie.compat.IntelliInputCompat#safeGetWindowText} に差し替える。
+     * スタック形状 (レシーバ+3引数→int) は同一なので分岐を追加せずに置換できる。
+     */
+    private byte[] patchIntelliInputEnumCallback(byte[] basicClass) {
+        ClassNode classNode = new ClassNode();
+        new ClassReader(basicClass).accept(classNode, 0);
+
+        boolean changed = false;
+        for (Object methodObject : classNode.methods) {
+            MethodNode method = (MethodNode) methodObject;
+            if (!"callback".equals(method.name)) {
+                continue;
+            }
+            for (org.objectweb.asm.tree.AbstractInsnNode insn = method.instructions
+                    .getFirst(); insn != null;) {
+                org.objectweb.asm.tree.AbstractInsnNode next = insn.getNext();
+                if (insn instanceof MethodInsnNode) {
+                    MethodInsnNode m = (MethodInsnNode) insn;
+                    if ("GetWindowText".equals(m.name) && m.desc.endsWith("[CI)I")) {
+                        method.instructions.set(insn, new MethodInsnNode(Opcodes.INVOKESTATIC,
+                                "net/suzumiya/crosstie/compat/IntelliInputCompat", "safeGetWindowText",
+                                "(Ljava/lang/Object;Ljava/lang/Object;[CI)I", false));
+                        changed = true;
+                    }
+                }
+                insn = next;
+            }
+        }
+        if (changed) {
+            System.out.println("[CrossTie] Patched IntelliInput EnumWindows callback (skip foreign-process GetWindowText)");
+            return writeClass(classNode);
+        }
+        return basicClass;
     }
 
     private byte[] patchLwjgl3ifyKeyboard(byte[] basicClass) {
@@ -644,5 +695,126 @@ public class CrossTieClassTransformer implements IClassTransformer {
         ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
         classNode.accept(writer);
         return writer.toByteArray();
+    }
+
+    private static final String DATA_RESULT_INTERNAL = "com/mojang/serialization/DataResult";
+    private static final String JM_DFU_BRIDGE_INTERNAL = "net/suzumiya/crosstie/compat/journeymap/JourneyMapDfuBridge";
+    private static Boolean dataResultIsInterface = null;
+
+    private static boolean isDataResultInterface() {
+        if (dataResultIsInterface != null) {
+            return dataResultIsInterface;
+        }
+        try {
+            Class<?> drCls = Class.forName("com.mojang.serialization.DataResult", false, net.minecraft.launchwrapper.Launch.classLoader);
+            dataResultIsInterface = drCls.isInterface();
+            return dataResultIsInterface;
+        } catch (Throwable t) {
+            try {
+                byte[] bytes = net.minecraft.launchwrapper.Launch.classLoader.getClassBytes("com.mojang.serialization.DataResult");
+                if (bytes != null) {
+                    ClassReader cr = new ClassReader(bytes);
+                    dataResultIsInterface = (cr.getAccess() & Opcodes.ACC_INTERFACE) != 0;
+                    return dataResultIsInterface;
+                }
+            } catch (Throwable ignored) {}
+        }
+        dataResultIsInterface = true;
+        return true;
+    }
+
+    /**
+     * JourneyMap が最新 DFU (GTNHLib) の interface 版 DataResult と衝突して
+     * IncompatibleClassChangeError を起こす問題を修復する。
+     */
+    private byte[] patchJourneyMapDfu(byte[] basicClass) {
+        if (basicClass == null || !isDataResultInterface()) {
+            return basicClass;
+        }
+
+        ClassReader cr = new ClassReader(basicClass);
+        ClassNode cn = new ClassNode();
+        cr.accept(cn, 0);
+
+        boolean modified = false;
+
+        // Jm12NbtOps: 新 DFU の DynamicOps で abstract になった getBooleanValue を補完
+        if ("journeymap/common/nbt/Jm12NbtOps".equals(cn.name)) {
+            boolean hasGetBoolean = false;
+            for (Object methodObj : cn.methods) {
+                MethodNode mn = (MethodNode) methodObj;
+                if ("getBooleanValue".equals(mn.name)) {
+                    hasGetBoolean = true;
+                    break;
+                }
+            }
+            if (!hasGetBoolean) {
+                // 1. public DataResult<Boolean> getBooleanValue(NBTBase input)
+                MethodNode mn1 = new MethodNode(
+                        Opcodes.ACC_PUBLIC,
+                        "getBooleanValue",
+                        "(Lnet/minecraft/nbt/NBTBase;)Lcom/mojang/serialization/DataResult;",
+                        "(Lnet/minecraft/nbt/NBTBase;)Lcom/mojang/serialization/DataResult<Ljava/lang/Boolean;>;",
+                        null);
+                mn1.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                mn1.instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
+                mn1.instructions.add(new MethodInsnNode(
+                        Opcodes.INVOKESTATIC,
+                        "net/suzumiya/crosstie/compat/journeymap/Jm12NbtOpsHelper",
+                        "getBooleanValue",
+                        "(Ljava/lang/Object;Lnet/minecraft/nbt/NBTBase;)Lcom/mojang/serialization/DataResult;",
+                        false));
+                mn1.instructions.add(new InsnNode(Opcodes.ARETURN));
+                cn.methods.add(mn1);
+
+                // 2. public DataResult getBooleanValue(Object input) (bridge)
+                MethodNode mn2 = new MethodNode(
+                        Opcodes.ACC_PUBLIC | Opcodes.ACC_BRIDGE | Opcodes.ACC_SYNTHETIC,
+                        "getBooleanValue",
+                        "(Ljava/lang/Object;)Lcom/mojang/serialization/DataResult;",
+                        null,
+                        null);
+                mn2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 0));
+                mn2.instructions.add(new VarInsnNode(Opcodes.ALOAD, 1));
+                mn2.instructions.add(new TypeInsnNode(Opcodes.CHECKCAST, "net/minecraft/nbt/NBTBase"));
+                mn2.instructions.add(new MethodInsnNode(
+                        Opcodes.INVOKEVIRTUAL,
+                        "journeymap/common/nbt/Jm12NbtOps",
+                        "getBooleanValue",
+                        "(Lnet/minecraft/nbt/NBTBase;)Lcom/mojang/serialization/DataResult;",
+                        false));
+                mn2.instructions.add(new InsnNode(Opcodes.ARETURN));
+                cn.methods.add(mn2);
+
+                modified = true;
+            }
+        }
+
+        for (Object methodObj : cn.methods) {
+            MethodNode mn = (MethodNode) methodObj;
+            for (AbstractInsnNode insn : mn.instructions.toArray()) {
+                if (insn instanceof MethodInsnNode) {
+                    MethodInsnNode minsn = (MethodInsnNode) insn;
+                    if (DATA_RESULT_INTERNAL.equals(minsn.owner)) {
+                        if (minsn.getOpcode() == Opcodes.INVOKESTATIC) {
+                            minsn.owner = JM_DFU_BRIDGE_INTERNAL;
+                            minsn.itf = false;
+                            modified = true;
+                        } else if (minsn.getOpcode() == Opcodes.INVOKEVIRTUAL) {
+                            minsn.setOpcode(Opcodes.INVOKEINTERFACE);
+                            minsn.itf = true;
+                            modified = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (modified) {
+            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+            cn.accept(cw);
+            return cw.toByteArray();
+        }
+        return basicClass;
     }
 }

@@ -24,9 +24,9 @@ public final class ScriptUtilFallback {
     private static volatile boolean lwjgl3ifyKeyboardCallRedirectLogged;
     private static volatile boolean scriptProbeLogged;
     private static final Pattern LEGACY_KEYBOARD_IS_KEY_DOWN = Pattern
-            .compile("\\bKeyboard\\s*\\.\\s*isKeyDown\\s*\\(");
+            .compile("(?<![a-zA-Z0-9_$])(?:[a-zA-Z0-9_$]+\\s*\\.\\s*)*Keyboard\\s*\\.\\s*isKeyDown\\s*\\(");
     private static final Pattern LEGACY_MOUSE_IS_BUTTON_DOWN = Pattern
-            .compile("\\bMouse\\s*\\.\\s*isButtonDown\\s*\\(");
+            .compile("(?<![a-zA-Z0-9_$])(?:[a-zA-Z0-9_$]+\\s*\\.\\s*)*Mouse\\s*\\.\\s*isButtonDown\\s*\\(");
 
     private ScriptUtilFallback() {
     }
@@ -68,7 +68,7 @@ public final class ScriptUtilFallback {
      * loaded before LaunchWrapper's transformers were registered.
      */
     @SuppressWarnings("unused")
-    private static String redirectLwjgl3ifyKeyboardCalls(String script) {
+    public static String redirectLwjgl3ifyKeyboardCalls(String script) {
         if (script == null) {
             return script;
         }

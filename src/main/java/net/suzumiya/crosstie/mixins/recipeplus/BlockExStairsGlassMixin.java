@@ -37,7 +37,7 @@ public abstract class BlockExStairsGlassMixin extends BlockStairs implements IRe
     @Inject(method = "<init>(Lnet/minecraft/block/Block;I)V", at = @At("RETURN"), remap = false)
     private void crosstie$onInit2(Block block, int meta, CallbackInfo ci) {
         this.crosstie$baseBlockMeta = meta;
-        if (block != null && !block.isOpaqueCube()) {
+        if (RecipePlusGlassCompat.isTransparentBase(block)) {
             this.setLightOpacity(0);
         }
     }
@@ -45,7 +45,7 @@ public abstract class BlockExStairsGlassMixin extends BlockStairs implements IRe
     @Inject(method = "<init>(Lnet/minecraft/block/Block;IF)V", at = @At("RETURN"), remap = false)
     private void crosstie$onInit3(Block block, int meta, float slipperiness, CallbackInfo ci) {
         this.crosstie$baseBlockMeta = meta;
-        if (block != null && !block.isOpaqueCube()) {
+        if (RecipePlusGlassCompat.isTransparentBase(block)) {
             this.setLightOpacity(0);
         }
     }

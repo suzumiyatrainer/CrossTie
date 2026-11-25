@@ -14,3 +14,13 @@ crosstie.gui.reloadPacks.recreating_cachedpolygonmodel=Recreating CachedPolygonM
 
 key.categories.crosstie=CrossTie
 key.crosstie.remove_wire=Fast Wire Removal
+
+crosstie.config.category.features=Features
+crosstie.config.category.features.tooltip=CrossTie feature settings
+crosstie.config.category.performance=Performance
+crosstie.config.category.performance.tooltip=Rendering, synchronization, and memory optimizations
+crosstie.config.category.fixes=Fixes
+crosstie.config.category.fixes.tooltip=Bug fixes for Angelica, OptiFine, and RTM
+
+crosstie.config.enableGlassConnectedTextures.name=Glass Connected Textures
+crosstie.config.enableGlassConnectedTextures.tooltip=Enables Connected Textures (CTM) for glass blocks and panes (regular, stained, and tinted glass). When disabled (false), seamless connection is turned off and standalone textures are used. Requires resource reload (F3+T) or restart to apply.

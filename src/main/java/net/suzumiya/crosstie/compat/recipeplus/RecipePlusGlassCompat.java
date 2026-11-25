@@ -22,6 +22,10 @@ public final class RecipePlusGlassCompat {
     /**
      * 対象ブロックの元ブロックが、内部の接合面をカリングすべき透過ガラス・氷系ブロックか判定する。
      */
+    public static boolean isTransparentBase(Block base) {
+        return base != null && !base.isOpaqueCube();
+    }
+
     public static boolean isCullableGlassBase(Block base) {
         if (base == null || base.isOpaqueCube() || base instanceof BlockLeavesBase) {
             return false;

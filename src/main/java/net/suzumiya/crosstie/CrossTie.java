@@ -53,8 +53,9 @@ public class CrossTie {
             net.suzumiya.crosstie.client.CrossTieKeyBindings.init();
             net.minecraftforge.client.ClientCommandHandler.instance
                     .registerCommand(new net.suzumiya.crosstie.client.gui.CommandViewImage());
-            net.minecraftforge.common.MinecraftForge.EVENT_BUS
-                    .register(new net.suzumiya.crosstie.gui.CrossTieGuiEventHandler());
+            net.suzumiya.crosstie.gui.CrossTieGuiEventHandler guiEventHandler = new net.suzumiya.crosstie.gui.CrossTieGuiEventHandler();
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(guiEventHandler);
+            cpw.mods.fml.common.FMLCommonHandler.instance().bus().register(guiEventHandler);
             net.minecraftforge.common.MinecraftForge.EVENT_BUS
                     .register(new net.suzumiya.crosstie.client.WireFastRemoveTracker());
             net.minecraftforge.common.MinecraftForge.EVENT_BUS
@@ -63,11 +64,14 @@ public class CrossTie {
                     .register(new net.suzumiya.crosstie.client.CrossTieDiagnosticsTicker());
             cpw.mods.fml.common.FMLCommonHandler.instance().bus()
                     .register(new net.suzumiya.crosstie.client.CrossTieRenderFrameTracker());
+            cpw.mods.fml.common.FMLCommonHandler.instance().bus()
+                    .register(new net.suzumiya.crosstie.client.ConnectedTrainSyncHandler());
             // lwjgl3ify(SDL3)環境のIME汎用補正
             try {
                 Class.forName("org.lwjglx.opengl.Display");
-                cpw.mods.fml.common.FMLCommonHandler.instance().bus()
-                        .register(new net.suzumiya.crosstie.client.ImeTicker());
+                net.suzumiya.crosstie.client.ImeTicker imeTicker = new net.suzumiya.crosstie.client.ImeTicker();
+                cpw.mods.fml.common.FMLCommonHandler.instance().bus().register(imeTicker);
+                net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(imeTicker);
                 LOGGER.info("lwjgl3ify detected: IME compat enabled");
             } catch (Throwable ignored) {
             }

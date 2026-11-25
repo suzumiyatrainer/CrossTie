@@ -11,3 +11,13 @@ crosstie.gui.reloadPacks.done=다시 불러오기 완료
 crosstie.gui.reloadPacks.clearing_caches=Clearing caches...
 crosstie.gui.reloadPacks.reloading_fileloader=Reloading FileLoader...
 crosstie.gui.reloadPacks.recreating_cachedpolygonmodel=Recreating CachedPolygonModel...
+
+crosstie.config.category.features=기능 설정
+crosstie.config.category.features.tooltip=CrossTie 기능 설정
+crosstie.config.category.performance=성능
+crosstie.config.category.performance.tooltip=렌더링 및 동기화 최적화
+crosstie.config.category.fixes=호환성 수정
+crosstie.config.category.fixes.tooltip=Angelica, OptiFine 및 RTM 버그 수정
+
+crosstie.config.enableGlassConnectedTextures.name=유리 연결 텍스처 (CTM)
+crosstie.config.enableGlassConnectedTextures.tooltip=유리 및 유리판(일반, 색유리, 차광 유리)의 연결 텍스처(CTM)를 활성화합니다. 비활성화(false) 시 연결되지 않고 단독 텍스처로 표시됩니다. 리소스 다시 불러오기(F3+T) 또는 재시작이 필요합니다.

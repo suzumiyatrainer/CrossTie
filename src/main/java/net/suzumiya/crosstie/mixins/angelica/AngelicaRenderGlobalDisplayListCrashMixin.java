@@ -13,7 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.suzumiya.crosstie.utils.CrossTiePartsRenderContext;
 
-@Mixin(targets = "com.gtnewhorizons.angelica.glsm.GLStateManager", remap = false)
+@Mixin(targets = { "com.gtnewhorizons.angelica.glsm.GLStateManager",
+        "com.gtnewhorizons.angelica.glsm.GLSMDraws" }, remap = false)
 public abstract class AngelicaRenderGlobalDisplayListCrashMixin {
 
     /**
