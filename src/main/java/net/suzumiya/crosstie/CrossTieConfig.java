@@ -130,7 +130,7 @@ public final class CrossTieConfig {
         public static boolean enableSoundPreload;
 
         /** ガラス系ブロック（通常ガラス・板ガラス・色付きガラス・色付き板ガラス・遮光ガラス）の隣接結合テクスチャ (Connected Textures / CTM) を有効にするかどうか。 */
-        public static boolean enableGlassConnectedTextures;
+        public static boolean enableGlassConnectedTextures = true;
 
         // ---- 設定項目 (Performance) ---- //
 
@@ -207,8 +207,8 @@ public final class CrossTieConfig {
         public static boolean fixOptiFineWireShadowPass;
 
         /**
-         * [実験的] KaizPatchX/RTM 環境で連結車両が走行中（特に高速時）に前後車両へめり込む不具合を修正する。
-         * 編成内の位置同期パケット送信位相の統一、クライアント受信のメインスレッド一括適用、およびパケット遅延時の外挿ガードを有効化する。
+         * [実験的] KaizPatchX/RTM 環境で連結車両の前後車両同士がめり込む、または離れてしまう不具合を修正する。
+         * 編成内の位置同期パケット送信位相の統一、クライアント側での編成単位バリア同期・車間距離補正、およびパケット遅延時の外挿ガードを有効化する。
          */
         public static boolean fixConnectedTrainClipping;
 
@@ -365,11 +365,11 @@ public final class CrossTieConfig {
                 enableSoundPreload = config.getBoolean("enableSoundPreload", CAT_FEATURES, true,
                                 "列車のドア開閉音・チャイム等の初回再生遅延（未ロードラグ）を解消する事前キャッシュ（プリロード）機能を有効にします。");
 
-                Property propGlassCtm = config.get(CAT_FEATURES, "enableGlassConnectedTextures", false);
+                Property propGlassCtm = config.get(CAT_FEATURES, "enableGlassConnectedTextures", true);
                 propGlassCtm.comment = "ガラス系ブロック（通常ガラス・板ガラス・色付きガラス・色付き板ガラス・遮光ガラス）の隣接結合テクスチャ (Connected Textures / CTM) を有効にします。"
                                 + " 無効(false)時は隣接結合を行わず単体テクスチャ(26.3等)で固定表示されます。変更の反映にはリソース再読み込み(F3+T)または再起動が必要です。";
                 propGlassCtm.setLanguageKey("crosstie.config.enableGlassConnectedTextures");
-                enableGlassConnectedTextures = propGlassCtm.getBoolean(false);
+                enableGlassConnectedTextures = propGlassCtm.getBoolean(true);
 
                 // ---- 2. Performance カテゴリ ---- //
                 trainDistantCullingEnabled = config.getBoolean("trainDistantCullingEnabled", CAT_PERFORMANCE, true,
@@ -436,8 +436,8 @@ public final class CrossTieConfig {
                                                 + " 描画されず画面上で消えてしまう問題を修正します。" + " Angelica 環境では自動的に無効化されます。");
 
                 fixConnectedTrainClipping = config.getBoolean("fixConnectedTrainClipping", CAT_FIXES, false,
-                                "[実験的] KaizPatchX/RTM 環境で連結車両が走行中（特に高速時）に前後車両へめり込む不具合を修正します。"
-                                                + " 位置同期パケットの送信位相統一・クライアントメインスレッド一括適用・遅延時外挿ガードを有効化します。");
+                                "[実験的] KaizPatchX/RTM 環境で連結車両の前後車両同士がめり込む・離れてしまう不具合を修正します。"
+                                                + " 位置同期パケットの送信位相統一・編成単位バリア同期・車間距離補正・遅延時外挿ガードを有効化します。");
         }
 
         /**
@@ -454,7 +454,7 @@ public final class CrossTieConfig {
                 enableVehicleRollFollow = true;
                 enableTrainMinimalChunkLoader = true;
                 enableSoundPreload = true;
-                enableGlassConnectedTextures = false;
+                enableGlassConnectedTextures = true;
                 trainDistantCullingEnabled = true;
                 trainSpeedSyncEnabled = false;
                 railTesrThrottleEnabled = true;

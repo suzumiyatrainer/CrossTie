@@ -505,6 +505,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("angelica.AngelicaGlassPaneCtmPropertiesFixMixin");
                 mixins.add("angelica.AngelicaGlassPaneRendererFixMixin");
                 mixins.add("angelica.AngelicaCtmTextureGeneratorFixMixin");
+                mixins.add("angelica.AngelicaBlockStairsTransparentFixMixin");
+                if (isModPresent("RecipePlusMod")) {
+                    mixins.add("angelica.AngelicaCtmRecipePlusGlassMixin");
+                    mixins.add("angelica.AngelicaBlockOrientationRecipePlusGlassMixin");
+                    mixins.add("angelica.AngelicaBlockStateMatcherRecipePlusGlassMixin");
+                }
 
                 if (isModPresent("RTM")) {
                     mixins.add("angelica.WeatherColumnsAccessor");
@@ -680,11 +686,12 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("journeymap.ScreenEventHandlerMixin");
         }
 
-        // RecipePlusMod (BlockBreakable / BlockPane hooks are registered here; RecipePlusMod target mixins are registered in CrossTieLateMixinLoader)
+        // RecipePlusMod (BlockBreakable / BlockPane / RenderBlocks hooks are registered here; RecipePlusMod target mixins are registered in CrossTieLateMixinLoader)
         if (isModPresent("RecipePlusMod")) {
             mixins.add("recipeplus.BlockPaneRecipePlusMixin");
             if (isClient) {
                 mixins.add("recipeplus.BlockBreakableRecipePlusMixin");
+                mixins.add("recipeplus.RenderBlocksRecipePlusGrassMixin");
             }
         }
 

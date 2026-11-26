@@ -71,7 +71,7 @@ CrossTie collectively solves and provides the following **4 core features** rega
    * Details: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 Compatibility & Rendering Bug Fixes**
-   * RTM/MCTE rendering and lighting fixes under Angelica or OptiFine (dynamic lighting, wire lighting, 1.12.2 manifest marker modernization), connected train clipping prevention (experimental) and `Formation` synchronization recovery, bogie errorLog NPE crash fix, adjacent face culling / glass pane connection for RecipePlusMod transparent blocks and Angelica CTM bug fixes, IME input compatibility and inline composition overlay on LWJGL3ify / SDL3, IntelliInput startup freeze workaround, JourneyMap × GTNHLib (DFU) compatibility fix, shader water effects for Bamboo Spa Water, and compatibility fixes for other surrounding mods.
+   * RTM/MCTE rendering and lighting fixes under Angelica or OptiFine (dynamic lighting, wire lighting, 1.12.2 manifest marker modernization), connected train clipping prevention (experimental) and `Formation` synchronization recovery, bogie errorLog NPE crash fix, RecipePlusMod transparent block face culling / glass pane connection / transparent glass stair X-Ray fix / same-shape CTM support / Ex grass block rendering, GUI icon & stair lighting fixes and Angelica CTM bug fixes, IME input compatibility and inline composition overlay on LWJGL3ify / SDL3, IntelliInput startup freeze workaround, JourneyMap × GTNHLib (DFU) compatibility fix, shader water effects for Bamboo Spa Water, and compatibility fixes for other surrounding mods.
    * Details:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)

@@ -71,7 +71,7 @@ CrossTie は、RTM 関連の Mod 群（KaizPatchX）とパフォーマンス系 
    * 詳細: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 互換性・描画バグ修正**
-   * Angelica や OptiFine 環境下での RTM/MCTE 描画・ライティング修正（動的光源・架線ライティング・1.12.2マニフェストマーカー現代化）、連結車両走行時のめり込み防止（実験的）および編成 (`Formation`) 同期修復、台車エラーログ NPE クラッシュ修正、RecipePlusMod 透過ブロックの隣接面カリング・板ガラス接続および Angelica CTM バグ修正、LWJGL3ify / SDL3 環境の IME 入力互換・インライン変換オーバーレイ、IntelliInput 起動時フリーズ回避、JourneyMap × GTNHLib (DFU) 互換性修正、竹Mod温泉水へのシェーダー水面効果適用、その他周辺Modの競合修正。
+   * Angelica や OptiFine 環境下での RTM/MCTE 描画・ライティング修正（動的光源・架線ライティング・1.12.2マニフェストマーカー現代化）、連結車両走行時のめり込み防止（実験的）および編成 (`Formation`) 同期修復、台車エラーログ NPE クラッシュ修正、RecipePlusMod 透過ブロックの隣接面カリング・板ガラス接続・透明ガラス階段 X-Ray 修正・同形状 CTM 対応・Ex草ブロック描画/GUIアイコン/ライティング修正および Angelica CTM バグ修正、LWJGL3ify / SDL3 環境の IME 入力互換・インライン変換オーバーレイ、IntelliInput 起動時フリーズ回避、JourneyMap × GTNHLib (DFU) 互換性修正、竹Mod温泉水へのシェーダー水面効果適用、その他周辺Modの競合修正。
    * 詳細:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)

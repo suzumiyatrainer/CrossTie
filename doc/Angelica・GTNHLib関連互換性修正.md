@@ -97,19 +97,23 @@ Angelicaは、描画パイプラインを近代的な OpenGL Core Profile ベー
 - **結果**: 
   画面内に多数の TileEntity（RTMの列車や信号、レール等を含む）が存在する状況での描画スレッドのメモリ確保オーバーヘッドがゼロ化され、フレームレートの平滑化に貢献します。
 
-### 2.10 ガラス・板ガラスの隣接結合テクスチャ（CTM）バグ修正とオン/オフ設定
-- **対象ファイル**: `AngelicaCtmTextureGeneratorFixMixin.java`, `AngelicaGlassPaneCtmPropertiesFixMixin.java`, `AngelicaGlassPaneRendererFixMixin.java`
+### 2.10 ガラス・板ガラスの隣接結合テクスチャ（CTM）バグ修正とオン/オフ設定・透明階段 X-Ray 修正
+- **対象ファイル**: `AngelicaCtmTextureGeneratorFixMixin.java`, `AngelicaGlassPaneCtmPropertiesFixMixin.java`, `AngelicaGlassPaneRendererFixMixin.java`, `AngelicaBlockStairsTransparentFixMixin.java`, `AngelicaCtmRecipePlusGlassMixin.java`, `AngelicaBlockOrientationRecipePlusGlassMixin.java`, `AngelicaBlockStateMatcherRecipePlusGlassMixin.java`
 - **問題の背景**:
-  Angelica（MCPatcherForge CTM）環境でガラスや板ガラスを並べた際、以下の不具合が発生していました。
+  Angelica（MCPatcherForge CTM / NotFine FaceCulling）環境でガラスや板ガラスを並べた際、以下の不具合が発生していました。
   1. **枠線の縦横が逆になるバグ**: 結合テクスチャの自動生成時に縦用（`cVert`）と横用（`cHori`）が取り違えられており、横に並べた板ガラスの継ぎ目に縦枠が残り、上下の枠が消えてしまっていました。
   2. **板ガラスで CTM が効かない問題**: 標準の CTM が有効でも、板ガラス用の CTM 設定がデフォルト無効のままだと結合表示されませんでした。
   3. **CTM だけを切りたい場合の手段がない**: ガラスの単体テクスチャは維持したまま、隣接結合だけをオフにしたいケースに対応できませんでした。
+  4. **透明ガラス階段の X-Ray 問題**: NotFine の `MixinBlockStairs#isFaceNonObstructing` がレンダーパス 1（半透明）のみ非遮蔽扱いにしていたため、レンダーパス 0 かつ透過ブロックである通常ガラス階段（`Blocks.glass` ベース）の真下のブロック上面がカリングされて空が透けてしまっていました。
+  5. **RecipePlusMod ガラス系ブロックの CTM 未適用**: 階段・ハーフ・1/4ブロックがバニラガラスとは別ブロック扱いとなり CTM が適用されませんでした。
 - **修正内容**:
   - 縦横テクスチャの割り当てミスおよび同一フォルダ内でのテクスチャ上書き汚染を修正しました。
   - 標準 CTM が有効な場合は板ガラスの CTM も正しく動くように補正しました。
-  - CrossTie の設定（`enableGlassConnectedTextures`、ゲーム内 Config GUI から変更可能）を `false` にすると、通常ガラス・板ガラス・色付きガラス・遮光ガラスの隣接結合だけを無効化し、単体テクスチャのまま表示できるようにしました（反映には `F3+T` によるリソース再読み込みまたは再起動が必要です）。
+  - CrossTie の設定（`enableGlassConnectedTextures`、デフォルト `true`、ゲーム内 Config GUI から変更可能）を `false` にすると、通常ガラス・板ガラス・色付きガラス・遮光ガラスの隣接結合だけを無効化し、単体テクスチャのまま表示できるようにしました（反映には `F3+T` によるリソース再読み込みまたは再起動が必要です）。
+  - 元ブロックが `!isOpaqueCube()` の階段ブロックを常に非遮蔽扱いとし、透明ガラス階段の X-Ray を防止しました。
+  - RecipePlusMod のガラス・色付きガラス系拡張ブロックを元ブロック・色メタデータとして CTM 照合させつつ、同一形状・同一ブロック同士のみ接続（異形状間は非接続）するよう軽量実装しました。
 - **結果**:
-  ガラスや板ガラスを並べたときの枠線が正しい向きで美しくつながり、好みに応じてガラスの隣接結合オン/オフを簡単に切り替えられるようになります。
+  ガラスや板ガラス・RecipePlusMod ガラス建材の枠線が正しい向きで美しくつながり、透明ガラス階段の X-Ray も解消されます。好みに応じてガラスの隣接結合オン/オフを簡単に切り替えられます。
 
 ---
 

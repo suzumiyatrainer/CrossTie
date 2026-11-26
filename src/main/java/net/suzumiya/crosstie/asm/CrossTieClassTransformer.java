@@ -144,6 +144,13 @@ public class CrossTieClassTransformer implements IClassTransformer {
             return patchJourneyMapDfu(basicClass);
         }
 
+        // BambooMod: 縮小フィールド (RenderMultiBlock) の部分ブロック描画時に
+        // RenderBlocks.field_152631_f が false のまま呼ばれるため、北面 (-Z) および
+        // 東面 (+X) の U 座標が不連続・反転する不具合を修正
+        if (isClass(transformedName, name, "ruby.bamboo.render.block.RenderMultiBlock", null)) {
+            return patchBambooRenderMultiBlock(basicClass);
+        }
+
         // AngelicaConfig は ASM パッチしない。
         // GTNHLib の config システムが static フィールドを初期化時にリセットするため、
         // クラスロード時のフィールド書き換えは効果がありません。
@@ -813,6 +820,54 @@ public class CrossTieClassTransformer implements IClassTransformer {
         if (modified) {
             ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
             cn.accept(cw);
+            return cw.toByteArray();
+        }
+        return basicClass;
+    }
+
+    /**
+     * 竹Mod ({@code ruby.bamboo.render.block.RenderMultiBlock}) 内の
+     * {@code RenderBlocks.renderStandardBlock(Block, int, int, int)} 呼び出しを
+     * {@link net.suzumiya.crosstie.compat.bamboo.BambooRenderCompat#renderStandardBlockWithUvFix}
+     * に差し替え、縮小フィールドの北面 (-Z) / 東面 (+X) の UV 崩れを修正する。
+     *
+     * <p>
+     * 元の {@code INVOKEVIRTUAL} とスタック形状
+     * ({@code (RenderBlocks, Block, int, int, int) -> boolean}) が完全に同一のため、
+     * 1命令置換のみでスレッドセーフかつ例外安全に適用できる。
+     */
+    private byte[] patchBambooRenderMultiBlock(byte[] basicClass) {
+        ClassNode classNode = new ClassNode();
+        new ClassReader(basicClass).accept(classNode, 0);
+
+        int patchedCount = 0;
+        for (Object methodObject : classNode.methods) {
+            MethodNode method = (MethodNode) methodObject;
+            for (AbstractInsnNode insn = method.instructions.getFirst(); insn != null;) {
+                AbstractInsnNode next = insn.getNext();
+                if (insn.getOpcode() == Opcodes.INVOKEVIRTUAL && insn instanceof MethodInsnNode) {
+                    MethodInsnNode m = (MethodInsnNode) insn;
+                    if ("net/minecraft/client/renderer/RenderBlocks".equals(m.owner)
+                            && ("func_147784_q".equals(m.name) || "renderStandardBlock".equals(m.name))
+                            && "(Lnet/minecraft/block/Block;III)Z".equals(m.desc)) {
+                        method.instructions.set(insn, new MethodInsnNode(
+                                Opcodes.INVOKESTATIC,
+                                "net/suzumiya/crosstie/compat/bamboo/BambooRenderCompat",
+                                "renderStandardBlockWithUvFix",
+                                "(Lnet/minecraft/client/renderer/RenderBlocks;Lnet/minecraft/block/Block;III)Z",
+                                false));
+                        patchedCount++;
+                    }
+                }
+                insn = next;
+            }
+        }
+
+        if (patchedCount > 0) {
+            System.out.println("[CrossTie] Patched Bamboo RenderMultiBlock (" + patchedCount
+                    + " renderStandardBlock call(s) -> BambooRenderCompat.renderStandardBlockWithUvFix)");
+            ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+            classNode.accept(cw);
             return cw.toByteArray();
         }
         return basicClass;

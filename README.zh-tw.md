@@ -71,7 +71,7 @@ CrossTie 統整解決了 RTM 相關模組（KaizPatchX）與效能最佳化模�
    * 詳情: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 相容性與渲染錯誤修復**
-   * 修復在 Angelica 或 OptiFine 環境下的 RTM/MCTE 渲染與光照問題（動態光源、架空線光照、1.12.2 Manifest 標記現代化）、連掛列車行駛時的穿模防止（實驗性）與編組（`Formation`）同步修復、轉向架錯誤日誌 NPE 崩潰修復、RecipePlusMod 透明方塊的相鄰面剔除/玻璃板連接及 Angelica CTM 錯誤修復、LWJGL3ify / SDL3 環境的 IME 輸入相容與內嵌候選覆蓋層、IntelliInput 啟動卡死規避、JourneyMap × GTNHLib (DFU) 相容性修復、竹 Mod 溫泉水應用光影水面效果、以及其他周邊模組的衝突。
+   * 修復在 Angelica 或 OptiFine 環境下的 RTM/MCTE 渲染與光照問題（動態光源、架空線光照、1.12.2 Manifest 標記現代化）、連掛列車行駛時的穿模防止（實驗性）與編組（`Formation`）同步修復、轉向架錯誤日誌 NPE 崩潰修復、RecipePlusMod 透明方塊的相鄰面剔除/玻璃板連接/透明玻璃樓梯透視（X-Ray）修復/同形狀 CTM 支援/Ex 草方塊渲染與 GUI 圖示及光照修復以及 Angelica CTM 錯誤修復、LWJGL3ify / SDL3 環境的 IME 輸入相容與內嵌候選覆蓋層、IntelliInput 啟動卡死規避、JourneyMap × GTNHLib (DFU) 相容性修復、竹 Mod 溫泉水應用光影水面效果、以及其他周邊模組的衝突。
    * 詳情:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)

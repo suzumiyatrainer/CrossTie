@@ -131,17 +131,30 @@ CustomNPC+（カスタムNPC追加Mod）において、Java 8 環境での起動
 
 ---
 
-## 9. RecipePlusMod 関連の透過ガラス・板ガラス互換
+## 9. RecipePlusMod 関連の透過ガラス・板ガラス・Ex草ブロック互換（1.3.0 / 1.6.0 両対応）
 
-### 9.1 ガラス・氷系ハーフ/1/4/階段ブロックの隣接面カリングと板ガラス接続対応
-- **対象ファイル**: `RecipePlusGlassCompat.java`, `IRecipePlusGlassBlock.java`, `BlockBreakableRecipePlusMixin.java`, `BlockPaneRecipePlusMixin.java`, `BlockExSlabGlassMixin.java`, `BlockExStairsGlassMixin.java`
+### 9.1 ガラス・氷系ハーフ/1/4/階段ブロックの隣接面カリング・板ガラス接続・CTM・X-Ray 修正
+- **対象ファイル**: `RecipePlusGlassCompat.java`, `IRecipePlusGlassBlock.java`, `BlockBreakableRecipePlusMixin.java`, `BlockPaneRecipePlusMixin.java`, `BlockExSlabGlassMixin.java`, `BlockExStairsGlassMixin.java`, `AngelicaBlockStairsTransparentFixMixin.java`, `AngelicaCtmRecipePlusGlassMixin.java`, `AngelicaBlockOrientationRecipePlusGlassMixin.java`, `AngelicaBlockStateMatcherRecipePlusGlassMixin.java`
 - **問題の背景**:
-  RecipePlusMod が追加するガラス・色付きガラス・氷系のハーフブロック・1/4ブロック・階段は、バニラのガラスと隣り合わせに置いたときに接合面が消えず二重に見えたり、板ガラスが正しく接続されなかったりする問題がありました。
+  RecipePlusMod が追加するガラス・色付きガラス・氷系のハーフブロック・1/4ブロック・階段は、バニラのガラスと隣り合わせに置いたときに接合面が消えず二重に見えたり、板ガラスが正しく接続されなかったり、Angelica 環境で CTM が未適用になったり、通常ガラス階段の下のブロックが X-Ray で透けたりする問題がありました。
 - **修正内容**:
   - 透過ガラス・氷系ブロック同士の接触面を判定し、バニラガラスと同様に不要な接合面を非表示（カリング）にする互換ヘルパーを追加しました。
   - バニラの板ガラス（`BlockPane`）が RecipePlusMod のハーフ・1/4・階段ブロックの面にも自然に接続できるようにしました。
+  - Angelica（NotFine）の階段遮蔽判定を透過ブロック対応にし、通常ガラス階段の下が X-Ray になる不具合を修正しました。
+  - Angelica（MCPatcherForge CTM）でガラス・色付きガラス系拡張ブロックにも CTM を適用し、同一形状・同一ブロック同士のみ綺麗に接続されるようにしました。
 - **結果**:
-  RecipePlusMod のガラス系建材をバニラガラスや板ガラスと組み合わせても、継ぎ目がすっきり綺麗に表示されます。
+  RecipePlusMod のガラス系建材をバニラガラスや板ガラスと組み合わせても、継ぎ目や CTM がすっきり綺麗に表示されます。
+
+### 9.2 Ex草ブロック（階段・ハーフ・1/4・フェンス・フェンスゲート・壁）の描画・GUIアイコン・ライティング修正
+- **対象ファイル**: `RecipePlusGrassCompat.java`, `RenderBlocksRecipePlusGrassMixin.java`, `BlockExStairsGrassMixin.java`
+- **問題の背景**:
+  バニラの `RenderBlocks#renderStandardBlockWithColorMultiplier`（Smooth Lighting OFF 時や Angelica / Celeritas の AO 経路）および `renderBlockAsItem` が `block == Blocks.grass` を直接比較しているため、`BlockGrass` を継承していない RecipePlusMod の Ex草ブロック6種（`BlockExStairsGrass`, `BlockExSlabGrass`, `BlockExQuarterSlabGrass`, `BlockExFenceGrass`, `BlockExFenceGateGrass`, `BlockExWallGrass`）では側面・下面の土部分までバイオームの緑色で乗算され、不自然な色になっていました。また、`BlockExStairsGrass` は `useNeighborBrightness` が未設定のため階段の段部分が暗く描画されていました。
+- **修正内容**:
+  - `renderStandardBlockWithColorMultiplier` の上面以外の色指定から余分なバイオーム色乗算を打ち消し、バニラ草ブロックと同一の描画（上面と側面草フチのみバイオーム色、土部分は無着色）になるようにしました（色乗算のない通常ブロックでは早期スキップする軽量設計）。
+  - `renderBlockAsItem` で Ex草ブロックを草ブロック扱いとし、階段・フェンス・壁の上面にも `Tessellator` 経由で草色を適用して GUI アイコンが灰色になる問題を修正しました。
+  - `BlockExStairsGrass` のコンストラクタで `useNeighborBrightness = true` を設定し、階段内角の暗化を修正しました。
+- **結果**:
+  RecipePlusMod 1.3.0 / 1.6.0 のいずれでも、Ex草ブロックのワールド描画・ライティング・GUI アイコンがバニラ草ブロックと同様に自然な見た目になります。
 
 ---
 

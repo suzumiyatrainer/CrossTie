@@ -71,7 +71,7 @@ CrossTie는 RTM 관련 모드군(KaizPatchX)과 성능 최적화 모드군 사�
    * 자세히: [`doc/KaizPatchX関連_パフォーマンス最適化.md`](./doc/KaizPatchX関連_パフォーマンス最適化.md)
 
 3. **🤝 호환성 및 렌더링 버그 수정**
-   * Angelica 및 OptiFine 환경에서의 RTM/MCTE 렌더링·라이팅 수정(동적 광원·가선 라이팅·1.12.2 매니페스트 마커 현대화), 연결 차량 주행 시 겹침 방지(실험적) 및 편성(`Formation`) 동기화 복구, 대차 오류 로그 NPE 크래시 수정, RecipePlusMod 투명 블록의 인접면 컬링·유리판 연결 및 Angelica CTM 버그 수정, LWJGL3ify / SDL3 환경의 IME 입력 호환·인라인 변환 오버레이, IntelliInput 시작 시 프리징 회피, JourneyMap × GTNHLib (DFU) 호환성 수정, 대나무 모드 온천수에 셰이더 수면 효과 적용, 기타 주변 모드 충돌 수정.
+   * Angelica 및 OptiFine 환경에서의 RTM/MCTE 렌더링·라이팅 수정(동적 광원·가선 라이팅·1.12.2 매니페스트 마커 현대화), 연결 차량 주행 시 겹침 방지(실험적) 및 편성(`Formation`) 동기화 복구, 대차 오류 로그 NPE 크래시 수정, RecipePlusMod 투명 블록의 인접면 컬링·유리판 연결·투명 유리 계단 X-Ray 수정·동일 형상 CTM 대응·Ex 잔디 블록 렌더링/GUI 아이콘/라이팅 수정 및 Angelica CTM 버그 수정, LWJGL3ify / SDL3 환경의 IME 입력 호환·인라인 변환 오버레이, IntelliInput 시작 시 프리징 회피, JourneyMap × GTNHLib (DFU) 호환성 수정, 대나무 모드 온천수에 셰이더 수면 효과 적용, 기타 주변 모드 충돌 수정.
    * 자세히:
      * [`doc/Angelica・GTNHLib関連互換性修正.md`](./doc/Angelica・GTNHLib関連互換性修正.md)
      * [`doc/OptiFine・FastCraft関連互換性修正.md`](./doc/OptiFine・FastCraft関連互換性修正.md)

@@ -13,7 +13,8 @@
     "webctc.SignalRouterReflectionMixin",
     "webctc.RailGroupUtilsSignalLevelMixin",
     "recipeplus.BlockExSlabGlassMixin",
-    "recipeplus.BlockExStairsGlassMixin"
+    "recipeplus.BlockExStairsGlassMixin",
+    "recipeplus.BlockExStairsGrassMixin"
   ],
   "client": [],
   "server": []

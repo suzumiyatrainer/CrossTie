@@ -36,6 +36,7 @@ public class CrossTieLateMixinLoader
         if (loadedMods.contains("RecipePlusMod")) {
             mixins.add("recipeplus.BlockExSlabGlassMixin");
             mixins.add("recipeplus.BlockExStairsGlassMixin");
+            mixins.add("recipeplus.BlockExStairsGrassMixin");
         }
         return mixins;
     }
