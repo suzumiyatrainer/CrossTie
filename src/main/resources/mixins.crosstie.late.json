@@ -11,6 +11,7 @@
     "webctc.RailCacheDataUpdateOptimizationMixin",
     "webctc.SignalCacheDataUpdateOptimizationMixin",
     "webctc.SignalRouterReflectionMixin",
+    "webctc.RailRouterTurningOptimizationMixin",
     "webctc.RailGroupUtilsSignalLevelMixin",
     "recipeplus.BlockExSlabGlassMixin",
     "recipeplus.BlockExStairsGlassMixin",

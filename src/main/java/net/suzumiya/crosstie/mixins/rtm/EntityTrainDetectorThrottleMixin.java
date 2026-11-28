@@ -1,64 +1,80 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
+import jp.ngt.rtm.electric.EntityElectricalWiring;
+import jp.ngt.rtm.entity.EntityTrainDetector;
+import jp.ngt.rtm.rail.TileEntityLargeRailBase;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.World;
 import net.suzumiya.crosstie.CrossTieConfig;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
-
-import java.util.stream.IntStream;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * {@code EntityTrainDetector} の在線確認処理（{@code onUpdate} 内の IntStream スキャン）を
- * スロットリングし、サーバーの MSPT を低減する。
+ * {@code EntityTrainDetector} の在線確認処理をフリッカーゼロかつゼロアロケーションでスロットリングする。
  *
- * <h3>安全性について</h3>
- * {@code EntityTrainDetector} の {@code onUpdate()} は毎tick、レール下8マスまでのTileEntityを
- * 走査して列車在線を判定する。最高速 320km/h ≒ 88.9m/s の列車でも、
- * デフォルト間隔4tickでの移動距離は約 1.4m（= 1レールピッチ未満）であり、
- * 確実に検知できる。
- *
- * <h3>動作</h3>
- * {@code @Redirect} を用いて {@code IntStream.range(0, 8)} の実行タイミングを制御する。
- * スロットリング対象のtickでは {@code IntStream.empty()} を返すことで在線探査をスキップし、
- * 前回結果（{@code findTrain}）を安全に維持する。
+ * <ul>
+ *   <li>スキップ tick は {@code findTrain} を上書きせず前回値を維持するため、信号・踏切の点滅が発生しない。</li>
+ *   <li>実スキャン時も {@code IntStream} を使わず単純な {@code for} ループで走査する。</li>
+ *   <li>{@code remap = true} で {@code onUpdate} / {@code super.onUpdate()} を SRG 名 ({@code func_70071_h_}) へ確実にリマップする。</li>
+ * </ul>
  */
-@Mixin(targets = "jp.ngt.rtm.entity.EntityTrainDetector", remap = false)
-public abstract class EntityTrainDetectorThrottleMixin {
+@Mixin(EntityTrainDetector.class)
+public abstract class EntityTrainDetectorThrottleMixin extends EntityElectricalWiring {
 
-    /** スロットリング用フレームカウンター */
+    @Shadow(remap = false)
+    private boolean findTrain;
+
     @Unique
-    private int crosstie$tickCount = 0;
+    private int crosstie$tickCount = -1;
 
-    /**
-     * {@code EntityTrainDetector.onUpdate()} 内の {@code IntStream.range(0, 8)} をフックし、
-     * スロットリング対象tickでは空の Stream を返して探査を回避する。
-     */
-    @Redirect(
-            method = "onUpdate",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Ljava/util/stream/IntStream;range(II)Ljava/util/stream/IntStream;",
-                    remap = false
-            ),
-            require = 0,
-            remap = false
-    )
-    private IntStream crosstie$throttleRange(int start, int end) {
+    protected EntityTrainDetectorThrottleMixin(World world) {
+        super(world);
+    }
+
+    @Inject(method = "onUpdate", at = @At("HEAD"), cancellable = true)
+    private void crosstie$throttledOnUpdate(CallbackInfo ci) {
         if (!CrossTieConfig.detectorThrottlingEnabled) {
-            return IntStream.range(start, end);
+            return;
         }
 
         int interval = CrossTieConfig.detectorThrottleInterval;
         if (interval <= 1) {
-            return IntStream.range(start, end);
+            return;
         }
 
-        if (++crosstie$tickCount % interval != 0) {
-            // スロットリング対象tick: 空のIntStreamを返すことで TileEntity 探査ループを完全にスキップ
-            return IntStream.empty();
+        if (this.worldObj != null && !this.worldObj.isRemote && this.tileEW != null) {
+            boolean shouldScan;
+            if (this.crosstie$tickCount < 0) {
+                // 初回は必ずスキャンし、以降は EntityId で位相を分散する
+                this.crosstie$tickCount = Math.abs(this.getEntityId()) % interval;
+                shouldScan = true;
+            } else {
+                this.crosstie$tickCount = (this.crosstie$tickCount + 1) % interval;
+                shouldScan = (this.crosstie$tickCount == 0);
+            }
+
+            if (shouldScan) {
+                boolean found = false;
+                int baseX = this.tileEW.xCoord;
+                int baseY = this.tileEW.yCoord;
+                int baseZ = this.tileEW.zCoord;
+                for (int i = 0; i < 8; i++) {
+                    TileEntity te = this.worldObj.getTileEntity(baseX, baseY - i, baseZ);
+                    if (te instanceof TileEntityLargeRailBase) {
+                        found = ((TileEntityLargeRailBase) te).isTrainOnRail();
+                        break;
+                    }
+                }
+                this.findTrain = found;
+            }
+            // スキップ tick は this.findTrain を前回値のまま維持
         }
 
-        return IntStream.range(start, end);
+        super.onUpdate();
+        ci.cancel();
     }
 }

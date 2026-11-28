@@ -11,6 +11,7 @@ import net.suzumiya.crosstie.utils.texture.GifTextureRecord;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import jp.ngt.ngtlib.util.NGTUtilClient;
 
 @Mixin(value = ModelObject.class, remap = false)
@@ -25,6 +26,15 @@ public class ModelObjectMixin {
     @SuppressWarnings("rawtypes")
     @Shadow
     public PartsRenderer renderer;
+
+    @Unique
+    private static boolean crosstie$isGifPath(String path) {
+        if (path == null) {
+            return false;
+        }
+        int len = path.length();
+        return len >= 4 && path.regionMatches(true, len - 4, ".gif", 0, 4);
+    }
 
     /**
      * @author SuzumiyaTrainer
@@ -73,7 +83,7 @@ public class ModelObjectMixin {
                     if (override instanceof ResourceLocation) {
                         ResourceLocation loc = (ResourceLocation) override;
                         // overrideがある場合、passに関係なく強制バインド（発光パス等でも適用）
-                        if (loc.getResourcePath().toLowerCase().endsWith(".gif")) {
+                        if (crosstie$isGifPath(loc.getResourcePath())) {
                             GifTextureRecord record = CrossTieGifTextureManager.getOrCreate(loc);
                             if (record != null) {
                                 int tex = record.getCurrentTextureId(System.currentTimeMillis());
@@ -97,7 +107,7 @@ public class ModelObjectMixin {
 
                 // overrideがなければ、RTMの通常のテクスチャバインド処理
                 if (!handled && shouldBind && targetLoc != null) {
-                    if (targetLoc.getResourcePath().toLowerCase().endsWith(".gif")) {
+                    if (crosstie$isGifPath(targetLoc.getResourcePath())) {
                         GifTextureRecord record = CrossTieGifTextureManager.getOrCreate(targetLoc);
                         if (record != null) {
                             int tex = record.getCurrentTextureId(System.currentTimeMillis());

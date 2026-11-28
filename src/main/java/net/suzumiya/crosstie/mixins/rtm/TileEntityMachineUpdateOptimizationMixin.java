@@ -10,22 +10,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * モデルJSONでスクリプト（serverScriptPath）が指定されていない TileEntityMachineBase の
- * updateEntity() 呼び出しをキャンセルし、サーバー側の Tick 負荷（MSPT）を最適化します。
- * <p>
- * ■ 動作仕様:
- * <ul>
- *   <li>TileEntityMachineBase 本体の updateEntity() は {@code ++this.tick;} と {@code executer.execScript(this);} のみを行う。</li>
- *   <li>無JSモデルでは RTM 側の callMethod() で {@code set.serverSE != null} により実行されないため、
- *       updateEntity() そのものを HEAD でスキップしても状態や動作に一切影響を与えない（完全非破壊）。</li>
- *   <li>踏切（TileEntityCrossingGate）や改札（TileEntityTurnstile）などのサブクラスで
- *       独自のアニメーションやタイマーを持つものは、サブクラスの処理（バー開閉、警報音等）は通常通り実行され、
- *       空の super.updateEntity() のみがスキップされるため安全に動作を維持する。</li>
- *   <li>モデル変更時（setModelName）および NBT 読み込み時にキャッシュフラグをリセットし、
- *       後からのモデル変更（無JS ⇄ 有JS）にも確実に追従する。</li>
- * </ul>
+ * モデルJSONでサーバー側スクリプト（serverScriptPath）が指定されていない TileEntityMachineBase の
+ * サーバー側 updateEntity() 呼び出しをキャンセルし、MSPT を最適化します。
+ *
+ * <p>クライアント側では {@code ++this.tick;} が描画 JS のアニメーションに使用されるため、
+ * {@code !worldObj.isRemote}（サーバー側）でのみキャンセルを行います。</p>
  */
-@Mixin(value = TileEntityMachineBase.class, remap = false)
+@Mixin(TileEntityMachineBase.class)
 public abstract class TileEntityMachineUpdateOptimizationMixin {
 
     @Unique
@@ -45,7 +36,7 @@ public abstract class TileEntityMachineUpdateOptimizationMixin {
         return this.crosstie$scriptState == 2;
     }
 
-    @Inject(method = "setModelName", at = @At("HEAD"))
+    @Inject(method = "setModelName", at = @At("HEAD"), remap = false)
     private void crosstie$onSetModelName(String par1, CallbackInfo ci) {
         this.crosstie$scriptState = 0;
     }
@@ -57,6 +48,10 @@ public abstract class TileEntityMachineUpdateOptimizationMixin {
 
     @Inject(method = "updateEntity", at = @At("HEAD"), cancellable = true)
     private void crosstie$onUpdateEntity(CallbackInfo ci) {
+        TileEntityMachineBase self = (TileEntityMachineBase) (Object) this;
+        if (self.getWorldObj() == null || self.getWorldObj().isRemote) {
+            return; // クライアント側の tick アニメーションを保護
+        }
         if (!this.crosstie$hasServerScript()) {
             ci.cancel();
         }

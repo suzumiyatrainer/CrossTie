@@ -9,13 +9,12 @@ import jp.ngt.rtm.electric.Connection;
 import jp.ngt.rtm.electric.TileEntityConnectorBase;
 import jp.ngt.rtm.electric.TileEntityElectricalWiring;
 import jp.ngt.rtm.electric.TileEntityDummyEW;
-import jp.ngt.rtm.electric.TileEntityInsulator;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.suzumiya.crosstie.CrossTieConfig;
-import net.suzumiya.crosstie.cache.ElectricalWiringCacheManager;
+import net.suzumiya.crosstie.client.CrossTieBlendStateHelper;
 import net.suzumiya.crosstie.utils.CrossTieDiagnostics;
 import net.suzumiya.crosstie.mixins.CrossTieMixinPlugin;
 import org.lwjgl.opengl.GL11;
@@ -41,7 +40,8 @@ public abstract class RenderElectricalWiringOptimizationMixin {
      * 遠距離・視界限界外の架線・碍子描画をカリング
      */
     @Inject(method = "renderElectricalWiring", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
-    private void crosstie$cullDistantWiring(TileEntityElectricalWiring tileEntity, double par2, double par4, double par6, float par8, CallbackInfo ci) {
+    private void crosstie$cullDistantWiring(TileEntityElectricalWiring tileEntity, double par2, double par4,
+            double par6, float par8, CallbackInfo ci) {
         if (CrossTieDiagnostics.isEnabled()) {
             CrossTieDiagnostics.electricalWiringRenderCalls.incrementAndGet();
         }
@@ -52,28 +52,12 @@ public abstract class RenderElectricalWiringOptimizationMixin {
         // 視界限界距離外は完全カリング
         if (distSq > maxDistSq) {
             ci.cancel();
-            return;
-        }
-
-        // 64m 以降でかつ純粋な碍子（BlockInsulator）の場合は高負荷パスをカリング/簡易描画
-        if (distSq > LOD_DISTANCE_SQ && tileEntity instanceof TileEntityInsulator) {
-            Boolean isDecorative = ElectricalWiringCacheManager.get(tileEntity);
-            if (isDecorative != null && isDecorative) {
-                // パス1(透明/エフェクト)の重い描画を64m以降省略
-                int pass = MinecraftForgeClient.getRenderPass();
-                if (pass == 1) {
-                    ci.cancel();
-                }
-            }
         }
     }
 
     @Inject(method = "getConnectedTarget", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
-    private void crosstie$useCachedConnectedTarget(
-            @Coerce Object tileEntity,
-            @Coerce Object connection,
-            float partialTicks,
-            CallbackInfoReturnable<Object> cir) {
+    private void crosstie$useCachedConnectedTarget(@Coerce Object tileEntity, @Coerce Object connection,
+            float partialTicks, CallbackInfoReturnable<Object> cir) {
         if (!CrossTieConfig.connectionCacheEnabled) {
             return;
         }
@@ -104,9 +88,7 @@ public abstract class RenderElectricalWiringOptimizationMixin {
         }
 
         double thisX = sourceTile.xCoord + 0.5D + posMain.getX();
-        double thisY = sourceTile.yCoord
-                + (sourceTile instanceof TileEntityDummyEW ? 0.0D : 0.5D)
-                + posMain.getY();
+        double thisY = sourceTile.yCoord + (sourceTile instanceof TileEntityDummyEW ? 0.0D : 0.5D) + posMain.getY();
         double thisZ = sourceTile.zCoord + 0.5D + posMain.getZ();
         double targetYOffset = target instanceof TileEntityDummyEW ? 0.0D : 0.5D;
 
@@ -120,16 +102,7 @@ public abstract class RenderElectricalWiringOptimizationMixin {
         }
     }
 
-    @Redirect(
-            method = "renderElectricalWiring",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraftforge/client/MinecraftForgeClient;getRenderPass()I",
-                    remap = false
-            ),
-            require = 0,
-            remap = false
-    )
+    @Redirect(method = "renderElectricalWiring", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/client/MinecraftForgeClient;getRenderPass()I", remap = false), require = 0, remap = false)
     private int crosstie$normalizeShadowPass() {
         int pass = MinecraftForgeClient.getRenderPass();
         if (CrossTieMixinPlugin.hasOptiFineLikeEnv() && CrossTieConfig.fixOptiFineWireShadowPass) {
@@ -139,7 +112,8 @@ public abstract class RenderElectricalWiringOptimizationMixin {
     }
 
     @Shadow
-    protected abstract void renderWire(TileEntityElectricalWiring tileEntity, Connection connection, double par2, double par4, double par6, float par8, int pass);
+    protected abstract void renderWire(TileEntityElectricalWiring tileEntity, Connection connection, double par2,
+            double par4, double par6, float par8, int pass);
 
     @Unique
     private static int crosstie$getConnectorBrightness(TileEntityConnectorBase tileEntity) {
@@ -186,7 +160,8 @@ public abstract class RenderElectricalWiringOptimizationMixin {
     }
 
     @Inject(method = "renderConnector", at = @At("HEAD"), require = 0, remap = false)
-    private void crosstie$preRenderConnector(TileEntityConnectorBase tileEntity, double par2, double par4, double par6, float par8, int pass, CallbackInfo ci) {
+    private void crosstie$preRenderConnector(TileEntityConnectorBase tileEntity, double par2, double par4, double par6,
+            float par8, int pass, CallbackInfo ci) {
         GL11.glEnable(GL11.GL_NORMALIZE);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         if (OpenGlHelper.lightmapTexUnit != 0 && !GLHelper.isCompiling()) {
@@ -198,7 +173,8 @@ public abstract class RenderElectricalWiringOptimizationMixin {
     }
 
     @Inject(method = "renderConnector", at = @At("RETURN"), require = 0, remap = false)
-    private void crosstie$postRenderConnector(TileEntityConnectorBase tileEntity, double par2, double par4, double par6, float par8, int pass, CallbackInfo ci) {
+    private void crosstie$postRenderConnector(TileEntityConnectorBase tileEntity, double par2, double par4, double par6,
+            float par8, int pass, CallbackInfo ci) {
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         GL11.glDisable(GL11.GL_NORMALIZE);
         if (OpenGlHelper.lightmapTexUnit != 0 && !GLHelper.isCompiling()) {
@@ -210,18 +186,21 @@ public abstract class RenderElectricalWiringOptimizationMixin {
     }
 
     @Inject(method = "renderElectricalWiring", at = @At("RETURN"), require = 0, remap = false)
-    private void crosstie$postRenderElectricalWiring(TileEntityElectricalWiring tileEntity, double par2, double par4, double par6, float par8, CallbackInfo ci) {
+    private void crosstie$postRenderElectricalWiring(TileEntityElectricalWiring tileEntity, double par2, double par4,
+            double par6, float par8, CallbackInfo ci) {
         GL11.glDisable(GL12.GL_RESCALE_NORMAL);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     /**
      * @author CrossTie
-     * @reason Optimize renderAllWire by removing high-overhead Java Stream API calls
-     *         and ensure normal/color/lightmap state is clean across each wire connection.
+     * @reason Optimize renderAllWire by removing high-overhead Java Stream API
+     *         calls and ensure normal/color/lightmap state is clean across each
+     *         wire connection.
      */
     @Overwrite
-    protected void renderAllWire(TileEntityElectricalWiring tileEntity, double par2, double par4, double par6, float par8, int pass) {
+    protected void renderAllWire(TileEntityElectricalWiring tileEntity, double par2, double par4, double par6,
+            float par8, int pass) {
         boolean hasShadersFix = CrossTieConfig.fixOptiFineWireNormalize;
         if (hasShadersFix) {
             GL11.glEnable(GL11.GL_NORMALIZE);
@@ -233,7 +212,8 @@ public abstract class RenderElectricalWiringOptimizationMixin {
 
         GL11.glPushMatrix();
         Vec3 vec = tileEntity.getWirePos();
-        GL11.glTranslatef((float) par2 + 0.5F + (float) vec.getX(), (float) par4 + 0.5F + (float) vec.getY(), (float) par6 + 0.5F + (float) vec.getZ());
+        GL11.glTranslatef((float) par2 + 0.5F + (float) vec.getX(), (float) par4 + 0.5F + (float) vec.getY(),
+                (float) par6 + 0.5F + (float) vec.getZ());
 
         List<Connection> connections = tileEntity.getConnectionList();
         if (connections != null) {
@@ -254,6 +234,54 @@ public abstract class RenderElectricalWiringOptimizationMixin {
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         if (hasShadersFix) {
             GL11.glDisable(GL11.GL_NORMALIZE);
+        }
+    }
+
+    @Unique
+    private boolean crosstie$wireBlendEnabledByUs = false;
+
+    @Inject(method = "renderWire", at = @At("HEAD"), require = 0, remap = false)
+    private void crosstie$resetWireBlendFlag(TileEntityElectricalWiring tileEntity, Connection connection,
+            double par2, double par4, double par6, float par8, int pass, CallbackInfo ci) {
+        this.crosstie$wireBlendEnabledByUs = false;
+    }
+
+    @Redirect(
+        method = "renderWire",
+        at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glEnable(I)V", remap = false),
+        require = 0,
+        remap = false
+    )
+    private void crosstie$redirectWireEnableBlend(int cap) {
+        if (cap == GL11.GL_BLEND) {
+            this.crosstie$wireBlendEnabledByUs = CrossTieBlendStateHelper.enterPass1Blend();
+        } else {
+            GL11.glEnable(cap);
+        }
+    }
+
+    @Redirect(
+        method = "renderWire",
+        at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glBlendFunc(II)V", remap = false),
+        require = 0,
+        remap = false
+    )
+    private void crosstie$redirectWireBlendFunc(int sfactor, int dfactor) {
+        // enterPass1Blend() 内で必要な場合のみ 4 引数 glBlendFunc を設定済み
+    }
+
+    @Redirect(
+        method = "renderWire",
+        at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/GL11;glDisable(I)V", remap = false),
+        require = 0,
+        remap = false
+    )
+    private void crosstie$redirectWireDisableBlend(int cap) {
+        if (cap == GL11.GL_BLEND) {
+            CrossTieBlendStateHelper.exitPass1Blend(this.crosstie$wireBlendEnabledByUs);
+            this.crosstie$wireBlendEnabledByUs = false;
+        } else {
+            GL11.glDisable(cap);
         }
     }
 }

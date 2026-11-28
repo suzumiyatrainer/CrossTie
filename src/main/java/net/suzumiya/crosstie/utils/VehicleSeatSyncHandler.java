@@ -55,6 +55,22 @@ public final class VehicleSeatSyncHandler {
             return;
         }
 
+        // 車両が完全静止かつ非搭乗かつ更新不要なら回転計算をスキップ
+        if (floor.riddenByEntity == null
+                && !floor.needsUpdatePos
+                && vehicle.getSpeed() == 0.0F
+                && vehicle.posX == vehicle.prevPosX
+                && vehicle.posY == vehicle.prevPosY
+                && vehicle.posZ == vehicle.prevPosZ
+                && vehicle.rotationYaw == vehicle.prevRotationYaw
+                && vehicle.rotationPitch == vehicle.prevRotationPitch
+                && vehicle.rotationRoll == vehicle.prevRotationRoll) {
+            floor.prevPosX = floor.posX;
+            floor.prevPosY = floor.posY;
+            floor.prevPosZ = floor.posZ;
+            return;
+        }
+
         jp.ngt.ngtlib.math.Vec3 partVec = floor.getPartVec();
         if (partVec == null) {
             return;
@@ -63,25 +79,61 @@ public final class VehicleSeatSyncHandler {
         double vy = partVec.getY();
         double vz = partVec.getZ();
 
-        // 今tickの位置（電車の今tick位置・姿勢から計算）
-        Vec3 vCur = Vec3.createVectorHelper(vx, vy, vz);
-        vCur.rotateAroundZ((float) Math.toRadians(-vehicle.rotationRoll));
-        vCur.rotateAroundX((float) Math.toRadians(vehicle.rotationPitch));
-        vCur.rotateAroundY((float) Math.toRadians(vehicle.rotationYaw));
+        // 今tickの位置（Vec3 生成ゼロのプリミティブ Z->X->Y 回転）
+        float rz = (float) Math.toRadians(-vehicle.rotationRoll);
+        float cosZ = MathHelper.cos(rz);
+        float sinZ = MathHelper.sin(rz);
+        double x1 = vx * cosZ + vy * sinZ;
+        double y1 = vy * cosZ - vx * sinZ;
+        double z1 = vz;
 
-        double curX = vehicle.posX + vCur.xCoord;
-        double curY = vehicle.posY + vCur.yCoord;
-        double curZ = vehicle.posZ + vCur.zCoord;
+        float rx = (float) Math.toRadians(vehicle.rotationPitch);
+        float cosX = MathHelper.cos(rx);
+        float sinX = MathHelper.sin(rx);
+        double y2 = y1 * cosX + z1 * sinX;
+        double z2 = z1 * cosX - y1 * sinX;
 
-        // 前tickの位置（電車の前tick位置・姿勢から計算）
-        Vec3 vPrev = Vec3.createVectorHelper(vx, vy, vz);
-        vPrev.rotateAroundZ((float) Math.toRadians(-vehicle.prevRotationRoll));
-        vPrev.rotateAroundX((float) Math.toRadians(vehicle.prevRotationPitch));
-        vPrev.rotateAroundY((float) Math.toRadians(vehicle.prevRotationYaw));
+        float ry = (float) Math.toRadians(vehicle.rotationYaw);
+        float cosY = MathHelper.cos(ry);
+        float sinY = MathHelper.sin(ry);
+        double curX = vehicle.posX + (x1 * cosY + z2 * sinY);
+        double curY = vehicle.posY + y2;
+        double curZ = vehicle.posZ + (z2 * cosY - x1 * sinY);
 
-        double prevX = vehicle.prevPosX + vPrev.xCoord;
-        double prevY = vehicle.prevPosY + vPrev.yCoord;
-        double prevZ = vehicle.prevPosZ + vPrev.zCoord;
+        // 前tickの位置（車両が移動していなければ今tickの結果を再利用）
+        double prevX;
+        double prevY;
+        double prevZ;
+        if (vehicle.posX == vehicle.prevPosX
+                && vehicle.posY == vehicle.prevPosY
+                && vehicle.posZ == vehicle.prevPosZ
+                && vehicle.rotationYaw == vehicle.prevRotationYaw
+                && vehicle.rotationPitch == vehicle.prevRotationPitch
+                && vehicle.rotationRoll == vehicle.prevRotationRoll) {
+            prevX = curX;
+            prevY = curY;
+            prevZ = curZ;
+        } else {
+            float prz = (float) Math.toRadians(-vehicle.prevRotationRoll);
+            float pCosZ = MathHelper.cos(prz);
+            float pSinZ = MathHelper.sin(prz);
+            double px1 = vx * pCosZ + vy * pSinZ;
+            double py1 = vy * pCosZ - vx * pSinZ;
+            double pz1 = vz;
+
+            float prx = (float) Math.toRadians(vehicle.prevRotationPitch);
+            float pCosX = MathHelper.cos(prx);
+            float pSinX = MathHelper.sin(prx);
+            double py2 = py1 * pCosX + pz1 * pSinX;
+            double pz2 = pz1 * pCosX - py1 * pSinX;
+
+            float pry = (float) Math.toRadians(vehicle.prevRotationYaw);
+            float pCosY = MathHelper.cos(pry);
+            float pSinY = MathHelper.sin(pry);
+            prevX = vehicle.prevPosX + (px1 * pCosY + pz2 * pSinY);
+            prevY = vehicle.prevPosY + py2;
+            prevZ = vehicle.prevPosZ + (pz2 * pCosY - px1 * pSinY);
+        }
 
         // 座席の位置・前tick位置を設定
         floor.prevPosX = prevX;

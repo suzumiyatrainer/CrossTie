@@ -13,6 +13,8 @@ import java.nio.ByteOrder;
 public abstract class NGTTessellatorOptiFineShaderMixin {
     @Unique
     private static int crosstie$whiteTexture = -1;
+    @Unique
+    private static final boolean CROSSTIE_IS_LITTLE_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN;
 
     @Shadow private int vertexCount;
     @Shadow private int drawMode;
@@ -98,6 +100,9 @@ public abstract class NGTTessellatorOptiFineShaderMixin {
 
         if (this.drawMode == GL11.GL_TRIANGLE_STRIP && this.vertexCount >= 3) {
             mc.startDrawing(GL11.GL_TRIANGLES);
+            if (!this.hasNormals) {
+                mc.setNormal(0.0F, 1.0F, 0.0F);
+            }
             for (int i = 0; i < this.vertexCount - 2; i++) {
                 int idx0, idx1, idx2;
                 if ((i & 1) == 0) {
@@ -111,6 +116,9 @@ public abstract class NGTTessellatorOptiFineShaderMixin {
             }
         } else if (this.drawMode == GL11.GL_TRIANGLE_FAN && this.vertexCount >= 3) {
             mc.startDrawing(GL11.GL_TRIANGLES);
+            if (!this.hasNormals) {
+                mc.setNormal(0.0F, 1.0F, 0.0F);
+            }
             for (int i = 0; i < this.vertexCount - 2; i++) {
                 crosstie$addVertexToMc(mc, 0);
                 crosstie$addVertexToMc(mc, i + 1);
@@ -118,12 +126,18 @@ public abstract class NGTTessellatorOptiFineShaderMixin {
             }
         } else if (this.drawMode == GL11.GL_LINE_STRIP && this.vertexCount >= 2) {
             mc.startDrawing(GL11.GL_LINES);
+            if (!this.hasNormals) {
+                mc.setNormal(0.0F, 1.0F, 0.0F);
+            }
             for (int i = 0; i < this.vertexCount - 1; i++) {
                 crosstie$addVertexToMc(mc, i);
                 crosstie$addVertexToMc(mc, i + 1);
             }
         } else {
             mc.startDrawing(this.drawMode);
+            if (!this.hasNormals) {
+                mc.setNormal(0.0F, 1.0F, 0.0F);
+            }
             for (int i = 0; i < this.vertexCount; i++) {
                 crosstie$addVertexToMc(mc, i);
             }
@@ -147,35 +161,34 @@ public abstract class NGTTessellatorOptiFineShaderMixin {
 
     @Unique
     private void crosstie$addVertexToMc(Tessellator mc, int i) {
-        int base = i * 8;
+        int base = i << 3;
+        int[] buf = this.rawBuffer;
         if (this.hasNormals) {
-            int n = this.rawBuffer[base + 6];
-            float nx = ((byte) (n & 0xFF)) / 127.0f;
-            float ny = ((byte) ((n >> 8) & 0xFF)) / 127.0f;
-            float nz = ((byte) ((n >> 16) & 0xFF)) / 127.0f;
+            int n = buf[base + 6];
+            float nx = ((byte) (n & 0xFF)) * (1.0F / 127.0F);
+            float ny = ((byte) ((n >> 8) & 0xFF)) * (1.0F / 127.0F);
+            float nz = ((byte) ((n >> 16) & 0xFF)) * (1.0F / 127.0F);
             mc.setNormal(nx, ny, nz);
-        } else {
-            mc.setNormal(0.0F, 1.0F, 0.0F);
         }
         if (this.hasBrightness) {
-            mc.setBrightness(this.rawBuffer[base + 7]);
+            mc.setBrightness(buf[base + 7]);
         }
         if (this.hasColor) {
-            int c = this.rawBuffer[base + 5];
+            int c = buf[base + 5];
             int r, g, b, a;
-            if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
+            if (CROSSTIE_IS_LITTLE_ENDIAN) {
                 r = c & 0xFF; g = (c >> 8) & 0xFF; b = (c >> 16) & 0xFF; a = (c >> 24) & 0xFF;
             } else {
                 r = (c >> 24) & 0xFF; g = (c >> 16) & 0xFF; b = (c >> 8) & 0xFF; a = c & 0xFF;
             }
             mc.setColorRGBA(r, g, b, a);
         }
-        float x = Float.intBitsToFloat(this.rawBuffer[base]);
-        float y = Float.intBitsToFloat(this.rawBuffer[base + 1]);
-        float z = Float.intBitsToFloat(this.rawBuffer[base + 2]);
+        float x = Float.intBitsToFloat(buf[base]);
+        float y = Float.intBitsToFloat(buf[base + 1]);
+        float z = Float.intBitsToFloat(buf[base + 2]);
         if (this.hasTexture) {
-            float u = Float.intBitsToFloat(this.rawBuffer[base + 3]);
-            float v = Float.intBitsToFloat(this.rawBuffer[base + 4]);
+            float u = Float.intBitsToFloat(buf[base + 3]);
+            float v = Float.intBitsToFloat(buf[base + 4]);
             mc.addVertexWithUV(x, y, z, u, v);
         } else {
             mc.addVertexWithUV(x, y, z, 0.0F, 0.0F);

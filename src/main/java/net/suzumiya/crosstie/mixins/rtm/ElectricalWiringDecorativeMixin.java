@@ -1,11 +1,13 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
 import jp.ngt.rtm.electric.Connection;
+import jp.ngt.rtm.electric.ElectricalWiringManager;
 import jp.ngt.rtm.electric.TileEntityConnector;
+import jp.ngt.rtm.electric.TileEntityDummyEW;
 import jp.ngt.rtm.electric.TileEntityElectricalWiring;
 import net.suzumiya.crosstie.CrossTieConfig;
-import net.suzumiya.crosstie.cache.ElectricalWiringCacheManager;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -13,89 +15,110 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Set;
 
 /**
- * お飾り架線（BlockConnector に繋がれていない、純粋な BlockInsulator のみの架線）を
- * {@code ElectricalWiringManager.propagateSignal()} の処理から除外し、
- * サーバーの MSPT を大幅に低減します。
+ * お飾り架線（機能ノードに繋がれていない純装飾の架線ネットワーク）を
+ * {@code ElectricalWiringManager.propagateSignal()} から除外し、サーバー MSPT を低減する。
+ *
+ * <ul>
+ *   <li>キャッシュをディメンション別・サーバースレッド専用の {@code ElectricalWiringManager} インスタンス内に保持し、
+ *       スレッド競合とワールドアンロード時のメモリリークを完全に排除する。</li>
+ *   <li>{@code topologyRevision} の変化で O(1) 自動無効化するため、接続変更・破壊・チャンク読込/解放の無効化漏れがゼロ。</li>
+ *   <li>{@code TileEntityConnector} / {@code TileEntityDummyEW} / {@code DIRECT} / {@code TO_ENTITY} /
+ *       接続先未ロードチャンク ({@code getTile == null}) を機能ノードとして保護し、連結成分の全ノードを一括キャッシュする。</li>
+ * </ul>
  */
-@Mixin(targets = "jp.ngt.rtm.electric.ElectricalWiringManager", remap = false)
+@Mixin(value = ElectricalWiringManager.class, remap = false)
 public abstract class ElectricalWiringDecorativeMixin {
 
-    /**
-     * {@code propagateSignal()} の HEAD でお飾りチェックを行い、
-     * 純碍子ネットワークであれば即座に return する。
-     */
+    @Shadow
+    private long topologyRevision;
+
+    @Shadow
+    public abstract TileEntityElectricalWiring getTile(int x, int y, int z);
+
+    @Unique
+    private final IdentityHashMap<TileEntityElectricalWiring, Boolean> crosstie$decorativeCache =
+            new IdentityHashMap<TileEntityElectricalWiring, Boolean>();
+
+    @Unique
+    private long crosstie$cachedRevision = Long.MIN_VALUE;
+
     @Inject(method = "propagateSignal", at = @At("HEAD"), cancellable = true, remap = false)
     private void crosstie$skipDecorativeNetwork(TileEntityElectricalWiring origin, int level, CallbackInfo ci) {
-        if (!CrossTieConfig.decorativeWireOptimizationEnabled) {
+        if (!CrossTieConfig.decorativeWireOptimizationEnabled || origin == null) {
             return;
         }
-        if (origin == null) {
+        if (origin.getWorldObj() == null || origin.getWorldObj().isRemote) {
             return;
         }
 
-        try {
-            Boolean cached = ElectricalWiringCacheManager.get(origin);
-            if (cached == null) {
-                cached = crosstie$isDecorativeNetwork(origin);
-                ElectricalWiringCacheManager.put(origin, cached);
-            }
-            if (cached) {
-                ci.cancel();
-            }
-        } catch (Throwable t) {
-            // 例外発生時は安全のためキャンセルしない
+        if (this.crosstie$cachedRevision != this.topologyRevision) {
+            this.crosstie$decorativeCache.clear();
+            this.crosstie$cachedRevision = this.topologyRevision;
+        }
+
+        Boolean cached = this.crosstie$decorativeCache.get(origin);
+        if (cached == null) {
+            cached = this.crosstie$evaluateAndCacheNetwork(origin);
+        }
+        if (cached) {
+            ci.cancel();
         }
     }
 
     /**
-     * 指定ノードから BFS でネットワークを探索し、
-     * TileEntityConnector (BlockConnector) や ConnectionType.DIRECT が1件もなければ true (お飾り) を返す。
+     * 連結成分全体を BFS 探索し、機能ノード・機能接続・未ロード先が 1 件もなければ {@code true}（お飾り）、
+     * そうでなければ {@code false}（機能配線）として到達した全ノードを一括キャッシュする。
      */
     @Unique
-    private boolean crosstie$isDecorativeNetwork(TileEntityElectricalWiring origin) {
-        if (origin instanceof TileEntityConnector) {
-            return false; // 起点自体がコネクタ = 機能ノード
-        }
+    private boolean crosstie$evaluateAndCacheNetwork(TileEntityElectricalWiring origin) {
+        IdentityHashMap<TileEntityElectricalWiring, Boolean> visited =
+                new IdentityHashMap<TileEntityElectricalWiring, Boolean>();
+        Deque<TileEntityElectricalWiring> queue = new ArrayDeque<TileEntityElectricalWiring>();
 
-        Set<TileEntityElectricalWiring> visited = new HashSet<>();
-        Deque<TileEntityElectricalWiring> queue = new ArrayDeque<>();
-        visited.add(origin);
+        visited.put(origin, Boolean.TRUE);
         queue.add(origin);
+
+        boolean isFunctional = false;
 
         while (!queue.isEmpty()) {
             TileEntityElectricalWiring current = queue.poll();
-            if (current instanceof TileEntityConnector) {
-                return false; // コネクタに到達 = 機能配線
+            if (current instanceof TileEntityConnector || current instanceof TileEntityDummyEW) {
+                isFunctional = true;
             }
 
             List<Connection> connections = current.getConnectionList();
-            if (connections != null) {
-                for (Connection c : connections) {
-                    if (c.type == Connection.ConnectionType.NONE || c.type == Connection.ConnectionType.TO_PLAYER) {
-                        continue;
-                    }
-                    if (c.type == Connection.ConnectionType.DIRECT) {
-                        return false; // DIRECT接続あり = 機能配線
-                    }
+            if (connections == null) {
+                continue;
+            }
+            for (int i = 0, size = connections.size(); i < size; i++) {
+                Connection c = connections.get(i);
+                if (c == null || c.type == Connection.ConnectionType.NONE || c.type == Connection.ConnectionType.TO_PLAYER) {
+                    continue;
+                }
+                if (c.type == Connection.ConnectionType.DIRECT || c.type == Connection.ConnectionType.TO_ENTITY) {
+                    isFunctional = true;
+                    continue;
+                }
 
-                    TileEntityElectricalWiring next = c.getElectricalWiring(current.getWorldObj());
-                    if (next != null && visited.add(next)) {
-                        queue.add(next);
-                    }
+                // WIRE 接続: マネージャーの O(1) レジストリから取得。未ロード(null)は安全側に倒して機能配線扱い。
+                TileEntityElectricalWiring next = this.getTile(c.x, c.y, c.z);
+                if (next == null) {
+                    isFunctional = true;
+                } else if (!visited.containsKey(next)) {
+                    visited.put(next, Boolean.TRUE);
+                    queue.add(next);
                 }
             }
         }
 
-        return true; // コネクタ・DIRECT接続が一切見つからない = 純装飾（碍子）配線
-    }
-
-    @Inject(method = "onNodeRemoved", at = @At("RETURN"), require = 0, remap = false)
-    private void crosstie$invalidateCacheOnNodeRemoved(CallbackInfo ci) {
-        ElectricalWiringCacheManager.clear();
+        Boolean isDecorative = Boolean.valueOf(!isFunctional);
+        for (TileEntityElectricalWiring node : visited.keySet()) {
+            this.crosstie$decorativeCache.put(node, isDecorative);
+        }
+        return !isFunctional;
     }
 }

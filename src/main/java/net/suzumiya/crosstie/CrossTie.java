@@ -39,6 +39,8 @@ public class CrossTie {
                 net.suzumiya.crosstie.world.TrainChunkLoaderManager.INSTANCE);
         net.minecraftforge.common.MinecraftForge.EVENT_BUS
                 .register(net.suzumiya.crosstie.world.TrainChunkLoaderManager.INSTANCE);
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS
+                .register(net.suzumiya.crosstie.cache.VehicleUUIDIndex.INSTANCE);
 
         // サーバー側メモリ最適化マネージャー初期化
         net.suzumiya.crosstie.server.ServerMemoryManager.INSTANCE.init();
@@ -64,6 +66,10 @@ public class CrossTie {
                     .register(new net.suzumiya.crosstie.client.CrossTieDiagnosticsTicker());
             cpw.mods.fml.common.FMLCommonHandler.instance().bus()
                     .register(new net.suzumiya.crosstie.client.CrossTieRenderFrameTracker());
+            net.suzumiya.crosstie.client.GLHelperCleanupHandler glCleanupHandler = new net.suzumiya.crosstie.client.GLHelperCleanupHandler();
+            cpw.mods.fml.common.FMLCommonHandler.instance().bus().register(glCleanupHandler);
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(glCleanupHandler);
+            net.suzumiya.crosstie.compat.AngelicaDynamicBoundsCompat.registerDynamicTileEntities();
             cpw.mods.fml.common.FMLCommonHandler.instance().bus()
                     .register(new net.suzumiya.crosstie.client.ConnectedTrainSyncHandler());
             // lwjgl3ify(SDL3)環境のIME汎用補正

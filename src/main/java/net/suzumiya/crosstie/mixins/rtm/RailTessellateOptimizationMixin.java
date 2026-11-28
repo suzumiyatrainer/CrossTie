@@ -25,7 +25,8 @@ public abstract class RailTessellateOptimizationMixin {
     @Overwrite
     private void tessellateParts(jp.ngt.rtm.rail.TileEntityLargeRailCore tileEntity, java.nio.FloatBuffer matrix, int[] brightness, java.util.List<jp.ngt.ngtlib.renderer.model.GroupObject> gObjList, jp.ngt.rtm.render.RailRenderGeometry geometry) {
         tessellator.startDrawing(0x0004); // GL11.GL_TRIANGLES = 0x0004
-        int capacity = matrix.capacity() >> 4;
+        // ThreadLocal プールされた FloatBuffer を安全に扱うため capacity() ではなく limit() を使用する
+        int capacity = Math.min(matrix.limit() >> 4, brightness.length);
 
         // Pre-compute "side" prefix check to avoid repeated String.startsWith per face
         boolean hasSideGroups = false;

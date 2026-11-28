@@ -1,8 +1,6 @@
 package net.suzumiya.crosstie.mixins.kaizpatch;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import javax.script.Bindings;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
@@ -10,6 +8,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
+import net.suzumiya.crosstie.utils.CrossTieScriptEngineWrapper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Unique;
@@ -136,13 +135,25 @@ public abstract class ScriptUtilInvocableCacheMixin {
 
     /**
      * @author CrossTie
-     * @reason Optimized script execution using ThreadLocal and ScriptContext Proxy
-     *         to prevent concurrent execution crashes, variables leakage, and
-     *         ClassLoader overheads while avoiding Nashorn's CompiledScript
-     *         ReferenceError bugs.
+     * @reason Optimized script execution using ThreadLocal and concrete wrapper
+     *         (eliminating dynamic Proxy overhead) while preventing concurrent crashes.
      */
     @Overwrite
     public static ScriptEngine doScript(String script) {
+        return crosstie$doScriptInternal(script, null);
+    }
+
+    /**
+     * @author CrossTie
+     * @reason KaizPatchX 2-arg overload (used by PartsRenderer etc.) also benefits from concrete wrapper.
+     */
+    @Overwrite
+    public static ScriptEngine doScript(String script, String fileName) {
+        return crosstie$doScriptInternal(script, fileName);
+    }
+
+    @Unique
+    private static ScriptEngine crosstie$doScriptInternal(String script, String fileName) {
         ScriptEngine realEngine = crosstie$threadLocalEngine.get();
         if (script == null || script.trim().isEmpty()) {
             return realEngine;
@@ -154,115 +165,36 @@ public abstract class ScriptUtilInvocableCacheMixin {
         Bindings bindings = realEngine.createBindings();
         context.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
 
-        ScriptEngine proxyEngine = crosstie$createEngineProxy(realEngine, context);
+        CrossTieScriptEngineWrapper wrapper = new CrossTieScriptEngineWrapper(realEngine, context);
+        if (fileName != null && !fileName.isEmpty()) {
+            wrapper.put(ScriptEngine.FILENAME, fileName);
+        }
 
         try {
             String name = realEngine.getFactory().getEngineName();
             if (name != null && name.toLowerCase().contains("nashorn")) {
                 try {
-                    proxyEngine.eval("load(\"nashorn:mozilla_compat.js\");");
+                    wrapper.eval("load(\"nashorn:mozilla_compat.js\");");
                 } catch (ScriptException ignored) {
                 }
             }
-            proxyEngine.eval(script);
-            return proxyEngine;
+            wrapper.eval(script);
+            return wrapper;
         } catch (ScriptException e) {
             throw new RuntimeException("Script exec error\n" + script, e);
         }
     }
 
-    @Unique
-    private static ScriptEngine crosstie$createEngineProxy(final ScriptEngine realEngine, final ScriptContext context) {
-        Class<?>[] interfaces = new Class<?>[] { ScriptEngine.class, Invocable.class };
-        return (ScriptEngine) Proxy.newProxyInstance(ScriptUtilInvocableCacheMixin.class.getClassLoader(), interfaces,
-                new InvocationHandler() {
-                    @Override
-                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                        String name = method.getName();
-
-                        if (method.getDeclaringClass() == Invocable.class) {
-                            if ("invokeFunction".equals(name)) {
-                                String funcName = (String) args[0];
-                                Object[] funcArgs = (Object[]) args[1];
-                                Bindings bindings = context.getBindings(ScriptContext.ENGINE_SCOPE);
-                                Object funcObj = bindings.get(funcName);
-                                if (funcObj == null) {
-                                    // 関数が定義されていない場合は NoSuchMethodException を new/throw せず
-                                    // null を即座に返すことで描画・Updateホットパスでの大量の例外インスタンス生成オーバーヘッドを排除
-                                    return null;
-                                }
-                                synchronized (realEngine) {
-                                    ScriptContext oldContext = realEngine.getContext();
-                                    try {
-                                        realEngine.setContext(context);
-                                        return ((Invocable) realEngine).invokeFunction(funcName, funcArgs);
-                                    } finally {
-                                        realEngine.setContext(oldContext);
-                                    }
-                                }
-                            }
-
-                            if ("getInterface".equals(name)) {
-                                throw new UnsupportedOperationException("getInterface is not supported on proxy");
-                            }
-                        }
-
-                        if ("eval".equals(name)) {
-                            if (args.length == 1 && args[0] instanceof String) {
-                                synchronized (realEngine) {
-                                    ScriptContext oldContext = realEngine.getContext();
-                                    try {
-                                        realEngine.setContext(context);
-                                        return realEngine.eval((String) args[0]);
-                                    } finally {
-                                        realEngine.setContext(oldContext);
-                                    }
-                                }
-                            }
-                        }
-
-                        if ("get".equals(name)) {
-                            return context.getBindings(ScriptContext.ENGINE_SCOPE).get(args[0]);
-                        }
-
-                        if ("put".equals(name)) {
-                            context.getBindings(ScriptContext.ENGINE_SCOPE).put((String) args[0], args[1]);
-                            return null;
-                        }
-
-                        if ("getBindings".equals(name)) {
-                            return context.getBindings(((Integer) args[0]).intValue());
-                        }
-
-                        if ("setBindings".equals(name)) {
-                            context.setBindings((Bindings) args[0], ((Integer) args[1]).intValue());
-                            return null;
-                        }
-
-                        if ("getContext".equals(name)) {
-                            return context;
-                        }
-
-                        if ("setContext".equals(name)) {
-                            throw new UnsupportedOperationException("setContext is not supported on proxy");
-                        }
-
-                        try {
-                            return method.invoke(realEngine, args);
-                        } catch (java.lang.reflect.InvocationTargetException e) {
-                            throw e.getCause();
-                        }
-                    }
-                });
-    }
-
     /**
      * @author CrossTie
-     * @reason Avoid repeated Invocable casts on the hot RTM/NGT script render path.
+     * @reason Monomorphic fast path for CrossTieScriptEngineWrapper + safe Invocable dispatch.
      */
     @Overwrite
     public static Object doScriptFunction(ScriptEngine se, String func, Object... args) {
         try {
+            if (se instanceof CrossTieScriptEngineWrapper) {
+                return ((CrossTieScriptEngineWrapper) se).invokeFunction(func, args);
+            }
             return ((Invocable) se).invokeFunction(func, args);
         } catch (NoSuchMethodException e) {
             return null;

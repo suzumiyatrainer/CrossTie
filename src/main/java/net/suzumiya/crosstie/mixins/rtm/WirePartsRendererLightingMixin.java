@@ -16,11 +16,15 @@ import jp.ngt.rtm.render.WirePartsRenderer;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
+import net.suzumiya.crosstie.client.WireDisplayListCache;
 import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = WirePartsRenderer.class, remap = false)
 public abstract class WirePartsRendererLightingMixin extends TileEntityPartsRenderer<ModelSetWireClient> {
@@ -30,8 +34,118 @@ public abstract class WirePartsRendererLightingMixin extends TileEntityPartsRend
     }
 
     @Shadow
+    private boolean useScript;
+
+    @Shadow
     private boolean shouldRenderObject(TileEntityElectricalWiring tileEntity, int len, int pos, int pass) {
         return true;
+    }
+
+    /** 0=未判定, 1=空/no-op, 2=非空 */
+    @Unique
+    private byte crosstie$wireStaticMode = 0;
+
+    /** 0=未判定, 1=RenderBasicWire, 2=RenderSimpleCatenary, 3=その他カスタム */
+    @Unique
+    private byte crosstie$wireDynamicKind = 0;
+
+    @Unique
+    private static boolean crosstie$isEmptyJsFunc(String fnSource) {
+        if (fnSource == null || fnSource.isEmpty()) {
+            return true;
+        }
+        String noComments = fnSource.replaceAll("/\\*[\\s\\S]*?\\*/", "").replaceAll("//[^\\r\\n]*", "");
+        int open = noComments.indexOf('{');
+        int close = noComments.lastIndexOf('}');
+        if (open < 0 || close <= open) {
+            return false;
+        }
+        String compact = noComments.substring(open + 1, close).replaceAll("\\s+", "");
+        return compact.isEmpty() || ";".equals(compact) || "return;".equals(compact) || "return".equals(compact);
+    }
+
+    @Unique
+    private byte crosstie$resolveWireStaticMode() {
+        if (this.crosstie$wireStaticMode != 0) {
+            return this.crosstie$wireStaticMode;
+        }
+        javax.script.ScriptEngine se = this.getScript();
+        if (se == null) {
+            this.crosstie$wireStaticMode = 1;
+            return 1;
+        }
+        try {
+            Object srcObj = se.eval("typeof renderWireStatic === 'function' ? String(renderWireStatic) : ''");
+            String src = srcObj != null ? srcObj.toString() : "";
+            this.crosstie$wireStaticMode = crosstie$isEmptyJsFunc(src) ? (byte) 1 : (byte) 2;
+        } catch (Throwable t) {
+            this.crosstie$wireStaticMode = 2;
+        }
+        return this.crosstie$wireStaticMode;
+    }
+
+    @Unique
+    private byte crosstie$resolveWireDynamicKind() {
+        if (this.crosstie$wireDynamicKind != 0) {
+            return this.crosstie$wireDynamicKind;
+        }
+        javax.script.ScriptEngine se = this.getScript();
+        if (se == null) {
+            this.crosstie$wireDynamicKind = 3;
+            return 3;
+        }
+        try {
+            Object srcObj = se.eval("typeof renderWireDynamic === 'function' ? String(renderWireDynamic) : ''");
+            String src = srcObj != null ? srcObj.toString() : "";
+            String compact = src.replaceAll("/\\*[\\s\\S]*?\\*/", "")
+                    .replaceAll("//[^\\r\\n]*", "")
+                    .replaceAll("\\s+", "");
+            if (compact.contains("GL_TRIANGLE_STRIP")
+                    && compact.contains("0.025")
+                    && compact.contains("setColorOpaque_I(0)")
+                    && !compact.contains("tileEntity.")) {
+                this.crosstie$wireDynamicKind = 1;
+            } else if (compact.contains("startDrawingQuads()")
+                    && compact.contains("-0.8125")
+                    && compact.contains("*1.2")
+                    && !compact.contains("tileEntity.")) {
+                this.crosstie$wireDynamicKind = 2;
+            } else {
+                this.crosstie$wireDynamicKind = 3;
+            }
+        } catch (Throwable t) {
+            this.crosstie$wireDynamicKind = 3;
+        }
+        return this.crosstie$wireDynamicKind;
+    }
+
+    @Inject(method = "renderWireStatic", at = @At("HEAD"), cancellable = true, remap = false)
+    private void crosstie$skipEmptyWireStatic(TileEntityElectricalWiring tileEntity, Connection connection, Vec3 target,
+            float par8, int pass, CallbackInfo ci) {
+        if (!this.useScript || this.crosstie$resolveWireStaticMode() == 1) {
+            ci.cancel();
+        }
+    }
+
+    /**
+     * Phase 5-3 & 5.5: スクリプト無し架線・桁橋 ({@code !useScript}) および標準スクリプト架線
+     * ({@code RenderBasicWire.js} / {@code RenderSimpleCatenary.js}) の 1 本 1 単一 VBO DisplayList 描画。
+     * {@code bindTexture} は親の {@code renderWire} で外側にて完了済みのため OptiFine シェーダー安全。
+     */
+    @Inject(method = "renderWireDynamic", at = @At("HEAD"), cancellable = true, remap = false)
+    private void crosstie$tryRenderWireSingleVbo(TileEntityElectricalWiring tileEntity, Connection connection, Vec3 target,
+            float par8, int pass, CallbackInfo ci) {
+        if (!this.useScript) {
+            if (pass == RenderPass.NORMAL.id && WireDisplayListCache.tryRenderCached(tileEntity, connection, target, pass)) {
+                ci.cancel();
+            }
+            return;
+        }
+        byte kind = this.crosstie$resolveWireDynamicKind();
+        if ((kind == 1 || kind == 2)
+                && WireDisplayListCache.tryRenderStandardScriptWire(tileEntity, connection, target, pass, kind)) {
+            ci.cancel();
+        }
     }
 
     @Unique

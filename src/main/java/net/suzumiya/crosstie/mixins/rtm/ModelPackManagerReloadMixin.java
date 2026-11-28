@@ -98,5 +98,6 @@ public class ModelPackManagerReloadMixin {
     @Inject(method = "reload", at = @At("HEAD"))
     private void onReloadStart(org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         net.suzumiya.crosstie.utils.texture.CrossTieTextureOverrideManager.clearAll();
+        net.suzumiya.crosstie.client.weather.VehicleModelHeightMap.clearCache();
     }
 }

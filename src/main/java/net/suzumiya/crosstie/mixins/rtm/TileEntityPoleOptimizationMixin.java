@@ -1,24 +1,34 @@
 package net.suzumiya.crosstie.mixins.rtm;
 
+import jp.ngt.rtm.RTMBlock;
+import jp.ngt.rtm.block.tileentity.TileEntityOrnament;
 import jp.ngt.rtm.block.tileentity.TileEntityPole;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.MapColor;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Optimizes TileEntityPole by skipping updateEntity() once the model name is configured.
- * This avoids per-tick getBlockMetadata() and getBlockType() queries to the world,
- * which cause heavy overhead in maps with thousands of poles.
+ * 3-5: {@link TileEntityPole} は親 {@link TileEntityOrnament} の {@code canUpdate() = false} を継承し、
+ * 旧データ互換の空モデル名補完のみ {@link #validate()} で 1 回実行する。
  */
-@Mixin(value = TileEntityPole.class, remap = false)
-public abstract class TileEntityPoleOptimizationMixin {
+@Mixin(TileEntityPole.class)
+public abstract class TileEntityPoleOptimizationMixin extends TileEntityOrnament {
 
-    @Inject(method = "updateEntity", at = @At("HEAD"), cancellable = true)
-    private void crosstie$onUpdateEntity(CallbackInfo ci) {
-        TileEntityPole self = (TileEntityPole) (Object) this;
-        if (!self.getModelName().equals("")) {
-            ci.cancel();
+    @Override
+    public void validate() {
+        super.validate();
+        if (this.worldObj != null) {
+            String current = this.getModelName();
+            if (current == null || current.isEmpty()) {
+                int meta = this.getBlockMetadata();
+                Block block = this.getBlockType();
+                if (block == RTMBlock.linePole) {
+                    this.setModelName(TileEntityPole.getFixedModelName(meta));
+                } else if (block == RTMBlock.framework) {
+                    this.setModelName("IronFrame01");
+                    this.getResourceState().color = MapColor.getMapColorForBlockColored(meta).colorValue;
+                }
+            }
         }
     }
 }

@@ -235,12 +235,24 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.ngtlib.")) {
             boolean hasNgtLib = isModPresent("NGTLib");
-            if (mixinClassName.endsWith(".TextureSetMixin")) {
+            if (mixinClassName.endsWith(".TextureSetMixin")
+                    || mixinClassName.endsWith(".GLHelperCleanupMixin")
+                    || mixinClassName.endsWith(".NGTTessellatorDrawVertexArrayFixMixin")
+                    || mixinClassName.endsWith(".NGTRendererOptimizationMixin")) {
                 shouldApply = isClient && hasNgtLib;
                 debugReason = "isClient=" + isClient + ", NGTLib=" + hasNgtLib;
             } else {
                 shouldApply = hasNgtLib;
                 debugReason = "NGTLib=" + hasNgtLib;
+            }
+        } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.mcte.")) {
+            boolean hasMcte = isModPresent("MCTE");
+            if (mixinClassName.endsWith(".RenderMiniatureOptimizationMixin")) {
+                shouldApply = isClient && hasMcte;
+                debugReason = "isClient=" + isClient + ", MCTE=" + hasMcte;
+            } else {
+                shouldApply = hasMcte;
+                debugReason = "MCTE=" + hasMcte;
             }
         } else if (mixinClassName.startsWith("net.suzumiya.crosstie.mixins.client.CameraTiltMixin")) {
             boolean hasRtm = isModPresent("RTM");
@@ -270,7 +282,17 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                     || mixinClassName.endsWith(".TrainSoundPreloadMixin")
                     || mixinClassName.endsWith(".GuiTrainControlPanelFormationSyncMixin")
                     || mixinClassName.endsWith(".PacketVehicleMovementSyncMixin")
-                    || mixinClassName.endsWith(".EntityVehicleBaseSyncInterpMixin")) {
+                    || mixinClassName.endsWith(".EntityVehicleBaseSyncInterpMixin")
+                    || mixinClassName.endsWith(".EntityTrainBaseOptimizationMixin")
+                    || mixinClassName.endsWith(".SoundUpdaterVehicleOptimizationMixin")
+                    || mixinClassName.endsWith(".PartsRendererOptimizationMixin")
+                    || mixinClassName.endsWith(".RenderVehicleBaseOptimizationMixin")
+                    || mixinClassName.endsWith(".BasicVehiclePartsRendererOptimizationMixin")
+                    || mixinClassName.endsWith(".RenderFlagOptimizationMixin")
+                    || mixinClassName.endsWith(".RenderItemWithModelCacheMixin")
+                    || mixinClassName.endsWith(".ModelObjectPass1BlendMixin")
+                    || mixinClassName.endsWith(".TileEntityEWDisplayListCleanupMixin")
+                    || mixinClassName.endsWith(".PartsRendererBindTextureHookMixin")) {
                 // クライアント専用パッチ/API: クライアントかつRTM存在時のみ適用
                 shouldApply = isClient && hasRtm;
                 debugReason = "isClient=" + isClient + ", RTM=" + hasRtm;
@@ -301,6 +323,11 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                     || mixinClassName.endsWith(".ServerConfigurationManagerLoginMixin")) {
                 shouldApply = true;
                 debugReason = "always=true";
+            } else if (mixinClassName.endsWith(".WorldVehicleIndexMixin")
+                    || mixinClassName.endsWith(".TrainEntityInteractionRangeMixin")) {
+                boolean hasRtm = isModPresent("RTM");
+                shouldApply = hasRtm;
+                debugReason = "RTM=" + hasRtm;
             } else if (mixinClassName.endsWith(".EntityRendererRainOcclusionMixin")
                     || mixinClassName.endsWith(".WorldPrecipitationHeightOcclusionMixin")) {
                 boolean hasRtm = isModPresent("RTM");
@@ -398,16 +425,13 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         if (isModPresent("RTM")) {
             mixins.add("rtm.DataEntryMixin");
             mixins.add("rtm.DataMapMixin");
+            mixins.add("rtm.PacketDataMapMixin");
             mixins.add("rtm.CommonProxySoundRangeOptimizationMixin");
             mixins.add("rtm.TileEntityInsulatorOptimizationMixin");
-            // ElectricalWiringDecorativeMixin / TileEntityEWConnectionMixin は
-            // クライアント・サーバー共通であり、下部の「RTM サーバー側」ブロックで一元登録。
-            // RenderElectricalWiringOptimizationMixin はクライアント描画専用のため
             // EntityTrainBaseSpeedSyncMixin: 列車パケット同期の無効化要請に伴い除外
+            // EntityTrainBasePhysicsMixin / EntityBogiePhysicsMixin:
+            // ForkJoinPool ワーカースレッドからの非スレッドセーフな World 操作（衝突・ダメージ・連結・loadChunk）を回避するため廃止
             mixins.add("rtm.EntityTrainBaseDataWatcherCacheMixin");
-            mixins.add("rtm.EntityTrainBaseOptimizationMixin");
-            mixins.add("rtm.EntityTrainBasePhysicsMixin");
-            mixins.add("rtm.EntityBogiePhysicsMixin");
             mixins.add("rtm.EntityBogieChunkCacheMixin");
             mixins.add("rtm.EntityBogieErrorLogNullMixin");
             mixins.add("rtm.FormationManagerConcurrentMapMixin");
@@ -416,9 +440,16 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rtm.ContainerTrainControlPanelFormationSyncMixin");
             mixins.add("rtm.RTMEventHandlerMixin");
             mixins.add("rtm.TileEntityPoleOptimizationMixin");
+            mixins.add("rtm.TileEntityOrnamentOptimizationMixin");
+            mixins.add("rtm.TileEntityPaintOptimizationMixin");
+            mixins.add("rtm.TileEntitySignBoardOptimizationMixin");
+            mixins.add("rtm.TileEntitySignalConverterOptimizationMixin");
+            mixins.add("rtm.TileEntitySCWirelessOptimizationMixin");
+            mixins.add("rtm.TileEntityMachineBaseAabbMixin");
+            mixins.add("rtm.TileEntityFlagAabbMixin");
             mixins.add("rtm.TileEntityMachineUpdateOptimizationMixin");
             mixins.add("rtm.TileEntitySignalUpdateOptimizationMixin");
-            mixins.add("rtm.TileEntityEWUpdateOptimizationMixin");
+            // TileEntityEWUpdateOptimizationMixin: TileEntityEWThrottleMixin に完全包含されるため廃止
             mixins.add("rtm.WireManagerMixin");
             // F-01: 列車屋根上への立ち乗り追従（サーバー側のみ動作） - 削除済み
             mixins.add("rtm.EntityVehiclePartCollisionNullMixin");
@@ -467,6 +498,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         if (isModPresent("MCTE")) {
             mixins.add("kaizpatch.McteWorldSetBlockDiffMixin");
+            mixins.add("mcte.TileEntityMiniatureOptimizationMixin");
         }
 
         // Client-side mixins
@@ -514,7 +546,6 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
                 if (isModPresent("RTM")) {
                     mixins.add("angelica.WeatherColumnsAccessor");
-                    mixins.add("angelica.WeatherColumnsRainOcclusionMixin");
                     mixins.add("angelica.WeatherRendererRainOcclusionMixin");
                 }
             }
@@ -536,35 +567,49 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
             // RTM client
             if (isModPresent("RTM")) {
-                mixins.add("minecraft.WorldPrecipitationHeightOcclusionMixin");
                 mixins.add("minecraft.EntityRendererRainOcclusionMixin");
                 mixins.add("rtm.RenderElectricalWiringOptimizationMixin");
                 mixins.add("rtm.BlockLinePoleConnectionCacheMixin");
                 mixins.add("rtm.RenderLargeRailOptimizationMixin");
-                // RenderMachine（機械類全般）の距離描画制御（半分まで通常、半分以遠は頻度半減、最大距離外は描画スキップ）
+                mixins.add("rtm.RenderBlockLargeRailCacheMixin");
+                // RenderMachine（機械類全般）の距離描画制御（最大距離外スキップ＋シャドウパス距離分離）
                 mixins.add("rtm.RenderMachineCullingMixin");
                 mixins.add("rtm.RailTessellateOptimizationMixin");
                 mixins.add("rtm.RailPartsRendererScriptGuardMixin");
                 mixins.add("rtm.RenderMarkerBlockBaseMixin");
-                mixins.add("rtm.TileEntitySignalNoCullingMixin");
-                mixins.add("rtm.TileEntityCrossingGateNoCullingMixin");
+                // TileEntitySignalNoCullingMixin / TileEntityCrossingGateNoCullingMixin / PartsRendererActionPartsMixin は
+                // mixins.crosstie.json の client 配列に静的登録済みのため重複追加しない
                 mixins.add("rtm.RenderEntityInstalledObjectCullingMixin");
                 mixins.add("rtm.GuiSelectTexturePagingMixin");
                 mixins.add("rtm.GuiTrainControlPanelFormationSyncMixin");
                 mixins.add("rtm.RtmPartsMatrixPushMixin");
                 mixins.add("rtm.BasicVehiclePartsRendererMixin");
+                mixins.add("rtm.BasicVehiclePartsRendererOptimizationMixin");
+                mixins.add("rtm.SoundUpdaterVehicleOptimizationMixin");
+                mixins.add("rtm.PartsRendererOptimizationMixin");
+                mixins.add("rtm.RenderVehicleBaseOptimizationMixin");
+                mixins.add("rtm.RenderFlagOptimizationMixin");
+                mixins.add("rtm.RenderItemWithModelCacheMixin");
                 mixins.add("rtm.ItemWithModelNbtSyncGuardMixin");
                 mixins.add("rtm.MixinSoundAPIEntityTrainBase");
                 mixins.add("rtm.PartsDoorGhostFixMixin");
                 mixins.add("rtm.NGTRenderHelperDoorFilterMixin");
-                mixins.add("rtm.PartsRendererActionPartsMixin");
+                mixins.add("rtm.EntityTrainBaseOptimizationMixin");
                 // EntityVehicleBasePacketSmoothingMixin handles train and vehicle snapshots
                 // on one timeline, including the vehicle currently carrying the player.
 
                 mixins.add("rtm.ModelPackManagerReloadMixin");
                 mixins.add("rtm.TextureManagerReloadMixin");
+                // ModelObjectRenderMixin は ModelObjectMixin と renderWithTexture の @Overwrite が競合するため廃止（ModelObjectMixin に統合済み）
                 mixins.add("rtm.ModelObjectMixin");
-                mixins.add("rtm.ModelObjectRenderMixin");
+                mixins.add("rtm.ModelObjectShadeModelMixin");
+                mixins.add("rtm.ModelObjectPass1BlendMixin");
+                mixins.add("rtm.PartsShadeModelMixin");
+                mixins.add("rtm.PartsRendererShadeModelMixin");
+                mixins.add("rtm.PartsRendererBindTextureHookMixin");
+                mixins.add("rtm.TileEntityEWDisplayListCleanupMixin");
+                mixins.add("rtm.BasicSignalPartsRendererOptimizationMixin");
+                mixins.add("rtm.RenderPaintOptimizationMixin");
                 mixins.add("rtm.RailPartsRendererMixin");
                 mixins.add("rtm.WirePartsRendererLightingMixin");
                 mixins.add("rtm.MixinRenderUtil");
@@ -575,6 +620,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
                 if (isModPresent("NGTLib")) {
                     mixins.add("ngtlib.TextureSetMixin");
+                    mixins.add("ngtlib.GLHelperCleanupMixin");
+                    mixins.add("ngtlib.NGTTessellatorDrawVertexArrayFixMixin");
+                    mixins.add("ngtlib.NGTRendererOptimizationMixin");
                 }
 
                 // GL_SELECT (マウスピッキング) 回避パッチ
@@ -613,13 +661,9 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
             }
 
             // MCTE client
-            // if (isModPresent("MCTE")) {
-            // boolean hasAnyAngelicaForMcte = isModPresent("Angelica") ||
-            // isModPresent("AngelicaGlsm");
-            // if (hasAnyAngelicaForMcte) {
-            // } else {
-            // }
-            // }
+            if (isModPresent("MCTE")) {
+                mixins.add("mcte.RenderMiniatureOptimizationMixin");
+            }
         }
 
         // RTM サーバー側 Mixin（クライアント・サーバー共通）
@@ -627,6 +671,7 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
         // 上部 RTM ブロック（L276）での誤二重登録は廃止済み。
         if (isModPresent("RTM")) {
             mixins.add("minecraft.TrainEntityInteractionRangeMixin");
+            mixins.add("minecraft.WorldVehicleIndexMixin");
             mixins.add("rtm.TileEntityElectricalWiringInvalidateMixin");
             mixins.add("rtm.RailMapChunkLoadMixin");
             if (ENABLE_DIAGNOSTIC_MIXINS) {
@@ -635,19 +680,25 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
                 mixins.add("rtm.TileEntityRailPropertyMutationDiagnosticMixin");
             }
             mixins.add("rtm.TileEntityLargeRailCoreInvalidateMixin");
+            mixins.add("rtm.TileEntityLargeRailBaseOptimizationMixin");
+            mixins.add("rtm.TileEntityLargeRailCoreOptimizationMixin");
+            mixins.add("rtm.RailMapCreateListOptimizationMixin");
+            mixins.add("rtm.SwitchTypeOptimizationMixin");
             mixins.add("rtm.ElectricalWiringDecorativeMixin");
-            mixins.add("rtm.TileEntityEWConnectionMixin");
+            // TileEntityEWConnectionMixin は topologyRevision ベース化により不要のため廃止
             mixins.add("rtm.EntityTrainDetectorThrottleMixin");
-            mixins.add("rtm.DataEntryMixin");
-            mixins.add("rtm.DataMapMixin");
-            // VehicleTrackerEntryMixin は mixins.crosstie.json の "mixins" 配列にて
-            // 静的登録済みのため、ここでの重複登録は廃止。
+            // DataEntryMixin / DataMapMixin は上部 RTM ブロックで登録済みのため重複追加を廃止
+            // VehicleTrackerEntryMixin は無効化済み
             mixins.add("rtm.TileEntityEWThrottleMixin");
             // P-03: EntityBogie/VehiclePart の UUID 線形スキャンを O(1) ルックアップに最適化
             mixins.add("rtm.EntityBogieUUIDLookupMixin");
             mixins.add("rtm.EntityVehiclePartUUIDLookupMixin");
             // P-06: EntityVehiclePart.checkEntityOrder の O(N)×3 スキャンを抑制
             mixins.add("rtm.EntityVehiclePartOrderOptimizationMixin");
+            // Phase 4: 車両パーツ静止最適化・列車Tick最適化・MovingMachine最適化
+            mixins.add("rtm.EntityVehiclePartOptimizationMixin");
+            mixins.add("rtm.EntityTrainBaseTickOptimizationMixin");
+            mixins.add("rtm.TileEntityMovingMachineOptimizationMixin");
             // P-07: TileEntityMarker の sendToAll を sendToAllAround に変更
             mixins.add("rtm.TileEntityMarkerBroadcastOptimizationMixin");
             // P-09: TileEntityElectricalWiring の sendToAll を sendToAllAround に変更
@@ -661,6 +712,10 @@ public class CrossTieMixinPlugin implements IMixinConfigPlugin {
 
         if (isModPresent("NGTLib")) {
             mixins.add("ngtlib.PacketNBTPlayerItemGuardMixin");
+            mixins.add("ngtlib.PacketNBTRangeBroadcastMixin");
+            mixins.add("ngtlib.NGTMathOptimizationMixin");
+            mixins.add("ngtlib.BezierCurveOptimizationMixin");
+            mixins.add("ngtlib.TileEntityPlaceableAabbMixin");
         }
 
         // WebCTC (RTM-side hooks are registered here; WebCTC-target mixins are registered in CrossTieLateMixinLoader)

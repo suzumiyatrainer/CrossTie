@@ -61,6 +61,9 @@ public abstract class BlockLinePoleConnectionCacheMixin {
             int z,
             boolean connectOther,
             CallbackInfoReturnable<Boolean> cir) {
+        if (!CrossTieConfig.connectionCacheEnabled) {
+            return;
+        }
         TickCache cache = crosstie$getClientTickCache(world);
         if (cache != null) {
             cache.put(crosstie$packKey(x, y, z, connectOther), cir.getReturnValue() ? (byte) 1 : (byte) 0);
